@@ -1,0 +1,48 @@
+.treatment-history {
+  padding: 20px;
+}
+
+.patient-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.patient-card {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.patient-card:hover {
+  background-color: #f0f0f0;
+}
+
+.patient-icon {
+  font-size: 24px;
+  margin-right: 10px;
+}
+
+.history-modal {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.history-modal table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-modal th, .history-modal td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.history-modal th {
+  background-color: #f2f2f2;
+}

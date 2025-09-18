@@ -1,0 +1,448 @@
+/* Patients.css */
+.patients {
+  padding: 20px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  margin-right: 10px;
+}
+
+.badge {
+  background: #4f46e5;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 5px;
+}
+
+.dark-mode .search-box {
+  border-color: #718096;
+}
+
+.search-icon {
+  margin: 0 10px;
+  color: #718096;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+}
+
+.dark-mode .search-input {
+  background: #4a5568;
+  color: #e2e8f0;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-primary svg {
+  margin-right: 8px;
+}
+
+.btn-primary:hover {
+  background: #4338ca;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .empty-state {
+  background: #2d3748;
+}
+
+.empty-state h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode table {
+  background: #2d3748;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dark-mode th,
+.dark-mode td {
+  border-bottom: 1px solid #4a5568;
+}
+
+th {
+  background: #f7fafc;
+  font-weight: 600;
+}
+
+.dark-mode th {
+  background: #4a5568;
+}
+
+.note-link {
+  color: #4f46e5;
+  cursor: pointer;
+}
+
+.note-link:hover {
+  text-decoration: underline;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-edit,
+.btn-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.btn-edit {
+  color: #4f46e5;
+}
+
+.btn-delete {
+  color: #c53030;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  animation: fadeIn 0.3s ease;
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.dark-mode .modal-content {
+  background: #2d3748;
+  color: #e2e8f0;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.error-message {
+  color: #c53030;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group select,
+.dark-mode .form-group textarea {
+  background: #4a5568;
+  border-color: #718096;
+  color: #e2e8f0;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-delete {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  min-width: 100px;
+}
+
+.btn-primary {
+  background: #4f46e5;
+  color: white;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #2d3748;
+}
+
+.dark-mode .btn-secondary {
+  background: #4a5568;
+  color: #e2e8f0;
+}
+
+.btn-delete {
+  background: #c53030;
+  color: white;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+
+
+/* Patients.css ga qo'shimchalar */
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.patient-icon {
+  color: #718096;
+}
+
+.input-icon {
+  margin-right: 8px;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: #718096;
+  margin-top: 4px;
+}
+
+.success-message {
+  background-color: #c6f6d5;
+  color: #22543d;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.dark-mode .success-message {
+  background-color: #22543d;
+  color: #c6f6d5;
+}
+
+.patient-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #f7fafc;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  text-align: start;
+}
+
+.dark-mode .detail-item {
+  background: #4a5568;
+}
+
+.detail-icon {
+  margin-top: 4px;
+  flex-shrink: 0;
+  font-size: 20px;
+  color: #4f46e5;
+}
+
+.detail-item div {
+  flex: 1;
+  overflow: hidden;
+}
+
+.detail-item strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.detail-item p {
+  margin: 0;
+  font-size: 16px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  text-align: start;
+}
+
+.detail-note {
+  grid-column: 1 / -1;
+}
+
+.detail-note-text {
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Responsive jadval va modal */
+@media (max-width: 768px) {
+  .actions {
+    flex-direction: column;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  table {
+    min-width: 700px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .patient-details {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .modal-content {
+    max-width: 90%;
+    padding: 16px;
+  }
+
+  .modal-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-header h2 {
+    font-size: 18px;
+  }
+
+  .detail-item {
+    padding: 10px;
+  }
+
+  .detail-item p {
+    font-size: 14px;
+  }
+}

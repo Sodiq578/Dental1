@@ -1,0 +1,89 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app.dark-mode .header {
+  background-color: #2d2d2d;
+  color: #f5f5f5;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  border-radius: 20px;
+  padding: 5px 15px;
+  flex: 1;
+  margin: 0 20px;
+}
+
+.app.dark-mode .search-bar {
+  background-color: #3d3d3d;
+}
+
+.search-bar input {
+  border: none;
+  background: none;
+  outline: none;
+  padding: 8px;
+  width: 100;
+}
+
+.app.dark-mode .search-bar input {
+  color: #f5f5f5;
+}
+
+.header-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.header-icons button {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .search-bar {
+    display: none;
+  }
+}
