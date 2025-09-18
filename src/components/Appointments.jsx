@@ -1,14 +1,32 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FiEdit, FiTrash2, FiPlus, FiX, FiSearch, 
   FiCalendar, FiClock, FiUser, FiPhone, 
-  FiActivity, FiArrowRight 
+  FiActivity, FiArrowRight, FiDownload, FiUpload 
 } from 'react-icons/fi';
-import { AppContext } from '../App';  // Context dan foydalanamiz
+import { 
+  getFromLocalStorage, 
+  saveToLocalStorage, 
+  validateStoredPatients, 
+  sanitizePatientData, 
+  validatePatientData, 
+  exportPatientsData, 
+  importPatientsData,
+  exportAppointmentsData,
+  importAppointmentsData
+} from '../utils';
 import './Appointments.css';
 
 const Appointments = () => {
-  const { appointments, setAppointments, patients } = useContext(AppContext); // Global state dan olamiz
+  // localStorage dan ma'lumotlarni olish
+  const [appointments, setAppointments] = useState(() => {
+    const savedAppointments = getFromLocalStorage('appointments', []);
+    return savedAppointments;
+  });
+  const [patients, setPatients] = useState(() => {
+    const savedPatients = getFromLocalStorage('patients', []);
+    return validateStoredPatients(savedPatients);
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [currentApp, setCurrentApp] = useState(null);
   const [error, setError] = useState('');
@@ -16,17 +34,38 @@ const Appointments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('');
+  const [countdowns, setCountdowns] = useState({});
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [smsTimers, setSmsTimers] = useState({});
+  const [newPatientMode, setNewPatientMode] = useState(false);
+  const [newPatient, setNewPatient] = useState({
+    name: '',
+    phone: '',
+    gender: '',
+    address: '',
+    dob: '',
+    note: ''
+  });
+
+  // 🔹 localStorage ni yangilash
+  useEffect(() => {
+    saveToLocalStorage('appointments', appointments);
+  }, [appointments]);
+
+  useEffect(() => {
+    saveToLocalStorage('patients', patients);
+  }, [patients]);
 
   // 🔹 Modalni ochish
-  const openModal = (app = null) => {
+  const openModal = (app = null, slotTime = null) => {
     setCurrentApp(
       app
         ? { ...app }
         : {
             id: null,
             patientId: '',
-            date: '',
-            time: '',
+            date: selectedDate,
+            time: slotTime || '',
             procedure: '',
             status: 'kutilmoqda',
             nextVisit: '',
@@ -35,6 +74,15 @@ const Appointments = () => {
             createdAt: new Date().toISOString()
           }
     );
+    setNewPatientMode(false);
+    setNewPatient({
+      name: '',
+      phone: '',
+      gender: '',
+      address: '',
+      dob: '',
+      note: ''
+    });
     setModalOpen(true);
     setError('');
     setSuccessMessage('');
@@ -44,54 +92,102 @@ const Appointments = () => {
     setModalOpen(false);
     setError('');
     setSuccessMessage('');
+    setNewPatientMode(false);
+    setNewPatient({
+      name: '',
+      phone: '',
+      gender: '',
+      address: '',
+      dob: '',
+      note: ''
+    });
   };
 
   // 🔹 Formani yuborish
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!currentApp.patientId) {
+
+    if (newPatientMode) {
+      const patientErrors = validatePatientData(newPatient);
+      if (patientErrors.length > 0) {
+        setError(patientErrors.join(', '));
+        return;
+      }
+    } else if (!currentApp.patientId) {
       setError('Bemor tanlanishi shart');
       return;
     }
     if (!currentApp.date) {
-      setError('Sana kiritilishi shart');
+      setError('Uchrashuv sanasi kiritilishi shart');
       return;
     }
     if (!currentApp.time) {
-      setError('Vaqt kiritilishi shart');
+      setError('Uchrashuv vaqti kiritilishi shart');
       return;
     }
     if (!currentApp.procedure.trim()) {
-      setError('Jarayon kiritilishi shart');
-      return;
-    }
-    if (currentApp.phone && !/^\+998\d{9}$/.test(currentApp.phone)) {
-      setError('Telefon raqami +998XXXXXXXXX formatida bo‘lishi kerak');
+      setError('Jarayon nomi kiritilishi shart');
       return;
     }
 
-    let updated;
+    let updatedAppointments;
+    let patientId = currentApp.patientId;
+
+    // Yangi bemor qo'shish
+    if (newPatientMode) {
+      const sanitizedPatient = sanitizePatientData({
+        ...newPatient,
+        id: Date.now()
+      });
+      setPatients([...patients, sanitizedPatient]);
+      patientId = sanitizedPatient.id;
+    }
+
     const newApp = {
       ...currentApp,
       id: currentApp.id || Date.now(),
+      patientId,
       updatedAt: new Date().toISOString()
     };
 
     if (currentApp.id) {
-      updated = appointments.map((a) => (a.id === currentApp.id ? newApp : a));
+      updatedAppointments = appointments.map((a) => (a.id === currentApp.id ? newApp : a));
       setSuccessMessage('Uchrashuv muvaffaqiyatli yangilandi');
     } else {
-      updated = [...appointments, newApp];
+      updatedAppointments = [...appointments, newApp];
       setSuccessMessage('Yangi uchrashuv muvaffaqiyatli qoʻshildi');
     }
-    
-    setAppointments(updated); // Global state ni yangilaymiz (avto saqlanadi App.js da)
-    
+
+    setAppointments(updatedAppointments);
+
     setTimeout(() => {
       setSuccessMessage('');
       if (!error) closeModal();
     }, 3000);
+
+    // SMS taymerni o'rnatish
+    setupSmsReminder(newApp);
+  };
+
+  // 🔹 SMS eslatma funksiyasi
+  const setupSmsReminder = (app) => {
+    const appDateTime = new Date(`${app.date}T${app.time}`);
+    const now = new Date();
+    const reminderTime = new Date(appDateTime.getTime() - (2 * 60 * 1000)); // Test uchun 2 daqiqa oldin
+
+    if (reminderTime > now) {
+      const timeoutId = setTimeout(() => {
+        sendSmsReminder(app);
+      }, reminderTime - now);
+      setSmsTimers((prev) => ({ ...prev, [app.id]: timeoutId }));
+    }
+  };
+
+  // 🔹 SMS yuborish
+  const sendSmsReminder = (app) => {
+    const patientName = getPatientName(app.patientId);
+    console.log(`SMS yuborildi: Hurmatli ${patientName}, uchrashuvingiz ${app.date} ${app.time} da. Telefon: ${app.phone}`);
+    alert(`SMS yuborildi: Hurmatli ${patientName}, uchrashuvingiz ${app.date} ${app.time} da.`);
   };
 
   // 🔹 Bemor ismini olish
@@ -105,9 +201,13 @@ const Appointments = () => {
   const deleteAppointment = (id) => {
     if (window.confirm('Haqiqatan ham bu uchrashuvni o‘chirmoqchimisiz?')) {
       const updated = appointments.filter((a) => a.id !== id);
-      setAppointments(updated); // Global state ni yangilaymiz
+      setAppointments(updated);
       setSuccessMessage('Uchrashuv muvaffaqiyatli o‘chirildi');
       setTimeout(() => setSuccessMessage(''), 3000);
+      if (smsTimers[id]) {
+        clearTimeout(smsTimers[id]);
+        setSmsTimers((prev) => { delete prev[id]; return { ...prev }; });
+      }
     }
   };
 
@@ -124,13 +224,146 @@ const Appointments = () => {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // 🔹 Status tahlili (jadval uchun)
+  // 🔹 Status tahlili
   const getStatusColor = (status) => {
     switch (status) {
       case 'kutilmoqda': return 'orange';
       case 'amalga oshirildi': return 'green';
       case 'bekor qilindi': return 'red';
       default: return 'gray';
+    }
+  };
+
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return 'Telefon kiritilmagan';
+    if (phone.startsWith('+998') && phone.length === 13) {
+      return phone.replace(/(\+998)(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5');
+    }
+    return phone;
+  };
+
+  // 🔹 Qoldiq vaqtni hisoblash
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newCountdowns = {};
+      appointments.forEach((app) => {
+        if (app.status === 'kutilmoqda') {
+          const appDateTime = new Date(`${app.date}T${app.time}`);
+          const now = new Date();
+          const diff = appDateTime - now;
+          if (diff > 0) {
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            newCountdowns[app.id] = `${hours} soat ${minutes} daqiqa qoldi`;
+          } else {
+            newCountdowns[app.id] = 'Vaqt o\'tdi';
+          }
+        }
+      });
+      setCountdowns(newCountdowns);
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [appointments]);
+
+  // 🔹 Barcha uchrashuvlar uchun SMS taymerlarni o'rnatish
+  useEffect(() => {
+    appointments.forEach(setupSmsReminder);
+  }, [appointments]);
+
+  // 🔹 Kalendar uchun vaqt slotlari
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 9; hour < 18; hour++) {
+      for (let min = 0; min < 60; min += 30) {
+        const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+        slots.push(time);
+      }
+    }
+    return slots;
+  };
+
+  // 🔹 Tanlangan sana uchun band va bo'sh vaqtlar
+  const getSlotsForDate = (date) => {
+    const timeSlots = generateTimeSlots();
+    const booked = appointments
+      .filter((app) => app.date === date && app.status !== 'bekor qilindi')
+      .map((app) => ({ time: app.time, patient: getPatientName(app.patientId) }));
+
+    return timeSlots.map((slot) => ({
+      time: slot,
+      isBooked: booked.some((b) => b.time === slot),
+      patient: booked.find((b) => b.time === slot)?.patient || null,
+    }));
+  };
+
+  const slots = getSlotsForDate(selectedDate);
+
+  // 🔹 Bemorlarni eksport qilish
+  const handleExportPatients = () => {
+    const success = exportPatientsData();
+    if (success) {
+      setSuccessMessage('Bemorlar muvaffaqiyatli eksport qilindi');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }
+  };
+
+  // 🔹 Bemorlarni import qilish
+  const handleImportPatients = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      importPatientsData(file, (success, message) => {
+        if (success) {
+          setPatients(validateStoredPatients(getFromLocalStorage('patients', [])));
+          setSuccessMessage(message);
+        } else {
+          setError(message);
+        }
+        setTimeout(() => {
+          setSuccessMessage('');
+          setError('');
+        }, 3000);
+      });
+    }
+  };
+
+  // 🔹 Uchrashuvlarni eksport qilish
+  const handleExportAppointments = () => {
+    const success = exportAppointmentsData();
+    if (success) {
+      setSuccessMessage('Uchrashuvlar muvaffaqiyatli eksport qilindi');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    }
+  };
+
+  // 🔹 Uchrashuvlarni import qilish
+  const handleImportAppointments = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      importAppointmentsData(file, (success, message) => {
+        if (success) {
+          setAppointments(getFromLocalStorage('appointments', []));
+          setSuccessMessage(message);
+        } else {
+          setError(message);
+        }
+        setTimeout(() => {
+          setSuccessMessage('');
+          setError('');
+        }, 3000);
+      });
+    }
+  };
+
+  // 🔹 Ma'lumotlarni tozalash
+  const clearStorage = () => {
+    if (window.confirm('Barcha ma\'lumotlarni o\'chirishni xohlaysizmi?')) {
+      saveToLocalStorage('appointments', []);
+      saveToLocalStorage('patients', []);
+      setAppointments([]);
+      setPatients([]);
+      setSuccessMessage('Ma\'lumotlar muvaffaqiyatli tozalandi');
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
@@ -144,35 +377,67 @@ const Appointments = () => {
       {successMessage && (
         <div className="success-message">{successMessage}</div>
       )}
+      {error && <div className="error-message">{error}</div>}
 
       <div className="actions">
         <div className="search-box">
-          <FiSearch className="search-icon" />
+          <label htmlFor="search-input" className="input-label">Qidiruv</label>
           <input
+            id="search-input"
             type="text"
-            placeholder="Bemor yoki jarayon boʻyicha qidirish..."
+            placeholder="Bemor ismi yoki jarayon boʻyicha qidirish..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
         </div>
         <div className="filters">
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <label htmlFor="status-filter" className="input-label">Status boʻyicha filtr</label>
+          <select
+            id="status-filter"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
             <option value="all">Barcha statuslar</option>
             <option value="kutilmoqda">Kutilmoqda</option>
             <option value="amalga oshirildi">Amalga oshirildi</option>
             <option value="bekor qilindi">Bekor qilindi</option>
           </select>
+
+          <label htmlFor="date-filter" className="input-label">Sana boʻyicha filtr</label>
           <input
+            id="date-filter"
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
             placeholder="Sana boʻyicha filtr"
           />
         </div>
-        <button onClick={() => openModal()} className="btn-primary">
-          <FiPlus /> Yangi uchrashuv
-        </button>
+        
+      </div>
+
+      {/* 🔹 Kalendar bo'limi */}
+      <div className="calendar-section">
+        <h2>Kalendar</h2>
+        <label htmlFor="calendar-date" className="input-label">Kalendar sanasini tanlang</label>
+        <input
+          id="calendar-date"
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+        />
+        <div className="time-slots">
+          {slots.map((slot) => (
+            <div
+              key={slot.time}
+              className={`slot ${slot.isBooked ? 'booked' : 'free'}`}
+              onClick={() => !slot.isBooked && openModal(null, slot.time)}
+            >
+              <span>{slot.time}</span>
+              <span>{slot.isBooked ? `Band: ${slot.patient}` : 'Bo\'sh'}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {filteredAppointments.length === 0 ? (
@@ -205,6 +470,7 @@ const Appointments = () => {
                 <th>Jarayon</th>
                 <th>Status</th>
                 <th>Keyingi kelish</th>
+                <th>Qoldiq vaqt</th>
                 <th>Izoh</th>
                 <th>Amallar</th>
               </tr>
@@ -223,6 +489,7 @@ const Appointments = () => {
                     </span>
                   </td>
                   <td>{app.nextVisit || '-'}</td>
+                  <td>{countdowns[app.id] || '-'}</td>
                   <td>{app.notes ? app.notes.slice(0, 20) + '...' : '-'}</td>
                   <td>
                     <div className="action-buttons">
@@ -255,89 +522,210 @@ const Appointments = () => {
               {error && <div className="error-message">{error}</div>}
               {successMessage && <div className="success-message">{successMessage}</div>}
 
-              {/* 🔹 Bemor */}
+              {/* 🔹 Bemor tanlash yoki yangi bemor kiritish */}
               <div className="form-group">
-                <label>
-                  <FiUser className="input-icon" /> Bemor *
+                <label htmlFor="patient-select" className="input-label">
+                  <FiUser className="input-icon" /> Bemor ismi *
                 </label>
-                <select
-                  value={currentApp.patientId}
-                  onChange={(e) => {
-                    const selectedPatient = patients.find((p) => String(p.id) === String(e.target.value));
-                    setCurrentApp({
-                      ...currentApp,
-                      patientId: e.target.value,
-                      phone: selectedPatient?.phone || '',
-                    });
-                  }}
-                  required
-                >
-                  <option value="">Bemor tanlang</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name || `Bemor ID: ${p.id}`} {p.phone ? `(${p.phone})` : ''}
-                    </option>
-                  ))}
-                </select>
+                {!newPatientMode ? (
+                  <>
+                    <select
+                      id="patient-select"
+                      value={currentApp.patientId}
+                      onChange={(e) => {
+                        const selectedPatient = patients.find((p) => String(p.id) === String(e.target.value));
+                        setCurrentApp({
+                          ...currentApp,
+                          patientId: e.target.value,
+                          phone: selectedPatient?.phone || '',
+                        });
+                      }}
+                      required={!newPatientMode}
+                    >
+                      <option value="">Bemor tanlang</option>
+                      {patients.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name || `Bemor ID: ${p.id}`} {p.phone ? `(${formatPhoneNumber(p.phone)})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn-secondary toggle-patient-mode"
+                      onClick={() => setNewPatientMode(true)}
+                    >
+                      Yangi bemor kiritish
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="new-patient-name" className="input-label">
+                          Ism *
+                        </label>
+                        <input
+                          id="new-patient-name"
+                          type="text"
+                          placeholder="Bemor ismi"
+                          value={newPatient.name}
+                          onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="new-patient-phone" className="input-label">
+                          Telefon *
+                        </label>
+                        <input
+                          id="new-patient-phone"
+                          type="tel"
+                          placeholder="+998 90 123 45 67"
+                          value={newPatient.phone}
+                          onChange={(e) => {
+                            setNewPatient({ ...newPatient, phone: e.target.value });
+                            setCurrentApp({ ...currentApp, phone: e.target.value });
+                          }}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="new-patient-gender" className="input-label">
+                          Jins
+                        </label>
+                        <select
+                          id="new-patient-gender"
+                          value={newPatient.gender}
+                          onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
+                        >
+                          <option value="">Jinsni tanlang</option>
+                          <option value="male">Erkak</option>
+                          <option value="female">Ayol</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="new-patient-dob" className="input-label">
+                          Tug'ilgan sana
+                        </label>
+                        <input
+                          id="new-patient-dob"
+                          type="date"
+                          value={newPatient.dob}
+                          onChange={(e) => setNewPatient({ ...newPatient, dob: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="new-patient-address" className="input-label">
+                        Manzil
+                      </label>
+                      <input
+                        id="new-patient-address"
+                        type="text"
+                        placeholder="Bemor manzili"
+                        value={newPatient.address}
+                        onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="new-patient-note" className="input-label">
+                        Izoh
+                      </label>
+                      <textarea
+                        id="new-patient-note"
+                        placeholder="Bemor haqida qo'shimcha izohlar"
+                        value={newPatient.note}
+                        onChange={(e) => setNewPatient({ ...newPatient, note: e.target.value })}
+                        rows="3"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-secondary toggle-patient-mode"
+                      onClick={() => setNewPatientMode(false)}
+                    >
+                      Mavjud bemorni tanlash
+                    </button>
+                    <div className="input-hint">
+                      Yangi bemor ma'lumotlarini to'ldiring
+                    </div>
+                  </>
+                )}
+                <div className="input-hint">
+                  {!newPatientMode ? 'Uchrashuv uchun bemorni tanlang' : 'Yangi bemor ma\'lumotlarini kiriting'}
+                </div>
               </div>
 
               {/* 🔹 Telefon */}
-              <div className="form-group">
-                <label>
-                  <FiPhone className="input-icon" /> Telefon raqam
-                </label>
-                <input
-                  type="tel"
-                  placeholder="+998901234567"
-                  value={currentApp.phone}
-                  onChange={(e) => setCurrentApp({ ...currentApp, phone: e.target.value })}
-                />
-              </div>
+              {!newPatientMode && (
+                <div className="form-group">
+                  <label htmlFor="phone-input" className="input-label">
+                    <FiPhone className="input-icon" /> Telefon raqami
+                  </label>
+                  <input
+                    id="phone-input"
+                    type="tel"
+                    placeholder="Telefon raqami (masalan: +998 90 123 45 67)"
+                    value={currentApp.phone}
+                    onChange={(e) => setCurrentApp({ ...currentApp, phone: e.target.value })}
+                  />
+                  <div className="input-hint">Xalqaro formatda kiriting, majburiy emas</div>
+                </div>
+              )}
 
               {/* 🔹 Sana va vaqt */}
               <div className="form-row">
                 <div className="form-group">
-                  <label>
-                    <FiCalendar className="input-icon" /> Sana *
+                  <label htmlFor="date-input" className="input-label">
+                    <FiCalendar className="input-icon" /> Uchrashuv sanasi *
                   </label>
                   <input
+                    id="date-input"
                     type="date"
                     value={currentApp.date}
                     onChange={(e) => setCurrentApp({ ...currentApp, date: e.target.value })}
                     required
                   />
+                  <div className="input-hint">Uchrashuv bo‘ladigan sanani tanlang</div>
                 </div>
                 <div className="form-group">
-                  <label>
-                    <FiClock className="input-icon" /> Vaqt *
+                  <label htmlFor="time-input" className="input-label">
+                    <FiClock className="input-icon" /> Uchrashuv vaqti *
                   </label>
                   <input
+                    id="time-input"
                     type="time"
                     value={currentApp.time}
                     onChange={(e) => setCurrentApp({ ...currentApp, time: e.target.value })}
                     required
                   />
+                  <div className="input-hint">Uchrashuv vaqtini kiriting (soat va daqiqa)</div>
                 </div>
               </div>
 
               {/* 🔹 Jarayon */}
               <div className="form-group">
-                <label>
-                  <FiActivity className="input-icon" /> Jarayon *
+                <label htmlFor="procedure-input" className="input-label">
+                  <FiActivity className="input-icon" /> Jarayon nomi *
                 </label>
                 <input
+                  id="procedure-input"
                   type="text"
-                  placeholder="Masalan: tish davolash"
+                  placeholder="Jarayon nomi (masalan: tish tekshiruvi, plombalash)"
                   value={currentApp.procedure}
                   onChange={(e) => setCurrentApp({ ...currentApp, procedure: e.target.value })}
                   required
                 />
+                <div className="input-hint">Bemor uchun rejalashtirilgan jarayonni kiriting</div>
               </div>
 
               {/* 🔹 Status */}
               <div className="form-group">
-                <label>Status</label>
+                <label htmlFor="status-select" className="input-label">Uchrashuv holati</label>
                 <select
+                  id="status-select"
                   value={currentApp.status}
                   onChange={(e) => setCurrentApp({ ...currentApp, status: e.target.value })}
                 >
@@ -345,28 +733,34 @@ const Appointments = () => {
                   <option value="amalga oshirildi">Amalga oshirildi</option>
                   <option value="bekor qilindi">Bekor qilindi</option>
                 </select>
+                <div className="input-hint">Uchrashuvning joriy holatini tanlang</div>
               </div>
 
               {/* 🔹 Keyingi kelish */}
               <div className="form-group">
-                <label>
-                  <FiArrowRight className="input-icon" /> Keyingi kelish
+                <label htmlFor="next-visit-input" className="input-label">
+                  <FiArrowRight className="input-icon" /> Keyingi kelish sanasi
                 </label>
                 <input
+                  id="next-visit-input"
                   type="date"
                   value={currentApp.nextVisit}
                   onChange={(e) => setCurrentApp({ ...currentApp, nextVisit: e.target.value })}
                 />
+                <div className="input-hint">Keyingi uchrashuv sanasini kiriting (majburiy emas)</div>
               </div>
 
               {/* 🔹 Izoh */}
               <div className="form-group">
-                <label>📝 Qoʻshimcha maʼlumot</label>
+                <label htmlFor="notes-input" className="input-label">📝 Qoʻshimcha izohlar</label>
                 <textarea
-                  placeholder="Masalan: Bemor antibiotik ichishi kerak"
+                  id="notes-input"
+                  placeholder="Bemorning shikoyatlari, maxsus ehtiyojlar yoki tavsiyalar"
                   value={currentApp.notes}
                   onChange={(e) => setCurrentApp({ ...currentApp, notes: e.target.value })}
+                  rows="4"
                 />
+                <div className="input-hint">Qo‘shimcha ma’lumotlarni kiriting (majburiy emas)</div>
               </div>
 
               <div className="modal-actions">

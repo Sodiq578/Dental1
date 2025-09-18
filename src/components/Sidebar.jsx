@@ -26,7 +26,7 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode }) => {
     { path: '/xodimlar', icon: <FiBriefcase />, label: 'Xodimlar' },
     { path: '/bemor-portali', icon: <FiGlobe />, label: 'Bemor Portali' },
     { path: '/davolashda-yordam', icon: <FiHelpCircle />, label: 'Davolashda Yordam' },
-    { path: '/tooth', icon: <FiSmile />, label: 'Tishlar' } // ✅ Yangi qo‘shildi
+    { path: '/tooth', icon: <FiSmile />, label: 'Tishlar' } // Yangi qo‘shildi
   ];
 
   return (
@@ -54,70 +54,10 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode }) => {
           </ul>
         </nav>
 
-        <div className="sidebar-footer">
-          <div className="settings-section">
-            <h3>
-              <FiSettings />
-              <span>Sozlamalar</span>
-            </h3>
-            
-            <div className="setting-item">
-              <button 
-                className="theme-toggle"
-                onClick={() => setDarkMode(!darkMode)}
-              >
-                {darkMode ? <FiSun /> : <FiMoon />}
-                <span>{darkMode ? 'Kunduzgi rejim' : 'Tungi rejim'}</span>
-              </button>
-            </div>
-            
-            <div className="setting-item">
-              <FiType />
-              <span>Shrift o'lchami</span>
-              <select onChange={(e) => setFontSize(parseInt(e.target.value))}>
-                <option value="14">14px</option>
-                <option value="16">16px</option>
-                <option value="18">18px</option>
-              </select>
-            </div>
-            
-            <div className="setting-item">
-              <FiLayout />
-              <span>Layout</span>
-              <select onChange={(e) => setLayout(e.target.value)}>
-                <option value="normal">Normal</option>
-                <option value="wide">Wide</option>
-              </select>
-            </div>
-
-            <div className="setting-item">
-              <button onClick={backupAllData}>
-                <FiDownload />
-                <span>Ma'lumotlarni zaxiralash</span>
-              </button>
-            </div>
-
-            <div className="setting-item">
-              <input
-                type="file"
-                accept=".json"
-                onChange={(e) => {
-                  if (e.target.files[0]) {
-                    restoreFromBackup(e.target.files[0], (success) => {
-                      alert(success ? 'Ma\'lumotlar muvaffaqiyatli tiklandi!' : 'Ma\'lumotlarni tiklashda xatolik.');
-                      window.location.reload();
-                    });
-                  }
-                }}
-              />
-              <span>Ma'lumotlarni tiklash</span>
-            </div>
-          </div>
-        </div>
+        
       </aside>
     </>
   );
 };
 
 export default Sidebar;
-

@@ -1,5 +1,22 @@
-/* CSS Variables */
- 
+/* Sidebar.css */
+
+/* CSS Variables - Yangi dizayn uchun yangi ranglar va o'zgarishlar qo'shildi */
+:root {
+  --sidebar-width: 280px;
+  --primary-color: #007bff; /* Asosiy rang */
+  --accent-color: #28a745; /* Aksent rang */
+  --white: #ffffff;
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-400: #ced4da;
+  --gray-600: #6c757d;
+  --gray-700: #495057;
+  --gray-800: #343a40;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+  --border-radius: 8px; /* Yumshoq burchaklar uchun */
+}
 
 /* === OVERLAY === */
 .sidebar-overlay {
@@ -8,7 +25,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.4);
   z-index: 998;
   opacity: 0;
   visibility: hidden;
@@ -32,42 +49,51 @@
   z-index: 999;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow-y: auto; /* Scrollni faollashtirish */
   transform: translateX(-100%);
   transition: var(--transition);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0; /* Yumshoq burchaklar */
+  scrollbar-width: none; /* Firefox uchun scroll bar yashirish */
+  -ms-overflow-style: none; /* IE va Edge uchun */
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera uchun scroll bar yashirish */
 }
 
 .sidebar.open {
   transform: translateX(0);
 }
 
-/* Dark mode */
+/* Dark mode - Yangi ranglar bilan */
 .sidebar.dark {
   background-color: var(--gray-800);
   color: var(--gray-200);
 }
 
 .sidebar-header {
-  padding: 20px;
+  padding: 24px 20px; /* Ko'proq bo'shliq */
   border-bottom: 1px solid var(--gray-200);
   text-align: center;
+  color: var(--white); /* Matn rangi oq */
+  border-radius: 0 0 var(--border-radius) var(--border-radius); /* Yumshoq burchaklar */
 }
 
 .sidebar-header h2 {
-  color: var(--primary-color);
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 26px; /* Kattaroq font */
+  font-weight: 700; /* Qalinroq */
   margin: 0;
 }
 
 .sidebar.dark .sidebar-header {
   border-bottom-color: var(--gray-700);
+  background-color: var(--gray-700); /* Dark modeda yangi fon */
 }
 
 /* === NAVIGATION === */
 .sidebar-nav {
   flex: 1;
-  padding: 20px 0;
+  padding: 24px 0; /* Ko'proq bo'shliq */
 }
 
 .sidebar-nav ul {
@@ -77,62 +103,65 @@
 }
 
 .sidebar-nav li {
-  margin-bottom: 8px;
+  margin-bottom: 12px; /* Ko'proq bo'shliq */
 }
 
 .sidebar-nav a {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 14px 24px; /* Kattaroq padding */
   color: var(--gray-700);
   text-decoration: none;
   transition: var(--transition);
-  gap: 12px;
-  border-left: 4px solid transparent;
+  gap: 14px; /* Ikon va matn orasidagi masofa */
+  border-radius: var(--border-radius); /* Yumshoq burchaklar */
+  margin: 0 12px; /* Yon tomondan bo'shliq */
 }
 
 .sidebar.dark .sidebar-nav a {
   color: var(--gray-300);
 }
 
-/* Hover effect */
+/* Hover effect - Yangi effekt: skalalash va rang o'zgarishi */
 .sidebar-nav a:hover {
   background-color: var(--gray-100);
   color: var(--primary-color);
-  border-left-color: var(--primary-color);
-  transform: translateX(5px);
+  transform: scale(1.02); /* Kichik skalalash */
 }
 
 .sidebar.dark .sidebar-nav a:hover {
   background-color: var(--gray-700);
 }
 
-/* Active link */
+/* Active link - Yangi dizayn: aksent rang bilan */
 .sidebar-nav a.active {
-  background-color: blue;
-  color: white;
-  border-left-color: var(--accent-color);
-  font-weight: 500;
+  background-color: var(--accent-color);
+  color: var(--white);
+  font-weight: 600; /* Qalinroq */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Kichik soya */
 }
 
 /* === FOOTER & SETTINGS === */
 .sidebar-footer {
-  padding: 20px;
+  padding: 24px 20px; /* Ko'proq bo'shliq */
   border-top: 1px solid var(--gray-200);
+  background-color: var(--gray-100); /* Footer uchun yangi fon */
+  border-radius: 0 0 var(--border-radius) 0; /* Yumshoq burchaklar */
 }
 
 .sidebar.dark .sidebar-footer {
   border-top-color: var(--gray-700);
+  background-color: var(--gray-700); /* Dark modeda yangi fon */
 }
 
 .settings-section h3 {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  font-size: 16px;
+  gap: 14px;
+  margin-bottom: 20px; /* Ko'proq bo'shliq */
+  font-size: 18px; /* Kattaroq font */
   color: var(--gray-700);
-  font-weight: 600;
+  font-weight: 700; /* Qalinroq */
 }
 
 .sidebar.dark .settings-section h3 {
@@ -142,20 +171,22 @@
 .setting-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 0;
+  gap: 14px;
+  padding: 12px 0; /* Kattaroq padding */
   color: var(--gray-600);
-  font-size: 14px;
+  font-size: 15px; /* Kattaroq font */
+  border-bottom: 1px solid var(--gray-200); /* Har bir item uchun chegara */
 }
 
 .sidebar.dark .setting-item {
   color: var(--gray-400);
+  border-bottom-color: var(--gray-700);
 }
 
 .theme-toggle {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   background: none;
   border: none;
   color: inherit;
@@ -163,22 +194,23 @@
   width: 100%;
   text-align: left;
   padding: 0;
-  font-size: 14px;
+  font-size: 15px;
   transition: var(--transition);
 }
 
 .theme-toggle:hover {
   color: var(--primary-color);
+  transform: scale(1.02); /* Hoverda skalalash */
 }
 
 .setting-item select {
   margin-left: auto;
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 8px 12px; /* Kattaroq padding */
+  border-radius: var(--border-radius); /* Yumshoq burchaklar */
   border: 1px solid var(--gray-300);
   background-color: var(--white);
   color: var(--gray-700);
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
 }
 
@@ -191,18 +223,19 @@
 .setting-item button {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   background: none;
   border: none;
   color: inherit;
   cursor: pointer;
   padding: 0;
-  font-size: 14px;
+  font-size: 15px;
   transition: var(--transition);
 }
 
 .setting-item button:hover {
   color: var(--primary-color);
+  transform: scale(1.02); /* Hoverda skalalash */
 }
 
 .setting-item input[type="file"] {
@@ -214,22 +247,17 @@
   z-index: -1;
 }
 
-.setting-item input[type="file"] + span {
+.restore-label {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   cursor: pointer;
   transition: var(--transition);
 }
 
-.setting-item input[type="file"] + span:hover {
+.restore-label:hover {
   color: var(--primary-color);
-}
-
-.setting-item input[type="file"] + span::before {
-  content: "\F15B";
-  font-family: "Feather Icons";
-  font-size: 16px;
+  transform: scale(1.02); /* Hoverda skalalash */
 }
 
 /* === RESPONSIVE === */
@@ -252,8 +280,8 @@
   background-color: var(--primary-color);
   color: white;
   border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
+  border-radius: var(--border-radius);
+  padding: 10px 14px;
   cursor: pointer;
   display: flex;
   align-items: center;

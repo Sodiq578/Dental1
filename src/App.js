@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, createContext } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { FiMenu, FiDatabase } from "react-icons/fi";
@@ -150,11 +151,11 @@ const App = () => {
         setInventory,
         staff,
         setStaff,
-        getFromLocalStorage, // Added to context
+        getFromLocalStorage,
       }}
     >
       <Router>
-        <div className={`app ${darkMode ? "dark-mode" : ""}`}>
+        <div className={`app ${darkMode ? "dark" : ""}`}>
           <button
             className="menu-btn"
             onClick={toggleSidebar}

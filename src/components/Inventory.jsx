@@ -76,7 +76,6 @@ const Inventory = () => {
 
       <div className="actions">
         <div className="search-box">
-          <FiSearch className="search-icon" />
           <input
             type="text"
             placeholder="Mahsulot nomi bo‘yicha qidirish..."

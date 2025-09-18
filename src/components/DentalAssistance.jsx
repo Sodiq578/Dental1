@@ -549,7 +549,6 @@ Tish va jag' ortopediyasi bemorlarning yuz simmetriyasini va funksionalligini ti
       <div className="sections">
         <h2>Bo'limlar</h2>
         <div className="search-box">
-          <FiSearch className="search-icon" />
           <input
             type="text"
             placeholder="Bo'lim nomi yoki ta'rifi bo'yicha qidirish..."

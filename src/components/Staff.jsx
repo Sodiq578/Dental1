@@ -76,7 +76,6 @@ const Staff = () => {
 
       <div className="actions">
         <div className="search-box">
-          <FiSearch className="search-icon" />
           <input
             type="text"
             placeholder="Ism yoki rol bo‘yicha qidirish..."

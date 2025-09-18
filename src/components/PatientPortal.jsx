@@ -28,7 +28,6 @@ const PatientPortal = () => {
       </div>
 
       <div className="search-box">
-        <FiSearch className="search-icon" />
         <input
           type="text"
           placeholder="Bemor ID sini kiriting..."

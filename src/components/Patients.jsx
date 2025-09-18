@@ -1,14 +1,18 @@
+
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../App';
-import { validateStoredPatients, sanitizePatientData, validatePatientData, exportPatientsData, importPatientsData } from '../utils';
-import { FiEdit, FiTrash2, FiPlus, FiSearch, FiUser, FiPhone, FiMapPin, FiCalendar, FiInfo, FiDownload, FiUpload } from 'react-icons/fi';
+import { validateStoredPatients, sanitizePatientData, validatePatientData } from '../utils';
+import { FiEdit, FiTrash2, FiPlus, FiSearch, FiUser, FiPhone, FiMapPin, FiCalendar, FiInfo, FiDownload } from 'react-icons/fi';
+import * as XLSX from 'xlsx';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 import './Patients.css';
 
 // Bemorlar komponenti
 const Patients = () => {
-  const { patients, setPatients, appointments, getFromLocalStorage } = useContext(AppContext); // Added getFromLocalStorage here
+  const { patients, setPatients, appointments, getFromLocalStorage } = useContext(AppContext);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [currentPatient, setCurrentPatient] = useState(null);
@@ -16,6 +20,7 @@ const Patients = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [selectedExportFormat, setSelectedExportFormat] = useState('excel');
 
   const filteredPatients = patients.filter(
     (p) =>
@@ -56,6 +61,7 @@ const Patients = () => {
 
   const closeModal = () => {
     setModalOpen(false);
+    setExportModalOpen(false);
     setNoteModalOpen(false);
     setDetailsModalOpen(false);
     setError('');
@@ -66,10 +72,8 @@ const Patients = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Ma'lumotlarni tozalash
     const sanitizedPatient = sanitizePatientData(currentPatient);
     
-    // Validatsiya (telefon validatsiyasini bo'shatib qo'ydik, faqat mavjudligini tekshirish)
     const validationErrors = validatePatientData(sanitizedPatient);
     if (validationErrors.length > 0) {
       setError(validationErrors.join(', '));
@@ -92,9 +96,8 @@ const Patients = () => {
       setSuccessMessage('Yangi bemor muvaffaqiyatli qo‘shildi');
     }
     
-    setPatients(validateStoredPatients(updated)); // Global state yangilash
+    setPatients(validateStoredPatients(updated));
     
-    // 3 soniyadan so'ng xabarni yo'qotish
     setTimeout(() => {
       setSuccessMessage('');
       closeModal();
@@ -108,7 +111,7 @@ const Patients = () => {
         return;
       }
       const updated = patients.filter((p) => p.id !== id);
-      setPatients(updated); // Global state yangilash
+      setPatients(updated);
       setSuccessMessage('Bemor muvaffaqiyatli o‘chirildi');
       setTimeout(() => setSuccessMessage(''), 3000);
       closeModal();
@@ -116,28 +119,56 @@ const Patients = () => {
   };
 
   const handleExport = () => {
-    const success = exportPatientsData();
-    if (success) {
-      setSuccessMessage('Bemor ma\'lumotlari muvaffaqiyatli eksport qilindi');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
+    setExportModalOpen(true);
   };
 
-  const handleImport = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    importPatientsData(file, (success, message) => {
-      if (success) {
-        // Yangi ma'lumotlarni yuklash va global state ni yangilash
-        setPatients(validateStoredPatients(getFromLocalStorage('patients', [])));
-        setSuccessMessage(message);
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        setError(message);
-        setTimeout(() => setError(''), 5000);
-      }
-    });
+  const performExport = async () => {
+    if (selectedExportFormat === 'excel') {
+      const ws = XLSX.utils.json_to_sheet(patients.map(p => ({
+        ID: p.id,
+        Ism: p.name,
+        Telefon: p.phone,
+        Jins: p.gender,
+        Manzil: p.address,
+        TugilganSana: p.dob,
+        OxirgiTashrif: p.lastVisit,
+        Izoh: p.note,
+        QoShilganSana: p.createdAt
+      })));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Bemorlar");
+      XLSX.writeFile(wb, "bemorlar.xlsx");
+    } else if (selectedExportFormat === 'word') {
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: patients.flatMap(p => [
+            new Paragraph({ children: [new TextRun({ text: `ID: ${p.id}`, bold: true })] }),
+            new Paragraph({ children: [new TextRun(`Ism: ${p.name || 'Noma\'lum'}`)] }),
+            new Paragraph({ children: [new TextRun(`Telefon: ${p.phone || '-'}`)] }),
+            new Paragraph({ children: [new TextRun(`Jins: ${p.gender || '-'}`)] }),
+            new Paragraph({ children: [new TextRun(`Manzil: ${p.address || '-'}`)] }),
+            new Paragraph({ children: [new TextRun(`Tug'ilgan sana: ${p.dob || '-'}`)] }),
+            new Paragraph({ children: [new TextRun(`Oxirgi tashrif: ${p.lastVisit || '-'}`)] }),
+            new Paragraph({ children: [new TextRun(`Izoh: ${p.note || '-'}`)] }),
+            new Paragraph({ children: [new TextRun(`Qo'shilgan sana: ${p.createdAt || '-'}`)] }),
+            new Paragraph({ children: [new TextRun("-----------------------------")] })
+          ])
+        }]
+      });
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bemorlar.docx';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    setSuccessMessage('Ma\'lumotlar muvaffaqiyatli eksport qilindi');
+    setTimeout(() => {
+      setSuccessMessage('');
+      closeModal();
+    }, 3000);
   };
 
   const truncateNote = (note, maxLength = 30) => {
@@ -159,13 +190,10 @@ const Patients = () => {
 
   const formatPhoneNumber = (phone) => {
     if (!phone) return 'Telefon kiritilmagan';
-    // Agar +998 bilan boshlansa, O'zbekiston formatida ko'rsat
     if (phone.startsWith('+998') && phone.length === 13) {
       return phone.replace(/(\+998)(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5');
     }
-    // Boshqa formatlar uchun (chet el), faqat bo'shliqlar qo'shish yoki asl holatda qoldirish
-    // Masalan, +1 (123) 456-7890 ni o'zgartirmasdan qoldirish yoki oddiy format
-    return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3'); // Umumiy oddiy format (faqat raqamlar uchun)
+    return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
   };
 
   return (
@@ -205,15 +233,6 @@ const Patients = () => {
           <button onClick={handleExport} className="btn-secondary" title="Eksport qilish">
             <FiDownload />
           </button>
-          <label className="btn-secondary import-btn" title="Import qilish">
-            <FiUpload />
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImport}
-              style={{ display: 'none' }}
-            />
-          </label>
         </div>
       </div>
 
@@ -438,6 +457,37 @@ const Patients = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {exportModalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content export-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Eksport formatini tanlang</h2>
+              <button type="button" onClick={closeModal} className="close-button">
+                &times;
+              </button>
+            </div>
+            <div className="form-group">
+              <select
+                value={selectedExportFormat}
+                onChange={(e) => setSelectedExportFormat(e.target.value)}
+              >
+                <option value="excel">Excel (.xlsx)</option>
+                <option value="word">Word (.docx)</option>
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button onClick={performExport} className="btn-primary">
+                Eksport qilish
+              </button>
+              <button type="button" onClick={closeModal} className="btn-secondary">
+                Bekor qilish
+              </button>
+            </div>
           </div>
         </div>
       )}

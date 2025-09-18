@@ -140,7 +140,6 @@ const Charting = () => {
 
       <div className="actions">
         <div className="search-box">
-          <FiSearch className="search-icon" />
           <input
             type="text"
             placeholder="Bemor ism yoki telefon bo‘yicha qidirish..."

@@ -82,7 +82,6 @@ const Medications = () => {
 
       <div className="actions">
         <div className="search-box">
-          <FiSearch className="search-icon" />
           <input
             type="text"
             placeholder="Dori nomi boʻyicha qidirish..."
