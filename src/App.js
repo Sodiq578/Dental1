@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, createContext } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { FiMenu, FiDatabase } from "react-icons/fi";
 
 // Komponentlar
@@ -18,13 +17,11 @@ import PatientPortal from "./components/PatientPortal";
 import Charting from "./components/Charting";
 import DentalAssistance from "./components/DentalAssistance";
 import Tooth from "./components/ToothCard";
+import Login from "./components/Login";
+import UserDashboard from "./components/UserDashboard";
 
 // Utils
-import {
-  getFromLocalStorage,
-  saveToLocalStorage,
-  initializeData,
-} from "./utils";
+import { getFromLocalStorage, saveToLocalStorage, initializeData } from "./utils";
 import "./App.css";
 
 // Context
@@ -37,6 +34,8 @@ const App = () => {
   const [layout, setLayout] = useState("normal");
   const [dataLoaded, setDataLoaded] = useState(false);
   const [storageStatus, setStorageStatus] = useState("checking");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Data state
   const [patients, setPatients] = useState([]);
@@ -45,6 +44,7 @@ const App = () => {
   const [billings, setBillings] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [users, setUsers] = useState([]);
 
   // Boshlang‘ich ma’lumotlarni yuklash
   useEffect(() => {
@@ -61,8 +61,14 @@ const App = () => {
       setBillings(getFromLocalStorage("billings", []));
       setInventory(getFromLocalStorage("inventory", []));
       setStaff(getFromLocalStorage("staff", []));
+      setUsers(getFromLocalStorage("users", []));
 
-      // LocalStorage test
+      const savedUser = getFromLocalStorage("currentUser", null);
+      if (savedUser) {
+        setCurrentUser(savedUser);
+        setIsLoggedIn(true);
+      }
+
       const testKey = "storage_test";
       localStorage.setItem(testKey, "test");
       if (localStorage.getItem(testKey) !== "test") {
@@ -93,6 +99,8 @@ const App = () => {
     saveToLocalStorage("billings", billings);
     saveToLocalStorage("inventory", inventory);
     saveToLocalStorage("staff", staff);
+    saveToLocalStorage("users", users);
+    saveToLocalStorage("currentUser", currentUser);
   }, [
     sidebarOpen,
     darkMode,
@@ -105,9 +113,24 @@ const App = () => {
     billings,
     inventory,
     staff,
+    users,
+    currentUser,
   ]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  const handleLogin = (userData) => {
+    setCurrentUser(userData);
+    setIsLoggedIn(true);
+    saveToLocalStorage("currentUser", userData);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setIsLoggedIn(false);
+    saveToLocalStorage("currentUser", null);
+    window.location.href = "/login"; // Redirect to login after logout
+  };
 
   if (storageStatus === "unavailable") {
     return (
@@ -151,42 +174,60 @@ const App = () => {
         setInventory,
         staff,
         setStaff,
+        users,
+        setUsers,
+        currentUser,
+        isLoggedIn,
+        handleLogout,
         getFromLocalStorage,
       }}
     >
       <Router>
         <div className={`app ${darkMode ? "dark" : ""}`}>
-          <button
-            className="menu-btn"
-            onClick={toggleSidebar}
-            aria-label="Yon panelni ochish"
-          >
-            <FiMenu />
-          </button>
-
-          <Sidebar
-            isOpen={sidebarOpen}
-            toggleSidebar={toggleSidebar}
-            darkMode={darkMode}
-          />
-
-          <main className="main-content">
+          {!isLoggedIn ? (
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/bemorlar" element={<Patients />} />
-              <Route path="/uchrashuvlar" element={<Appointments />} />
-              <Route path="/dorilar" element={<Medications />} />
-              <Route path="/hisobotlar" element={<Reports />} />
-              <Route path="/davolash-tarixi" element={<TreatmentHistory />} />
-              <Route path="/hisob-kitob" element={<Billing />} />
-              <Route path="/ombor" element={<Inventory />} />
-              <Route path="/xodimlar" element={<Staff />} />
-              <Route path="/bemor-portali" element={<PatientPortal />} />
-              <Route path="/diagrammalar" element={<Charting />} />
-              <Route path="/davolashda-yordam" element={<DentalAssistance />} />
-              <Route path="/tooth" element={<Tooth />} />
+              <Route path="/login" element={<Login onLogin={handleLogin} />} />
+              <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
-          </main>
+          ) : (
+            <>
+              <button
+                className="menu-btn"
+                onClick={toggleSidebar}
+                aria-label="Yon panelni ochish"
+              >
+                <FiMenu />
+              </button>
+
+              <Sidebar
+                isOpen={sidebarOpen}
+                toggleSidebar={toggleSidebar}
+                darkMode={darkMode}
+                currentUser={currentUser}
+                onLogout={handleLogout}
+              />
+
+              <main className="main-content">
+                <Routes>
+                  
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/bemorlar" element={<Patients />} />
+                  <Route path="/uchrashuvlar" element={<Appointments />} />
+                  <Route path="/dorilar" element={<Medications />} />
+                  <Route path="/hisobotlar" element={<Reports />} />
+                  <Route path="/davolash-tarixi" element={<TreatmentHistory />} />
+                  <Route path="/hisob-kitob" element={<Billing />} />
+                  <Route path="/ombor" element={<Inventory />} />
+                  <Route path="/xodimlar" element={<Staff />} />
+                  <Route path="/bemor-portali" element={<PatientPortal />} />
+                  <Route path="/diagrammalar" element={<Charting />} />
+                  <Route path="/davolashda-yordam" element={<DentalAssistance />} />
+                  <Route path="/tooth" element={<Tooth />} />
+                  <Route path="/foydalanuvchi" element={<UserDashboard />} />
+                </Routes>
+              </main>
+            </>
+          )}
         </div>
       </Router>
     </AppContext.Provider>
