@@ -1,13 +1,222 @@
-
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../App';
 import { validateStoredPatients, sanitizePatientData, validatePatientData } from '../utils';
-import { FiEdit, FiTrash2, FiPlus, FiSearch, FiUser, FiPhone, FiMapPin, FiCalendar, FiInfo, FiDownload } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiSearch, FiUser, FiPhone, FiMapPin, FiCalendar, FiInfo, FiDownload, FiX } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import './Patients.css';
 
-// Bemorlar komponenti
+// Regions data
+const regions = {
+  "Andijon viloyati": {
+    "tumanlar": {
+      "Andijon tumani": { "Tuman markazi": "Kuyganyor" },
+      "Asaka tumani": { "Tuman markazi": "Asaka (shahar)" },
+      "Baliqchi tumani": { "Tuman markazi": "Baliqchi (shahar)" },
+      "Boʻston tumani": { "Tuman markazi": "Boʻston (shaharcha)" },
+      "Buloqboshi tumani": { "Tuman markazi": "Buloqboshi" },
+      "Izboskan tumani": { "Tuman markazi": "Poytugʻ" },
+      "Jalaquduq tumani": { "Tuman markazi": "Jalaquduq" },
+      "Xoʻjaobod tumani": { "Tuman markazi": "Xoʻjaobod" },
+      "Qoʻrgʻontepa tumani": { "Tuman markazi": "Qoʻrgʻontepa" },
+      "Marhamat tumani": { "Tuman markazi": "Marhamat" },
+      "Oltinkoʻl tumani": { "Tuman markazi": "Oltinkoʻl (qishloq)" },
+      "Paxtaobod tumani": { "Tuman markazi": "Paxtaobod" },
+      "Shahrixon tumani": { "Tuman markazi": "Shahrixon (shahar)" },
+      "Ulugʻnor tumani": { "Tuman markazi": "Oqoltin" }
+    }
+  },
+  "Qoraqalpogʻiston": {
+    "tumanlar": {
+      "Amudaryo tumani": { "Tuman markazi": "Mangʻit (shahar)" },
+      "Beruniy tumani": { "Tuman markazi": "Beruniy (shahar)" },
+      "Chimboy tumani": { "Tuman markazi": "Chimboy" },
+      "Ellikqalʼa tumani": { "Tuman markazi": "Boʻston (shahar)" },
+      "Kegeyli tumani": { "Tuman markazi": "Kegeyli" },
+      "Moʻynoq tumani": { "Tuman markazi": "Moʻynoq" },
+      "Nukus tumani": { "Tuman markazi": "Oqmangʻit" },
+      "Qanlikoʻl tumani": { "Tuman markazi": "Qanlikoʻl" },
+      "Qoʻngʻirot tumani": { "Tuman markazi": "Qoʻngʻirot" },
+      "Qoraoʻzak tumani": { "Tuman markazi": "Qoraoʻzak" },
+      "Shumanay tumani": { "Tuman markazi": "Shumanay" },
+      "Taxtakoʻpir tumani": { "Tuman markazi": "Taxtakoʻpir" },
+      "Toʻrtkoʻl tumani": { "Tuman markazi": "Toʻrtkoʻl" },
+      "Xoʻjayli tumani": { "Tuman markazi": "Xoʻjayli" },
+      "Taxiatosh tumani": { "Tuman markazi": "Taxiatosh" },
+      "Boʻzatov tumani": { "Tuman markazi": "Boʻzatov" }
+    }
+  },
+  "Navoiy viloyati": {
+    "tumanlar": {
+      "Konimex tumani": { "Tuman markazi": "Konimex (shaharcha)" },
+      "Karmana tumani": { "Tuman markazi": "Karmana" },
+      "Qiziltepa tumani": { "Tuman markazi": "Qiziltepa" },
+      "Xatirchi tumani": { "Tuman markazi": "Yangirabot" },
+      "Navbahor tumani": { "Tuman markazi": "Beshrabot" },
+      "Nurota tumani": { "Tuman markazi": "Nurota" },
+      "Tomdi tumani": { "Tuman markazi": "Tomdibuloq" },
+      "Uchquduq tumani": { "Tuman markazi": "Uchquduq" }
+    }
+  },
+  "Buxoro viloyati": {
+    "tumanlar": {
+      "Olot tumani": { "Tuman markazi": "Olot" },
+      "Buxoro tumani": { "Tuman markazi": "Galaosiyo" },
+      "Gʻijduvon tumani": { "Tuman markazi": "Gʻijduvon" },
+      "Jondor tumani": { "Tuman markazi": "Jondor (shaharcha)" },
+      "Kogon tumani": { "Tuman markazi": "Kogon" },
+      "Qorakoʻl tumani": { "Tuman markazi": "Qorakoʻl (shahar)" },
+      "Qorovulbozor tumani": { "Tuman markazi": "Qorovulbozor" },
+      "Peshku tumani": { "Tuman markazi": "Yangibozor" },
+      "Romitan tumani": { "Tuman markazi": "Romitan" },
+      "Shofirkon tumani": { "Tuman markazi": "Shofirkon" },
+      "Vobkent tumani": { "Tuman markazi": "Vobkent" }
+    }
+  },
+  "Farg'ona viloyati": {
+    "tumanlar": {
+      "Farg'ona tumani": { "Tuman markazi": "Farg'ona" },
+      "Quva tumani": { "Tuman markazi": "Quva" },
+      "Dang'ara tumani": { "Tuman markazi": "Dang'ara" },
+      "Beshariq tumani": { "Tuman markazi": "Beshariq" },
+      "Oltiariq tumani": { "Tuman markazi": "Oltiariq" },
+      "Yazyavan tumani": { "Tuman markazi": "Yazyavan" },
+      "Toshloq tumani": { "Tuman markazi": "Toshloq" },
+      "Bog'dod tumani": { "Tuman markazi": "Bog'dod" },
+      "Rishton tumani": { "Tuman markazi": "Rishton" },
+      "Furqat tumani": { "Tuman markazi": "Furqat" },
+      "O'zbekiston tumani": { "Tuman markazi": "O'zbekiston" }
+    }
+  },
+  "Jizzax viloyati": {
+    "tumanlar": {
+      "Jizzax tumani": { "Tuman markazi": "Jizzax" },
+      "Zafarobod tumani": { "Tuman markazi": "Zafarobod" },
+      "Forish tumani": { "Tuman markazi": "Forish" },
+      "Baxmal tumani": { "Tuman markazi": "Baxmal" },
+      "G'allaorol tumani": { "Tuman markazi": "G'allaorol" },
+      "Arnasoy tumani": { "Tuman markazi": "Arnasoy" },
+      "Yangiobod tumani": { "Tuman markazi": "Yangiobod" },
+      "Shahrisabz tumani": { "Tuman markazi": "Shahrisabz" }
+    }
+  },
+  "Xorazm viloyati": {
+    "tumanlar": {
+      "Urganch tumani": { "Tuman markazi": "Urganch" },
+      "Gurlan tumani": { "Tuman markazi": "Gurlan" },
+      "Xiva tumani": { "Tuman markazi": "Xiva" },
+      "Beruniy tumani": { "Tuman markazi": "Beruniy" },
+      "Shovot tumani": { "Tuman markazi": "Shovot" },
+      "Khiva tumani": { "Tuman markazi": "Khiva" },
+      "Kungrad tumani": { "Tuman markazi": "Kungrad" },
+      "Urganch shahar": { "Tuman markazi": "Urganch" }
+    }
+  },
+  "Namangan viloyati": {
+    "tumanlar": {
+      "Namangan tumani": { "Tuman markazi": "Namangan" },
+      "Chortoq tumani": { "Tuman markazi": "Chortoq" },
+      "Kosonsoy tumani": { "Tuman markazi": "Kosonsoy" },
+      "Mingbuloq tumani": { "Tuman markazi": "Mingbuloq" },
+      "Tuproqqala tumani": { "Tuman markazi": "Tuproqqala" },
+      "Uchqo'rg'on tumani": { "Tuman markazi": "Uchqo'rg'on" },
+      "Yangiyo'l tumani": { "Tuman markazi": "Yangiyo'l" },
+      "Kaspiy tumani": { "Tuman markazi": "Kaspiy" },
+      "Chust tumani": { "Tuman markazi": "Chust" },
+      "Peshku tumani": { "Tuman markazi": "Peshku" }
+    }
+  },
+  "Surxondaryo viloyati": {
+    "tumanlar": {
+      "Termiz tumani": { "Tuman markazi": "Termiz" },
+      "Oltinosy tumani": { "Tuman markazi": "Bo'ston" },
+      "Angor tumani": { "Tuman markazi": "Angor" },
+      "Sherobod tumani": { "Tuman markazi": "Sherobod" },
+      "Boysun tumani": { "Tuman markazi": "Boysun" },
+      "Jarkurgan tumani": { "Tuman markazi": "Jarkurgan" },
+      "Uzun tumani": { "Tuman markazi": "Uzun" },
+      "Sariosiyo tumani": { "Tuman markazi": "Sariosiyo" },
+      "Qumqo'rg'on tumani": { "Tuman markazi": "Qumqo'rg'on" },
+      "Muzrabot tumani": { "Tuman markazi": "Muzrabot" }
+    }
+  },
+  "Samarqand viloyati": {
+    "tumanlar": {
+      "Samarqand tumani": { "Tuman markazi": "Samarqand" },
+      "Paxtachi tumani": { "Tuman markazi": "Paxtachi" },
+      "Ishtixon tumani": { "Tuman markazi": "Ishtixon" },
+      "Jomboy tumani": { "Tuman markazi": "Jomboy" },
+      "Narpay tumani": { "Tuman markazi": "Narpay" },
+      "Kattaqo'rg'on tumani": { "Tuman markazi": "Kattaqo'rg'on" },
+      "Oqdaryo tumani": { "Tuman markazi": "Oqdaryo" },
+      "Pastdarg'om tumani": { "Tuman markazi": "Pastdarg'om" },
+      "Urgut tumani": { "Tuman markazi": "Urgut" },
+      "Samarkand shahar": { "Tuman markazi": "Samarqand" }
+    }
+  },
+  "Sirdaryo viloyati": {
+    "tumanlar": {
+      "Guliston tumani": { "Tuman markazi": "Guliston" },
+      "Sirdaryo tumani": { "Tuman markazi": "Sirdaryo" },
+      "Mirzaobod tumani": { "Tuman markazi": "Mirzaobod" },
+      "Boyovut tumani": { "Tuman markazi": "Boyovut" },
+      "Shirin tumani": { "Tuman markazi": "Shirin" },
+      "Oqoltin tumani": { "Tuman markazi": "Oqoltin" },
+      "Xovos tumani": { "Tuman markazi": "Xovos" },
+      "Yangiyer tumani": { "Tuman markazi": "Yangiyer" },
+      "Arnasoy tumani": { "Tuman markazi": "Arnasoy" }
+    }
+  },
+  "Toshkent shahri": {
+    "tumanlar": {
+      "Chilonzor tumani": { "Tuman markazi": "Chilonzor" },
+      "Mirzo-Ulug'bek tumani": { "Tuman markazi": "Mirzo-Ulug'bek" },
+      "Mirobod tumani": { "Tuman markazi": "Mirobod" },
+      "Yunusobod tumani": { "Tuman markazi": "Yunusobod" },
+      "Sergeli tumani": { "Tuman markazi": "Sergeli" },
+      "Shayxontohur tumani": { "Tuman markazi": "Shayxontohur" },
+      "Almazar tumani": { "Tuman markazi": "Almazar" },
+      "Samarqand tumani": { "Tuman markazi": "Samarqand" },
+      "Bektemir tumani": { "Tuman markazi": "Bektemir" },
+      "Yakkasaroy tumani": { "Tuman markazi": "Yakkasaroy" }
+    }
+  },
+  "Toshkent viloyati": {
+    "tumanlar": {
+      "Angren tumani": { "Tuman markazi": "Angren" },
+      "Bekobod tumani": { "Tuman markazi": "Bekobod" },
+      "Boʻstonliq tumani": { "Tuman markazi": "Gʻazalkent" },
+      "Buka tumani": { "Tuman markazi": "Buka" },
+      "Chirchiq tumani": { "Tuman markazi": "Chirchiq" },
+      "Qibray tumani": { "Tuman markazi": "Qibray" },
+      "Ohangaron tumani": { "Tuman markazi": "Ohangaron" },
+      "Parkent tumani": { "Tuman markazi": "Parkent" },
+      "Piskent tumani": { "Tuman markazi": "Piskent" },
+      "Quyi Chirchiq tumani": { "Tuman markazi": "Doʻstobod" },
+      "Yuqori Chirchiq tumani": { "Tuman markazi": "Yangibozor" },
+      "Zangiota tumani": { "Tuman markazi": "Eshonguzar" }
+    }
+  },
+  "Qashqadaryo viloyati": {
+    "tumanlar": {
+      "Qarshi tumani": { "Tuman markazi": "Qarshi" },
+      "Chiroqchi tumani": { "Tuman markazi": "Chiroqchi" },
+      "Gʻuzor tumani": { "Tuman markazi": "Gʻuzor" },
+      "Dehqonobod tumani": { "Tuman markazi": "Dehqonobod" },
+      "Qamashi tumani": { "Tuman markazi": "Qamashi" },
+      "Koson tumani": { "Tuman markazi": "Koson" },
+      "Mirishkor tumani": { "Tuman markazi": "Mirishkor" },
+      "Muborak tumani": { "Tuman markazi": "Muborak" },
+      "Nishon tumani": { "Tuman markazi": "Yanginazar" },
+      "Shahrisabz tumani": { "Tuman markazi": "Shahrisabz" },
+      "Yakkabogʻ tumani": { "Tuman markazi": "Yakkabogʻ" },
+      "Kitob tumani": { "Tuman markazi": "Kitob" },
+      "Kasbi tumani": { "Tuman markazi": "Kasbi" }
+    }
+  }
+};
+
+// Patients component
 const Patients = () => {
   const { patients, setPatients, appointments, getFromLocalStorage } = useContext(AppContext);
   const [search, setSearch] = useState('');
@@ -16,11 +225,35 @@ const Patients = () => {
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [currentPatient, setCurrentPatient] = useState(null);
+  const [newPrescription, setNewPrescription] = useState({
+    date: new Date().toISOString().slice(0, 10),
+    medicine: '',
+    dosage: '',
+    notes: ''
+  });
   const [selectedNote, setSelectedNote] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedExportFormat, setSelectedExportFormat] = useState('excel');
+  // Address dropdown states
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [additionalAddress, setAdditionalAddress] = useState('');
+
+  // Parse address when editing a patient
+  useEffect(() => {
+    if (currentPatient && currentPatient.address) {
+      const [region, district, ...rest] = currentPatient.address.split(', ');
+      setSelectedRegion(region || '');
+      setSelectedDistrict(district || '');
+      setAdditionalAddress(rest.join(', ') || '');
+    } else {
+      setSelectedRegion('');
+      setSelectedDistrict('');
+      setAdditionalAddress('');
+    }
+  }, [currentPatient]);
 
   const filteredPatients = patients.filter(
     (p) =>
@@ -31,7 +264,7 @@ const Patients = () => {
   const openModal = (patient = null) => {
     setCurrentPatient(
       patient
-        ? { ...patient }
+        ? { ...patient, prescriptions: patient.prescriptions || [] }
         : {
             id: null,
             name: '',
@@ -41,8 +274,15 @@ const Patients = () => {
             dob: '',
             lastVisit: '',
             note: '',
+            prescriptions: []
           }
     );
+    setNewPrescription({
+      date: new Date().toISOString().slice(0, 10),
+      medicine: '',
+      dosage: '',
+      notes: ''
+    });
     setModalOpen(true);
     setError('');
     setSuccessMessage('');
@@ -55,7 +295,7 @@ const Patients = () => {
   };
 
   const openDetailsModal = (patient) => {
-    setSelectedPatient(patient);
+    setSelectedPatient({ ...patient, prescriptions: patient.prescriptions || [] });
     setDetailsModalOpen(true);
   };
 
@@ -67,12 +307,53 @@ const Patients = () => {
     setError('');
     setSuccessMessage('');
     setCurrentPatient(null);
+    setSelectedRegion('');
+    setSelectedDistrict('');
+    setAdditionalAddress('');
+  };
+
+  const handlePrescriptionChange = (e) => {
+    setNewPrescription({ ...newPrescription, [e.target.name]: e.target.value });
+  };
+
+  const addPrescription = (e) => {
+    e.preventDefault();
+    if (!newPrescription.medicine.trim() || !newPrescription.dosage.trim()) {
+      setError('Dori nomi va dozasi majburiy');
+      return;
+    }
+    setCurrentPatient({
+      ...currentPatient,
+      prescriptions: [...currentPatient.prescriptions, { ...newPrescription }]
+    });
+    setNewPrescription({
+      date: new Date().toISOString().slice(0, 10),
+      medicine: '',
+      dosage: '',
+      notes: ''
+    });
+    setError('');
+  };
+
+  const removePrescription = (index) => {
+    const updatedPrescriptions = currentPatient.prescriptions.filter((_, i) => i !== index);
+    setCurrentPatient({ ...currentPatient, prescriptions: updatedPrescriptions });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    const sanitizedPatient = sanitizePatientData(currentPatient);
+    // Construct address from dropdowns and additional input
+    const address = [selectedRegion, selectedDistrict, additionalAddress]
+      .filter(Boolean)
+      .join(', ');
+    
+    const updatedPatient = {
+      ...currentPatient,
+      address: address
+    };
+    
+    const sanitizedPatient = sanitizePatientData(updatedPatient);
     
     const validationErrors = validatePatientData(sanitizedPatient);
     if (validationErrors.length > 0) {
@@ -133,6 +414,7 @@ const Patients = () => {
         TugilganSana: p.dob,
         OxirgiTashrif: p.lastVisit,
         Izoh: p.note,
+        Retseptlar: p.prescriptions ? p.prescriptions.map(pr => `${pr.date}: ${pr.medicine} (${pr.dosage}) - ${pr.notes || ''}`).join('; ') : '-',
         QoShilganSana: p.createdAt
       })));
       const wb = XLSX.utils.book_new();
@@ -151,6 +433,7 @@ const Patients = () => {
             new Paragraph({ children: [new TextRun(`Tug'ilgan sana: ${p.dob || '-'}`)] }),
             new Paragraph({ children: [new TextRun(`Oxirgi tashrif: ${p.lastVisit || '-'}`)] }),
             new Paragraph({ children: [new TextRun(`Izoh: ${p.note || '-'}`)] }),
+            new Paragraph({ children: [new TextRun(`Retseptlar: ${p.prescriptions ? p.prescriptions.map(pr => `${pr.date}: ${pr.medicine} (${pr.dosage}) - ${pr.notes || ''}`).join('\n') : '-'}`)] }),
             new Paragraph({ children: [new TextRun(`Qo'shilgan sana: ${p.createdAt || '-'}`)] }),
             new Paragraph({ children: [new TextRun("-----------------------------")] })
           ])
@@ -176,6 +459,12 @@ const Patients = () => {
     return note.length > maxLength ? `${note.slice(0, maxLength)}...` : note;
   };
 
+  const truncatePrescriptions = (prescriptions, maxLength = 30) => {
+    if (!prescriptions || prescriptions.length === 0) return '-';
+    const summary = `${prescriptions.length} ta retsept`;
+    return summary.length > maxLength ? `${summary.slice(0, maxLength)}...` : summary;
+  };
+
   const calculateAge = (dob) => {
     if (!dob) return '-';
     const birthDate = new Date(dob);
@@ -194,6 +483,22 @@ const Patients = () => {
       return phone.replace(/(\+998)(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5');
     }
     return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+  };
+
+  const formatDate = (date) => {
+    return date ? new Date(date).toLocaleDateString('uz-UZ') : '-';
+  };
+
+  // Handle region change
+  const handleRegionChange = (e) => {
+    const region = e.target.value;
+    setSelectedRegion(region);
+    setSelectedDistrict(''); // Reset district when region changes
+  };
+
+  // Get districts for the selected region
+  const getDistricts = () => {
+    return selectedRegion && regions[selectedRegion] ? Object.keys(regions[selectedRegion].tumanlar) : [];
   };
 
   return (
@@ -267,6 +572,7 @@ const Patients = () => {
                 <th>Jinsi</th>
                 <th>Oxirgi tashrif</th>
                 <th>Izoh</th>
+                <th>Retseptlar</th>
                 <th>Amallar</th>
               </tr>
             </thead>
@@ -307,6 +613,9 @@ const Patients = () => {
                       '-'
                     )}
                   </td>
+                  <td>
+                    {truncatePrescriptions(p.prescriptions)}
+                  </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className="action-buttons">
                       <button
@@ -333,7 +642,7 @@ const Patients = () => {
       )}
 
       {/* Add/Edit Patient Modal */}
-      {modalOpen && (
+      {modalOpen && currentPatient && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <form onSubmit={handleSubmit}>
@@ -413,13 +722,45 @@ const Patients = () => {
                 <label>
                   <FiMapPin className="input-icon" /> Manzil
                 </label>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Viloyat</label>
+                    <select
+                      value={selectedRegion}
+                      onChange={handleRegionChange}
+                      required
+                    >
+                      <option value="">Viloyatni tanlang</option>
+                      {Object.keys(regions).map((region) => (
+                        <option key={region} value={region}>
+                          {region}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Tuman</label>
+                    <select
+                      value={selectedDistrict}
+                      onChange={(e) => setSelectedDistrict(e.target.value)}
+                      disabled={!selectedRegion}
+                      required
+                    >
+                      <option value="">Tumanni tanlang</option>
+                      {getDistricts().map((district) => (
+                        <option key={district} value={district}>
+                          {district}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
                 <textarea
-                  placeholder="Bemorning to'liq manzili (shahar, tuman, ko'cha, uy va h.k.)"
-                  value={currentPatient.address}
-                  onChange={(e) =>
-                    setCurrentPatient({ ...currentPatient, address: e.target.value })
-                  }
-                  rows="3"
+                  placeholder="Qo‘shimcha manzil ma'lumotlari (ko‘cha, uy raqami va h.k.)"
+                  value={additionalAddress}
+                  onChange={(e) => setAdditionalAddress(e.target.value)}
+                  rows="2"
+                  className="address-details"
                 />
               </div>
 
@@ -446,6 +787,75 @@ const Patients = () => {
                   }
                   rows="4"
                 />
+              </div>
+
+              {/* Prescriptions Section */}
+              <div className="form-group">
+                <label>Retseptlar (Davolash retsepti)</label>
+                <div className="prescriptions-list">
+                  {currentPatient.prescriptions.map((pr, index) => (
+                    <div key={index} className="prescription-item">
+                      <div>
+                        <strong>{formatDate(pr.date)}:</strong> {pr.medicine} ({pr.dosage}) {pr.notes ? `- ${pr.notes}` : ''}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removePrescription(index)}
+                        className="btn-delete small"
+                      >
+                        <FiX />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="add-prescription">
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Sana</label>
+                      <input
+                        type="date"
+                        name="date"
+                        value={newPrescription.date}
+                        onChange={handlePrescriptionChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Dori nomi *</label>
+                      <input
+                        type="text"
+                        name="medicine"
+                        placeholder="Dori nomi"
+                        value={newPrescription.medicine}
+                        onChange={handlePrescriptionChange}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Doza *</label>
+                      <input
+                        type="text"
+                        name="dosage"
+                        placeholder="Doza (masalan: 1 tabletka kuniga 2 marta)"
+                        value={newPrescription.dosage}
+                        onChange={handlePrescriptionChange}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Izoh</label>
+                      <input
+                        type="text"
+                        name="notes"
+                        placeholder="Qo'shimcha izoh"
+                        value={newPrescription.notes}
+                        onChange={handlePrescriptionChange}
+                      />
+                    </div>
+                  </div>
+                  <button type="button" onClick={addPrescription} className="btn-primary small">
+                    <FiPlus /> Retsept qo'shish
+                  </button>
+                </div>
               </div>
 
               <div className="modal-actions">
@@ -514,7 +924,7 @@ const Patients = () => {
         </div>
       )}
 
-      {/* Details Modal */}
+      {/* Details Modal - New Style: Vertical list with sections */}
       {detailsModalOpen && selectedPatient && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content details-modal" onClick={(e) => e.stopPropagation()}>
@@ -524,80 +934,66 @@ const Patients = () => {
                 &times;
               </button>
             </div>
-            <div className="patient-details">
-              <div className="detail-item detail-name">
-                <FiUser className="detail-icon" />
-                <div>
-                  <strong>Ism va familiya</strong>
-                  <p>{selectedPatient.name || 'Noma\'lum'}</p>
-                </div>
-              </div>
-              
-              <div className="detail-item detail-phone">
-                <FiPhone className="detail-icon" />
-                <div>
-                  <strong>Telefon</strong>
-                  <p>{formatPhoneNumber(selectedPatient.phone)}</p>
-                </div>
-              </div>
-              
-              <div className="detail-item detail-gender">
-                <div className="detail-icon">👤</div>
-                <div>
-                  <strong>Jinsi</strong>
-                  <p>{selectedPatient.gender || '-'}</p>
-                </div>
-              </div>
-              
-              <div className="detail-item detail-address">
-                <FiMapPin className="detail-icon" />
-                <div>
-                  <strong>Manzil</strong>
-                  <p>{selectedPatient.address || '-'}</p>
-                </div>
-              </div>
-              
-              <div className="detail-item detail-dob">
-                <FiCalendar className="detail-icon" />
-                <div>
-                  <strong>Tug'ilgan sana</strong>
-                  <p>{selectedPatient.dob ? new Date(selectedPatient.dob).toLocaleDateString('uz-UZ') : '-'}</p>
-                </div>
-              </div>
-              
-              <div className="detail-item detail-age">
-                <div className="detail-icon">🎂</div>
-                <div>
-                  <strong>Yoshi</strong>
-                  <p>{calculateAge(selectedPatient.dob)}</p>
-                </div>
-              </div>
-              
-              <div className="detail-item detail-last-visit">
-                <FiCalendar className="detail-icon" />
-                <div>
-                  <strong>Oxirgi tashrif</strong>
-                  <p>{selectedPatient.lastVisit ? new Date(selectedPatient.lastVisit).toLocaleDateString('uz-UZ') : 'Hali tashrif yo\'q'}</p>
-                </div>
-              </div>
-              
-              <div className="detail-item detail-created">
-                <FiCalendar className="detail-icon" />
-                <div>
-                  <strong>Qo'shilgan sana</strong>
-                  <p>{selectedPatient.createdAt ? new Date(selectedPatient.createdAt).toLocaleDateString('uz-UZ') : '-'}</p>
-                </div>
-              </div>
+            <div className="patient-details-new">
+              <section className="detail-section">
+                <h3>Asosiy ma'lumotlar</h3>
+                <ul>
+                  <li>
+                    <span className="detail-label"><FiUser /> Ism va familiya:</span>
+                    <span className="detail-value">{selectedPatient.name || 'Noma\'lum'}</span>
+                  </li>
+                  <li>
+                    <span className="detail-label"><FiPhone /> Telefon:</span>
+                    <span className="detail-value">{formatPhoneNumber(selectedPatient.phone)}</span>
+                  </li>
+                  <li>
+                    <span className="detail-label">Jinsi:</span>
+                    <span className="detail-value">{selectedPatient.gender || '-'}</span>
+                  </li>
+                  <li>
+                    <span className="detail-label"><FiMapPin /> Manzil:</span>
+                    <span className="detail-value">{selectedPatient.address || '-'}</span>
+                  </li>
+                  <li>
+                    <span className="detail-label"><FiCalendar /> Tug'ilgan sana:</span>
+                    <span className="detail-value">{formatDate(selectedPatient.dob)}</span>
+                  </li>
+                  <li>
+                    <span className="detail-label">Yoshi:</span>
+                    <span className="detail-value">{calculateAge(selectedPatient.dob)}</span>
+                  </li>
+                  <li>
+                    <span className="detail-label"><FiCalendar /> Oxirgi tashrif:</span>
+                    <span className="detail-value">{selectedPatient.lastVisit ? formatDate(selectedPatient.lastVisit) : 'Hali tashrif yo\'q'}</span>
+                  </li>
+                  <li>
+                    <span className="detail-label"><FiCalendar /> Qo'shilgan sana:</span>
+                    <span className="detail-value">{formatDate(selectedPatient.createdAt)}</span>
+                  </li>
+                </ul>
+              </section>
               
               {selectedPatient.note && (
-                <div className="detail-item detail-note">
-                  <FiInfo className="detail-icon" />
-                  <div>
-                    <strong>Izoh</strong>
-                    <p className="detail-note-text">{selectedPatient.note}</p>
-                  </div>
-                </div>
+                <section className="detail-section">
+                  <h3>Izoh</h3>
+                  <p className="detail-note-text">{selectedPatient.note}</p>
+                </section>
               )}
+
+              <section className="detail-section">
+                <h3>Retseptlar</h3>
+                {selectedPatient.prescriptions.length > 0 ? (
+                  <ul className="prescriptions-list-new">
+                    {selectedPatient.prescriptions.map((pr, index) => (
+                      <li key={index}>
+                        <strong>{formatDate(pr.date)}:</strong> {pr.medicine} ({pr.dosage}) {pr.notes ? `- ${pr.notes}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>Hali retseptlar yo'q</p>
+                )}
+              </section>
             </div>
             <div className="modal-actions">
               <button

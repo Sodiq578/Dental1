@@ -1,16 +1,16 @@
-// src/components/Sidebar.jsx
 import React, { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   FiHome, FiUsers, FiCalendar, FiPackage, FiBarChart2, FiSettings,
   FiMoon, FiSun, FiType, FiLayout, FiDownload, FiUpload, FiClock,
-  FiDollarSign, FiBox, FiBriefcase, FiGlobe, FiGrid, FiHelpCircle, FiSmile
+  FiDollarSign, FiBox, FiBriefcase, FiGlobe, FiGrid, FiHelpCircle, FiSmile,
+  FiLogOut // Added logout icon
 } from 'react-icons/fi';
 import { AppContext } from '../App';
 import { backupAllData, restoreFromBackup } from '../utils'; 
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, toggleSidebar, darkMode }) => {
+const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => { // Added onLogout prop
   const { setDarkMode, setFontSize, setLayout } = useContext(AppContext);
   const location = useLocation();
 
@@ -26,7 +26,7 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode }) => {
     { path: '/xodimlar', icon: <FiBriefcase />, label: 'Xodimlar' },
     { path: '/bemor-portali', icon: <FiGlobe />, label: 'Bemor Portali' },
     { path: '/davolashda-yordam', icon: <FiHelpCircle />, label: 'Davolashda Yordam' },
-    { path: '/tooth', icon: <FiSmile />, label: 'Tishlar' } // Yangi qo‘shildi
+    { path: '/tooth', icon: <FiSmile />, label: 'Tishlar' }
   ];
 
   return (
@@ -51,10 +51,19 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode }) => {
                 </Link>
               </li>
             ))}
+            {/* Logout Button */}
+            <li>
+              <button 
+                className="sidebar-logout-btn"
+                onClick={onLogout}
+                aria-label="Tizimdan chiqish"
+              >
+                <FiLogOut />
+                <span>Chiqish</span>
+              </button>
+            </li>
           </ul>
         </nav>
-
-        
       </aside>
     </>
   );

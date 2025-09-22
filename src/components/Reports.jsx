@@ -1,5 +1,4 @@
-
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { AppContext } from '../App';
 import { FiDownload } from 'react-icons/fi';
 import {
@@ -9,13 +8,15 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  LabelList
 } from "recharts";
 import * as XLSX from 'xlsx';
 import './Reports.css';
 
 const Reports = () => {
   const { appointments, patients } = useContext(AppContext);
+  const [sortOrder, setSortOrder] = useState('desc'); // Jadvalni tartiblash uchun holat
 
   // Data validation
   const validPatients = Array.isArray(patients) ? patients : [];
@@ -50,10 +51,17 @@ const Reports = () => {
     }, {});
   }, [validAppointments, validPatients]);
 
-  const patientTableData = Object.entries(visitsByPatient).map(([name, count]) => ({
-    name,
-    visits: count
-  }));
+  // Tartiblangan jadval ma'lumotlari
+  const patientTableData = Object.entries(visitsByPatient)
+    .map(([name, count]) => ({
+      name,
+      visits: count
+    }))
+    .sort((a, b) => sortOrder === 'desc' ? b.visits - a.visits : a.visits - b.visits);
+
+  // Eng faol bemor
+  const topPatient = patientTableData[0]?.name || 'Maʼlumot yoʻq';
+  const topPatientVisits = patientTableData[0]?.visits || 0;
 
   // === Excel Export ===
   const exportToExcel = () => {
@@ -73,7 +81,7 @@ const Reports = () => {
       // Prepare patient visit summary
       const patientData = patientTableData.map((p) => ({
         Bemor: p.name,
-        Tashriflar: p.visits
+        Tashriflar: p.visits.toLocaleString('uz-UZ') // Raqamlarni formatlash
       }));
 
       // Create worksheets
@@ -141,26 +149,35 @@ const Reports = () => {
     }
   };
 
+  // Tartiblash funksiyasi
+  const handleSortToggle = () => {
+    setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+  };
+
   return (
     <div className="reports">
       <div className="page-header">
         <h1>Hisobotlar</h1>
-        <span className="badge">{totalAppointments} ta uchrashuv</span>
+        <span className="badge">{totalAppointments.toLocaleString('uz-UZ')} ta uchrashuv</span>
       </div>
 
       {/* Statistikalar */}
       <div className="stats-grid">
         <div className="stat-card">
           <h3>Umumiy bemorlar</h3>
-          <p>{totalPatients}</p>
+          <p>{totalPatients.toLocaleString('uz-UZ')}</p>
         </div>
         <div className="stat-card">
           <h3>Umumiy uchrashuvlar</h3>
-          <p>{totalAppointments}</p>
+          <p>{totalAppointments.toLocaleString('uz-UZ')}</p>
         </div>
         <div className="stat-card">
           <h3>Oylik tashriflar</h3>
-          <p>{Object.values(visitsByMonth).reduce((sum, count) => sum + count, 0)}</p>
+          <p>{Object.values(visitsByMonth).reduce((sum, count) => sum + count, 0).toLocaleString('uz-UZ')}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Eng faol bemor</h3>
+          <p>{topPatient} ({topPatientVisits.toLocaleString('uz-UZ')} tashrif)</p>
         </div>
       </div>
 
@@ -180,7 +197,9 @@ const Reports = () => {
                 stroke="#2563eb"
                 strokeWidth={2}
                 fill="rgba(37, 99, 235, 0.2)"
-              />
+              >
+                <LabelList dataKey="count" position="top" /> {/* Raqamlarni grafikda ko‘rsatish */}
+              </Line>
             </LineChart>
           </ResponsiveContainer>
         ) : (
@@ -191,6 +210,9 @@ const Reports = () => {
       {/* Bemor bo'yicha tashriflar jadvali */}
       <div className="table-section">
         <h2>Bemor bo‘yicha tashriflar</h2>
+        <button onClick={handleSortToggle} className="btn-sort">
+          Tartiblash: {sortOrder === 'desc' ? 'Yuqoridan pastga' : 'Pastdan yuqoriga'}
+        </button>
         {patientTableData.length > 0 ? (
           <table>
             <thead>
@@ -203,7 +225,7 @@ const Reports = () => {
               {patientTableData.map((p) => (
                 <tr key={p.name}>
                   <td>{p.name}</td>
-                  <td>{p.visits}</td>
+                  <td>{p.visits.toLocaleString('uz-UZ')}</td>
                 </tr>
               ))}
             </tbody>

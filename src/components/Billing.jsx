@@ -97,6 +97,8 @@ const Billing = () => {
         </button>
       </div>
 
+
+
       {filteredBills.length === 0 ? (
         <div className="empty-state">
           {searchTerm ? (

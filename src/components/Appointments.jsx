@@ -13,7 +13,8 @@ import {
   exportPatientsData, 
   importPatientsData,
   exportAppointmentsData,
-  importAppointmentsData
+  importAppointmentsData,
+  sendTelegramMessage
 } from '../utils';
 import './Appointments.css';
 
@@ -29,6 +30,7 @@ const Appointments = () => {
   });
   const [modalOpen, setModalOpen] = useState(false);
   const [currentApp, setCurrentApp] = useState(null);
+  const [originalApp, setOriginalApp] = useState(null);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,8 +46,11 @@ const Appointments = () => {
     gender: '',
     address: '',
     dob: '',
-    note: ''
+    note: '',
+    telegram: '',
+    prescriptions: []
   });
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   // 🔹 localStorage ni yangilash
   useEffect(() => {
@@ -58,22 +63,23 @@ const Appointments = () => {
 
   // 🔹 Modalni ochish
   const openModal = (app = null, slotTime = null) => {
-    setCurrentApp(
-      app
-        ? { ...app }
-        : {
-            id: null,
-            patientId: '',
-            date: selectedDate,
-            time: slotTime || '',
-            procedure: '',
-            status: 'kutilmoqda',
-            nextVisit: '',
-            phone: '',
-            notes: '',
-            createdAt: new Date().toISOString()
-          }
-    );
+    const appData = app
+      ? { ...app, prescription: app.prescription || '' }
+      : {
+          id: null,
+          patientId: '',
+          date: selectedDate,
+          time: slotTime || '',
+          procedure: '',
+          status: 'kutilmoqda',
+          nextVisit: '',
+          phone: '',
+          notes: '',
+          prescription: '',
+          createdAt: new Date().toISOString()
+        };
+    setCurrentApp(appData);
+    setOriginalApp(app ? { ...app, prescription: app.prescription || '' } : null);
     setNewPatientMode(false);
     setNewPatient({
       name: '',
@@ -81,8 +87,11 @@ const Appointments = () => {
       gender: '',
       address: '',
       dob: '',
-      note: ''
+      note: '',
+      telegram: '',
+      prescriptions: []
     });
+    setSelectedPatient(app ? patients.find(p => String(p.id) === String(app.patientId)) : null);
     setModalOpen(true);
     setError('');
     setSuccessMessage('');
@@ -99,8 +108,12 @@ const Appointments = () => {
       gender: '',
       address: '',
       dob: '',
-      note: ''
+      note: '',
+      telegram: '',
+      prescriptions: []
     });
+    setSelectedPatient(null);
+    setOriginalApp(null);
   };
 
   // 🔹 Formani yuborish
@@ -131,16 +144,22 @@ const Appointments = () => {
     }
 
     let updatedAppointments;
+    let updatedPatients = [...patients];
     let patientId = currentApp.patientId;
+    let patientIndex;
 
     // Yangi bemor qo'shish
     if (newPatientMode) {
       const sanitizedPatient = sanitizePatientData({
         ...newPatient,
-        id: Date.now()
+        id: Date.now(),
+        prescriptions: []
       });
-      setPatients([...patients, sanitizedPatient]);
+      updatedPatients.push(sanitizedPatient);
       patientId = sanitizedPatient.id;
+      patientIndex = updatedPatients.length - 1;
+    } else {
+      patientIndex = updatedPatients.findIndex(p => String(p.id) === String(patientId));
     }
 
     const newApp = {
@@ -150,15 +169,71 @@ const Appointments = () => {
       updatedAt: new Date().toISOString()
     };
 
-    if (currentApp.id) {
-      updatedAppointments = appointments.map((a) => (a.id === currentApp.id ? newApp : a));
-      setSuccessMessage('Uchrashuv muvaffaqiyatli yangilandi');
-    } else {
+    const isNewApp = !currentApp.id;
+    const prescriptionChanged = newApp.prescription.trim() !== '' && 
+      (isNewApp || newApp.prescription !== (originalApp?.prescription || ''));
+
+    if (prescriptionChanged) {
+      const newPrescription = {
+        appointmentId: newApp.id,
+        date: newApp.date,
+        procedure: newApp.procedure,
+        text: newApp.prescription
+      };
+      updatedPatients[patientIndex].prescriptions.push(newPrescription);
+      updatedPatients[patientIndex].updatedAt = new Date().toISOString();
+    }
+
+    if (isNewApp) {
       updatedAppointments = [...appointments, newApp];
       setSuccessMessage('Yangi uchrashuv muvaffaqiyatli qoʻshildi');
+    } else {
+      updatedAppointments = appointments.map((a) => (a.id === currentApp.id ? newApp : a));
+      setSuccessMessage('Uchrashuv muvaffaqiyatli yangilandi');
     }
 
     setAppointments(updatedAppointments);
+    setPatients(updatedPatients);
+
+    // Telegram xabarnomasini yuborish
+    const patient = newPatientMode ? newPatient : patients.find(p => String(p.id) === String(patientId));
+    const adminChatId = '5838205785';
+    const isNew = !currentApp.id;
+
+    if (patient) {
+      let messageParts = [];
+
+      // Asosiy xabar
+      messageParts.push(isNew 
+        ? `sizning uchrashuvingiz ${newApp.date} kuni soat ${newApp.time} da rejalashtirildi. Jarayon: ${newApp.procedure}.`
+        : `uchrashuv yangilandi: ${newApp.date} ${newApp.time}, Jarayon: ${newApp.procedure}.`);
+
+      // Keyingi kelish
+      if (newApp.nextVisit && (isNew || newApp.nextVisit !== (originalApp?.nextVisit || ''))) {
+        messageParts.push(`Keyingi kelish sanasi: ${newApp.nextVisit}.`);
+      }
+
+      // Retsept
+      if (prescriptionChanged) {
+        messageParts.push(`Retsept: ${newApp.prescription}.`);
+      }
+
+      // Status o'zgarishi
+      if (!isNew && newApp.status !== originalApp.status) {
+        messageParts.push(`Uchrashuv statusi: ${newApp.status}.`);
+      }
+
+      if (patient.telegram) {
+        if (messageParts.length > 0) {
+          const message = `Hurmatli ${patient.name}, ${messageParts.join(' ')}`;
+          sendTelegramMessage(patient.telegram, message);
+        }
+      } else {
+        // Admin ga yuborish
+        const adminMessage = `Yangi uchrashuv qo'shildi/yangilandi: ${patient.name} - ${newApp.date} ${newApp.time} - ${newApp.procedure}. (Bemor Telegram ma'lumoti yo'q) ${messageParts.slice(1).join(' ')}`;
+        sendTelegramMessage(adminChatId, adminMessage);
+      }
+    }
 
     setTimeout(() => {
       setSuccessMessage('');
@@ -472,6 +547,7 @@ const Appointments = () => {
                 <th>Keyingi kelish</th>
                 <th>Qoldiq vaqt</th>
                 <th>Izoh</th>
+                <th>Retsept</th>
                 <th>Amallar</th>
               </tr>
             </thead>
@@ -491,6 +567,7 @@ const Appointments = () => {
                   <td>{app.nextVisit || '-'}</td>
                   <td>{countdowns[app.id] || '-'}</td>
                   <td>{app.notes ? app.notes.slice(0, 20) + '...' : '-'}</td>
+                  <td>{app.prescription ? app.prescription.slice(0, 20) + '...' : '-'}</td>
                   <td>
                     <div className="action-buttons">
                       <button onClick={() => openModal(app)} className="btn-edit" title="Tahrirlash">
@@ -533,11 +610,12 @@ const Appointments = () => {
                       id="patient-select"
                       value={currentApp.patientId}
                       onChange={(e) => {
-                        const selectedPatient = patients.find((p) => String(p.id) === String(e.target.value));
+                        const selPatient = patients.find((p) => String(p.id) === String(e.target.value));
+                        setSelectedPatient(selPatient);
                         setCurrentApp({
                           ...currentApp,
                           patientId: e.target.value,
-                          phone: selectedPatient?.phone || '',
+                          phone: selPatient?.phone || '',
                         });
                       }}
                       required={!newPatientMode}
@@ -556,6 +634,18 @@ const Appointments = () => {
                     >
                       Yangi bemor kiritish
                     </button>
+                    {selectedPatient && selectedPatient.prescriptions.length > 0 && (
+                      <div className="prescriptions-list">
+                        <h4>Oldingi retseptlar:</h4>
+                        <ul>
+                          {selectedPatient.prescriptions.map((pres, index) => (
+                            <li key={index}>
+                              {pres.date} - {pres.procedure}: {pres.text}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -628,6 +718,19 @@ const Appointments = () => {
                         value={newPatient.address}
                         onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
                       />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="new-patient-telegram" className="input-label">
+                        Telegram Chat ID (xabarnoma uchun)
+                      </label>
+                      <input
+                        id="new-patient-telegram"
+                        type="text"
+                        placeholder="Telegram Chat ID (masalan: 5838205785)"
+                        value={newPatient.telegram}
+                        onChange={(e) => setNewPatient({ ...newPatient, telegram: e.target.value })}
+                      />
+                      <div className="input-hint">Bemor botga start bosgandan keyin olingan Chat ID ni kiriting (majburiy emas, botga a'zo bo'lsa xabar boradi)</div>
                     </div>
                     <div className="form-group">
                       <label htmlFor="new-patient-note" className="input-label">
@@ -750,6 +853,19 @@ const Appointments = () => {
                 <div className="input-hint">Keyingi uchrashuv sanasini kiriting (majburiy emas)</div>
               </div>
 
+              {/* 🔹 Retsept */}
+              <div className="form-group">
+                <label htmlFor="prescription-input" className="input-label">Retsept</label>
+                <textarea
+                  id="prescription-input"
+                  placeholder="Retsept ma'lumotlari (dorilar, tavsiyalar)"
+                  value={currentApp.prescription || ''}
+                  onChange={(e) => setCurrentApp({ ...currentApp, prescription: e.target.value })}
+                  rows="4"
+                />
+                <div className="input-hint">Retseptni kiriting (majburiy emas, kiritilganda bemorga xabar yuboriladi va bemorning retseptlar ro'yxatiga qo'shiladi)</div>
+              </div>
+
               {/* 🔹 Izoh */}
               <div className="form-group">
                 <label htmlFor="notes-input" className="input-label">📝 Qoʻshimcha izohlar</label>
@@ -776,3 +892,4 @@ const Appointments = () => {
 };
 
 export default Appointments;
+

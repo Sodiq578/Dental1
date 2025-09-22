@@ -294,3 +294,78 @@
     display: none;
   }
 }
+
+
+
+
+
+
+
+/* Sidebar logout button */
+.sidebar-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.dark .sidebar-logout-btn {
+  color: #f0f0f0;
+}
+
+.sidebar-logout-btn:hover {
+  background-color: #4a6cf7;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-logout-btn svg {
+  font-size: 20px;
+}
+
+.sidebar-logout-btn span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sidebar-logout-btn {
+    padding: 10px 16px;
+    font-size: 15px;
+  }
+
+  .sidebar-logout-btn svg {
+    font-size: 18px;
+  }
+
+  .sidebar-logout-btn span {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-logout-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .sidebar-logout-btn svg {
+    font-size: 16px;
+  }
+
+  .sidebar-logout-btn span {
+    font-size: 12px;
+  }
+}

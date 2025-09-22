@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FiUsers, FiCalendar, FiPackage, FiDownload } from 'react-icons/fi';
 import { AppContext } from '../App';
+import CountUp from 'react-countup'; // Hisoblagich animatsiyasi uchun
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -32,7 +33,7 @@ const Dashboard = () => {
       totalAppointments: appointments.length,
       totalMedications: medications.length,
       todayAppointments: todayAppointments.length,
-      lowStockMedications: lowStockMedications.length
+      lowStockMedications: lowStockMedications.length,
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -46,7 +47,7 @@ const Dashboard = () => {
   return (
     <div className={`dashboard ${darkMode ? 'dark' : ''}`}>
       <div className="page-header">
-        <h1>Bosh Sahifa</h1>
+        <h1>Bosh Sahifa (Admin)</h1>
       </div>
 
       {/* Statistikalar */}
@@ -54,17 +55,38 @@ const Dashboard = () => {
         <div className="stat-card">
           <FiUsers className="stat-icon" />
           <h3>Bemorlar</h3>
-          <p>{patients.length} ta</p>
+          <p>
+            <CountUp
+              end={patients.length}
+              duration={2.5} // Animatsiya davomiyligi (sekundlarda)
+              separator=" " // Raqamlarni formatlash (masalan, 1000 -> 1 000)
+              suffix=" ta" // Oxiriga "ta" so‘zini qo‘shish
+            />
+          </p>
         </div>
         <div className="stat-card">
           <FiCalendar className="stat-icon" />
           <h3>Uchrashuvlar</h3>
-          <p>{appointments.length} ta</p>
+          <p>
+            <CountUp
+              end={appointments.length}
+              duration={2.5}
+              separator=" "
+              suffix=" ta"
+            />
+          </p>
         </div>
         <div className="stat-card">
           <FiPackage className="stat-icon" />
           <h3>Dorilar</h3>
-          <p>{medications.length} ta</p>
+          <p>
+            <CountUp
+              end={medications.length}
+              duration={2.5}
+              separator=" "
+              suffix=" ta"
+            />
+          </p>
         </div>
       </div>
 
@@ -103,12 +125,12 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {todayAppointments.map(a => (
+              {todayAppointments.map((a) => (
                 <tr key={a.id}>
                   <td>{getPatientName(a.patientId)}</td>
-                  <td>{a.time}</td>
-                  <td>{a.procedure}</td>
-                  <td>{a.status}</td>
+                  <td>{a.time || '-'}</td>
+                  <td>{a.procedure || '-'}</td>
+                  <td>{a.status || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -132,12 +154,12 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {recentAppointments.map(a => (
+              {recentAppointments.map((a) => (
                 <tr key={a.id}>
                   <td>{getPatientName(a.patientId)}</td>
-                  <td>{a.date}</td>
-                  <td>{a.time}</td>
-                  <td>{a.procedure}</td>
+                  <td>{a.date ? new Date(a.date).toLocaleDateString('uz-UZ') : '-'}</td>
+                  <td>{a.time || '-'}</td>
+                  <td>{a.procedure || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -159,10 +181,16 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {lowStockMedications.map(m => (
+              {lowStockMedications.map((m) => (
                 <tr key={m.id}>
                   <td>{m.name}</td>
-                  <td className="low-stock">{m.quantity}</td>
+                  <td className="low-stock">
+                    <CountUp
+                      end={m.quantity}
+                      duration={2}
+                      separator=" "
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
