@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 // src/App.jsx
+=======
+>>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
 import React, { useState, useEffect, createContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { FiMenu, FiDatabase } from "react-icons/fi";
@@ -18,8 +21,13 @@ import PatientPortal from "./components/PatientPortal";
 import Charting from "./components/Charting";
 import DentalAssistance from "./components/DentalAssistance";
 import Tooth from "./components/ToothCard";
+<<<<<<< HEAD
 import Login from "./pages/Login";
 import UserDashboard from "./pages/UserDashboard";
+=======
+import Login from "./components/Login";
+import UserDashboard from "./components/UserDashboard";
+>>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
 
 // Utils
 import { getFromLocalStorage, saveToLocalStorage, initializeData } from "./utils";
@@ -189,7 +197,10 @@ const App = () => {
           {!isLoggedIn ? (
             <Routes>
               <Route path="/login" element={<Login onLogin={handleLogin} />} />
+<<<<<<< HEAD
               <Route path="/bemor-portali" element={<PatientPortal />} /> {/* Public route for PatientPortal */}
+=======
+>>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
               <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
           ) : (
@@ -212,6 +223,10 @@ const App = () => {
 
               <main className="main-content">
                 <Routes>
+<<<<<<< HEAD
+=======
+                  
+>>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/bemorlar" element={<Patients />} />
                   <Route path="/uchrashuvlar" element={<Appointments />} />
@@ -226,7 +241,10 @@ const App = () => {
                   <Route path="/davolashda-yordam" element={<DentalAssistance />} />
                   <Route path="/tooth" element={<Tooth />} />
                   <Route path="/foydalanuvchi" element={<UserDashboard />} />
+<<<<<<< HEAD
                   <Route path="*" element={<Navigate to="/" />} />
+=======
+>>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
                 </Routes>
               </main>
             </>

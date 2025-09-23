@@ -262,14 +262,22 @@ tr:hover {
 }
 
 .modal-content {
-    background-color: var(--white);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    width: 100%;
-    max-width: var(--layout-width);
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: fadeIn 0.3s ease;
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  width: 100%;
+  max-width: var(--layout-width);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: fadeIn 0.3s ease;
+
+  /* Scrollbarni yashirish */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer va Edge */
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari va Opera */
 }
 
 .modal-header {
