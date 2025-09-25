@@ -11,8 +11,13 @@ const Billing = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Check if patients array is empty
+  if (!patients || patients.length === 0) {
+    return <div className="error-state">Bemorlar ma'lumotlari yuklanmadi</div>;
+  }
+
   const filteredBills = billings.filter(b =>
-    patients.find(p => p.id === b.patientId)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patients.find(p => String(p.id) === String(b.patientId))?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.invoiceNumber.includes(searchTerm)
   );
 
@@ -49,7 +54,7 @@ const Billing = () => {
       return;
     }
     const updated = currentBill.id
-      ? billings.map(b => (b.id === currentBill.id ? { ...currentBill } : b))
+      ? billings.map(b => (String(b.id) === String(currentBill.id) ? { ...currentBill } : b))
       : [...billings, { ...currentBill, id: Date.now() }];
     setBillings(updated);
     setSuccessMessage(currentBill.id ? 'To‘lov yangilandi' : 'To‘lov qo‘shildi');
@@ -61,15 +66,15 @@ const Billing = () => {
 
   const deleteBill = (id) => {
     if (window.confirm('Haqiqatan ham bu to‘lovni o‘chirmoqchimisiz?')) {
-      setBillings(billings.filter(b => b.id !== id));
+      setBillings(billings.filter(b => String(b.id) !== String(id)));
       setSuccessMessage('To‘lov o‘chirildi');
       setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
 
-  const getPatientName = (id) => {
-    const p = patients.find(p => p.id === id);
-    return p ? p.name : 'Noma’lum';
+  const getPatientName = (id, bill) => {
+    const p = patients.find(p => String(p.id) === String(id));
+    return p ? p.name : (bill.patientName || 'Noma’lum');
   };
 
   return (
@@ -83,7 +88,6 @@ const Billing = () => {
 
       <div className="actions">
         <div className="search-box">
-         
           <input
             type="text"
             placeholder="Bemor yoki faktura raqami bo‘yicha qidirish..."
@@ -96,8 +100,6 @@ const Billing = () => {
           <FiPlus /> Yangi To‘lov
         </button>
       </div>
-
-
 
       {filteredBills.length === 0 ? (
         <div className="empty-state">
@@ -136,9 +138,9 @@ const Billing = () => {
             <tbody>
               {filteredBills.map(b => (
                 <tr key={b.id}>
-                  <td>{getPatientName(b.patientId)}</td>
+                  <td>{getPatientName(b.patientId, b)}</td>
                   <td>{b.invoiceNumber}</td>
-                  <td>{b.amount} UZS</td>
+                  <td>{b.amount || b.total} UZS</td>
                   <td>{b.status === 'paid' ? 'To‘langan' : 'To‘lanmagan'}</td>
                   <td>{b.insurance || '-'}</td>
                   <td>{b.date}</td>

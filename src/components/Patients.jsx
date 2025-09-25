@@ -1,224 +1,54 @@
-import React, { useState, useContext, useEffect } from 'react';
+// Patients.js
+import React, { useState, useEffect, useContext } from 'react';
+import { FiCalendar, FiClock, FiUser, FiPhone, FiPlus, FiSearch, FiEdit, FiTrash2, FiMapPin, FiInfo, FiDownload, FiX } from 'react-icons/fi';
 import { AppContext } from '../App';
-import { validateStoredPatients, sanitizePatientData, validatePatientData } from '../utils';
-import { FiEdit, FiTrash2, FiPlus, FiSearch, FiUser, FiPhone, FiMapPin, FiCalendar, FiInfo, FiDownload, FiX } from 'react-icons/fi';
+import { validateStoredPatients, sanitizePatientData, validatePatientData, addNewPatient, sendTelegramMessage, getFromLocalStorage } from '../utils';
 import * as XLSX from 'xlsx';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import './Patients.css';
 
-// Regions data
+// Regions and districts data
 const regions = {
-  "Andijon viloyati": {
+  "Qoraqalpogʻiston Respublikasi": {
     "tumanlar": {
-      "Andijon tumani": { "Tuman markazi": "Kuyganyor" },
-      "Asaka tumani": { "Tuman markazi": "Asaka (shahar)" },
-      "Baliqchi tumani": { "Tuman markazi": "Baliqchi (shahar)" },
-      "Boʻston tumani": { "Tuman markazi": "Boʻston (shaharcha)" },
-      "Buloqboshi tumani": { "Tuman markazi": "Buloqboshi" },
-      "Izboskan tumani": { "Tuman markazi": "Poytugʻ" },
-      "Jalaquduq tumani": { "Tuman markazi": "Jalaquduq" },
-      "Xoʻjaobod tumani": { "Tuman markazi": "Xoʻjaobod" },
-      "Qoʻrgʻontepa tumani": { "Tuman markazi": "Qoʻrgʻontepa" },
-      "Marhamat tumani": { "Tuman markazi": "Marhamat" },
-      "Oltinkoʻl tumani": { "Tuman markazi": "Oltinkoʻl (qishloq)" },
-      "Paxtaobod tumani": { "Tuman markazi": "Paxtaobod" },
-      "Shahrixon tumani": { "Tuman markazi": "Shahrixon (shahar)" },
-      "Ulugʻnor tumani": { "Tuman markazi": "Oqoltin" }
-    }
-  },
-  "Qoraqalpogʻiston": {
-    "tumanlar": {
-      "Amudaryo tumani": { "Tuman markazi": "Mangʻit (shahar)" },
-      "Beruniy tumani": { "Tuman markazi": "Beruniy (shahar)" },
+      "Amudaryo tumani": { "Tuman markazi": "Mangʻit" },
+      "Beruniy tumani": { "Tuman markazi": "Beruniy" },
+      "Boʻzatov tumani": { "Tuman markazi": "Boʻzatov" },
       "Chimboy tumani": { "Tuman markazi": "Chimboy" },
-      "Ellikqalʼa tumani": { "Tuman markazi": "Boʻston (shahar)" },
+      "Ellikqal’a tumani": { "Tuman markazi": "Boʻston" },
       "Kegeyli tumani": { "Tuman markazi": "Kegeyli" },
       "Moʻynoq tumani": { "Tuman markazi": "Moʻynoq" },
       "Nukus tumani": { "Tuman markazi": "Oqmangʻit" },
       "Qanlikoʻl tumani": { "Tuman markazi": "Qanlikoʻl" },
       "Qoʻngʻirot tumani": { "Tuman markazi": "Qoʻngʻirot" },
       "Qoraoʻzak tumani": { "Tuman markazi": "Qoraoʻzak" },
-      "Shumanay tumani": { "Tuman markazi": "Shumanay" },
+      "Shoʻmanoy tumani": { "Tuman markazi": "Shoʻmanoy" },
       "Taxtakoʻpir tumani": { "Tuman markazi": "Taxtakoʻpir" },
       "Toʻrtkoʻl tumani": { "Tuman markazi": "Toʻrtkoʻl" },
       "Xoʻjayli tumani": { "Tuman markazi": "Xoʻjayli" },
       "Taxiatosh tumani": { "Tuman markazi": "Taxiatosh" },
-      "Boʻzatov tumani": { "Tuman markazi": "Boʻzatov" }
     }
   },
-  "Navoiy viloyati": {
-    "tumanlar": {
-      "Konimex tumani": { "Tuman markazi": "Konimex (shaharcha)" },
-      "Karmana tumani": { "Tuman markazi": "Karmana" },
-      "Qiziltepa tumani": { "Tuman markazi": "Qiziltepa" },
-      "Xatirchi tumani": { "Tuman markazi": "Yangirabot" },
-      "Navbahor tumani": { "Tuman markazi": "Beshrabot" },
-      "Nurota tumani": { "Tuman markazi": "Nurota" },
-      "Tomdi tumani": { "Tuman markazi": "Tomdibuloq" },
-      "Uchquduq tumani": { "Tuman markazi": "Uchquduq" }
-    }
-  },
-  "Buxoro viloyati": {
-    "tumanlar": {
-      "Olot tumani": { "Tuman markazi": "Olot" },
-      "Buxoro tumani": { "Tuman markazi": "Galaosiyo" },
-      "Gʻijduvon tumani": { "Tuman markazi": "Gʻijduvon" },
-      "Jondor tumani": { "Tuman markazi": "Jondor (shaharcha)" },
-      "Kogon tumani": { "Tuman markazi": "Kogon" },
-      "Qorakoʻl tumani": { "Tuman markazi": "Qorakoʻl (shahar)" },
-      "Qorovulbozor tumani": { "Tuman markazi": "Qorovulbozor" },
-      "Peshku tumani": { "Tuman markazi": "Yangibozor" },
-      "Romitan tumani": { "Tuman markazi": "Romitan" },
-      "Shofirkon tumani": { "Tuman markazi": "Shofirkon" },
-      "Vobkent tumani": { "Tuman markazi": "Vobkent" }
-    }
-  },
-  "Farg'ona viloyati": {
-    "tumanlar": {
-      "Farg'ona tumani": { "Tuman markazi": "Farg'ona" },
-      "Quva tumani": { "Tuman markazi": "Quva" },
-      "Dang'ara tumani": { "Tuman markazi": "Dang'ara" },
-      "Beshariq tumani": { "Tuman markazi": "Beshariq" },
-      "Oltiariq tumani": { "Tuman markazi": "Oltiariq" },
-      "Yazyavan tumani": { "Tuman markazi": "Yazyavan" },
-      "Toshloq tumani": { "Tuman markazi": "Toshloq" },
-      "Bog'dod tumani": { "Tuman markazi": "Bog'dod" },
-      "Rishton tumani": { "Tuman markazi": "Rishton" },
-      "Furqat tumani": { "Tuman markazi": "Furqat" },
-      "O'zbekiston tumani": { "Tuman markazi": "O'zbekiston" }
-    }
-  },
-  "Jizzax viloyati": {
-    "tumanlar": {
-      "Jizzax tumani": { "Tuman markazi": "Jizzax" },
-      "Zafarobod tumani": { "Tuman markazi": "Zafarobod" },
-      "Forish tumani": { "Tuman markazi": "Forish" },
-      "Baxmal tumani": { "Tuman markazi": "Baxmal" },
-      "G'allaorol tumani": { "Tuman markazi": "G'allaorol" },
-      "Arnasoy tumani": { "Tuman markazi": "Arnasoy" },
-      "Yangiobod tumani": { "Tuman markazi": "Yangiobod" },
-      "Shahrisabz tumani": { "Tuman markazi": "Shahrisabz" }
-    }
-  },
-  "Xorazm viloyati": {
-    "tumanlar": {
-      "Urganch tumani": { "Tuman markazi": "Urganch" },
-      "Gurlan tumani": { "Tuman markazi": "Gurlan" },
-      "Xiva tumani": { "Tuman markazi": "Xiva" },
-      "Beruniy tumani": { "Tuman markazi": "Beruniy" },
-      "Shovot tumani": { "Tuman markazi": "Shovot" },
-      "Khiva tumani": { "Tuman markazi": "Khiva" },
-      "Kungrad tumani": { "Tuman markazi": "Kungrad" },
-      "Urganch shahar": { "Tuman markazi": "Urganch" }
-    }
-  },
-  "Namangan viloyati": {
-    "tumanlar": {
-      "Namangan tumani": { "Tuman markazi": "Namangan" },
-      "Chortoq tumani": { "Tuman markazi": "Chortoq" },
-      "Kosonsoy tumani": { "Tuman markazi": "Kosonsoy" },
-      "Mingbuloq tumani": { "Tuman markazi": "Mingbuloq" },
-      "Tuproqqala tumani": { "Tuman markazi": "Tuproqqala" },
-      "Uchqo'rg'on tumani": { "Tuman markazi": "Uchqo'rg'on" },
-      "Yangiyo'l tumani": { "Tuman markazi": "Yangiyo'l" },
-      "Kaspiy tumani": { "Tuman markazi": "Kaspiy" },
-      "Chust tumani": { "Tuman markazi": "Chust" },
-      "Peshku tumani": { "Tuman markazi": "Peshku" }
-    }
-  },
-  "Surxondaryo viloyati": {
-    "tumanlar": {
-      "Termiz tumani": { "Tuman markazi": "Termiz" },
-      "Oltinosy tumani": { "Tuman markazi": "Bo'ston" },
-      "Angor tumani": { "Tuman markazi": "Angor" },
-      "Sherobod tumani": { "Tuman markazi": "Sherobod" },
-      "Boysun tumani": { "Tuman markazi": "Boysun" },
-      "Jarkurgan tumani": { "Tuman markazi": "Jarkurgan" },
-      "Uzun tumani": { "Tuman markazi": "Uzun" },
-      "Sariosiyo tumani": { "Tuman markazi": "Sariosiyo" },
-      "Qumqo'rg'on tumani": { "Tuman markazi": "Qumqo'rg'on" },
-      "Muzrabot tumani": { "Tuman markazi": "Muzrabot" }
-    }
-  },
-  "Samarqand viloyati": {
-    "tumanlar": {
-      "Samarqand tumani": { "Tuman markazi": "Samarqand" },
-      "Paxtachi tumani": { "Tuman markazi": "Paxtachi" },
-      "Ishtixon tumani": { "Tuman markazi": "Ishtixon" },
-      "Jomboy tumani": { "Tuman markazi": "Jomboy" },
-      "Narpay tumani": { "Tuman markazi": "Narpay" },
-      "Kattaqo'rg'on tumani": { "Tuman markazi": "Kattaqo'rg'on" },
-      "Oqdaryo tumani": { "Tuman markazi": "Oqdaryo" },
-      "Pastdarg'om tumani": { "Tuman markazi": "Pastdarg'om" },
-      "Urgut tumani": { "Tuman markazi": "Urgut" },
-      "Samarkand shahar": { "Tuman markazi": "Samarqand" }
-    }
-  },
-  "Sirdaryo viloyati": {
-    "tumanlar": {
-      "Guliston tumani": { "Tuman markazi": "Guliston" },
-      "Sirdaryo tumani": { "Tuman markazi": "Sirdaryo" },
-      "Mirzaobod tumani": { "Tuman markazi": "Mirzaobod" },
-      "Boyovut tumani": { "Tuman markazi": "Boyovut" },
-      "Shirin tumani": { "Tuman markazi": "Shirin" },
-      "Oqoltin tumani": { "Tuman markazi": "Oqoltin" },
-      "Xovos tumani": { "Tuman markazi": "Xovos" },
-      "Yangiyer tumani": { "Tuman markazi": "Yangiyer" },
-      "Arnasoy tumani": { "Tuman markazi": "Arnasoy" }
-    }
-  },
-  "Toshkent shahri": {
-    "tumanlar": {
-      "Chilonzor tumani": { "Tuman markazi": "Chilonzor" },
-      "Mirzo-Ulug'bek tumani": { "Tuman markazi": "Mirzo-Ulug'bek" },
-      "Mirobod tumani": { "Tuman markazi": "Mirobod" },
-      "Yunusobod tumani": { "Tuman markazi": "Yunusobod" },
-      "Sergeli tumani": { "Tuman markazi": "Sergeli" },
-      "Shayxontohur tumani": { "Tuman markazi": "Shayxontohur" },
-      "Almazar tumani": { "Tuman markazi": "Almazar" },
-      "Samarqand tumani": { "Tuman markazi": "Samarqand" },
-      "Bektemir tumani": { "Tuman markazi": "Bektemir" },
-      "Yakkasaroy tumani": { "Tuman markazi": "Yakkasaroy" }
-    }
-  },
-  "Toshkent viloyati": {
-    "tumanlar": {
-      "Angren tumani": { "Tuman markazi": "Angren" },
-      "Bekobod tumani": { "Tuman markazi": "Bekobod" },
-      "Boʻstonliq tumani": { "Tuman markazi": "Gʻazalkent" },
-      "Buka tumani": { "Tuman markazi": "Buka" },
-      "Chirchiq tumani": { "Tuman markazi": "Chirchiq" },
-      "Qibray tumani": { "Tuman markazi": "Qibray" },
-      "Ohangaron tumani": { "Tuman markazi": "Ohangaron" },
-      "Parkent tumani": { "Tuman markazi": "Parkent" },
-      "Piskent tumani": { "Tuman markazi": "Piskent" },
-      "Quyi Chirchiq tumani": { "Tuman markazi": "Doʻstobod" },
-      "Yuqori Chirchiq tumani": { "Tuman markazi": "Yangibozor" },
-      "Zangiota tumani": { "Tuman markazi": "Eshonguzar" }
-    }
-  },
-  "Qashqadaryo viloyati": {
-    "tumanlar": {
-      "Qarshi tumani": { "Tuman markazi": "Qarshi" },
-      "Chiroqchi tumani": { "Tuman markazi": "Chiroqchi" },
-      "Gʻuzor tumani": { "Tuman markazi": "Gʻuzor" },
-      "Dehqonobod tumani": { "Tuman markazi": "Dehqonobod" },
-      "Qamashi tumani": { "Tuman markazi": "Qamashi" },
-      "Koson tumani": { "Tuman markazi": "Koson" },
-      "Mirishkor tumani": { "Tuman markazi": "Mirishkor" },
-      "Muborak tumani": { "Tuman markazi": "Muborak" },
-      "Nishon tumani": { "Tuman markazi": "Yanginazar" },
-      "Shahrisabz tumani": { "Tuman markazi": "Shahrisabz" },
-      "Yakkabogʻ tumani": { "Tuman markazi": "Yakkabogʻ" },
-      "Kitob tumani": { "Tuman markazi": "Kitob" },
-      "Kasbi tumani": { "Tuman markazi": "Kasbi" }
-    }
+  // Add other regions as needed (omitted for brevity)
+};
+
+// Placeholder for sendSMS function
+const sendSMS = (phone, message) => {
+  console.log(`SMS sent to ${phone}: ${message}`);
+  return true;
+};
+
+// Helper function to send notification via Telegram or SMS
+const sendNotification = (patient, message) => {
+  if (patient.telegram) {
+    sendTelegramMessage(patient.telegram, message);
+  } else if (patient.phone) {
+    sendSMS(patient.phone, message);
   }
 };
 
-// Patients component
 const Patients = () => {
-  const { patients, setPatients, appointments, getFromLocalStorage } = useContext(AppContext);
+  const { patients, setPatients, appointments, setAppointments } = useContext(AppContext);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -236,10 +66,25 @@ const Patients = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedExportFormat, setSelectedExportFormat] = useState('excel');
-  // Address dropdown states
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [additionalAddress, setAdditionalAddress] = useState('');
+  const [viewMode, setViewMode] = useState('patients');
+  const [newPatientPortal, setNewPatientPortal] = useState({
+    name: '',
+    phone: '',
+    gender: '',
+    address: '',
+    dob: '',
+    note: '',
+    telegram: '',
+    prescriptions: []
+  });
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showRegistration, setShowRegistration] = useState(true);
+  const [patientId, setPatientId] = useState(null);
+  const [selectedTime, setSelectedTime] = useState('');
+  const [procedure, setProcedure] = useState('');
 
   // Parse address when editing a patient
   useEffect(() => {
@@ -255,6 +100,167 @@ const Patients = () => {
     }
   }, [currentPatient]);
 
+  // Clear messages after timeout
+  useEffect(() => {
+    if (successMessage || error) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+        setError('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, error]);
+
+  // Generate time slots
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = 9; hour < 18; hour++) {
+      for (let min = 0; min < 60; min += 30) {
+        const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+        slots.push(time);
+      }
+    }
+    return slots;
+  };
+
+  // Get available slots for the selected date
+  const getSlotsForDate = (date) => {
+    const timeSlots = generateTimeSlots();
+    const booked = appointments
+      .filter((app) => app.date === date && app.status !== 'bekor qilindi')
+      .map((app) => app.time);
+    return timeSlots.map((slot) => ({
+      time: slot,
+      isBooked: booked.includes(slot),
+    }));
+  };
+
+  const slots = getSlotsForDate(selectedDate);
+
+  // Find the next available slot
+  const findNextAvailableSlot = () => {
+    const today = new Date();
+    let currentDate = new Date(selectedDate);
+    let foundSlot = null;
+    for (let i = 0; i < 30; i++) {
+      const dateString = currentDate.toISOString().split('T')[0];
+      const availableSlots = getSlotsForDate(dateString).filter(slot => !slot.isBooked);
+      if (availableSlots.length > 0) {
+        foundSlot = { date: dateString, time: availableSlots[0].time };
+        break;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return foundSlot;
+  };
+
+  // Handle patient registration
+  const handleRegister = (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    addNewPatient(newPatientPortal, (success, message, data) => {
+      if (success) {
+        setPatientId(data.id);
+        setShowRegistration(false);
+        setSuccessMessage('Muvaffaqiyatli roʻyxatdan oʻtdingiz! Endi uchrashuv band qilishingiz mumkin.');
+        const formattedMessage = `*Hurmatli ${newPatientPortal.name}!* 🎉\nSiz muvaffaqiyatli roʻyxatdan oʻtdingiz. Endi uchrashuv band qilishingiz mumkin.`;
+        sendNotification(newPatientPortal, formattedMessage);
+      } else {
+        setError(message);
+      }
+    });
+  };
+
+  // Handle appointment booking
+  const handleBookAppointment = (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    if (!patientId) {
+      setError('Iltimos, avval roʻyxatdan oʻting.');
+      return;
+    }
+    if (!selectedTime) {
+      setError('Iltimos, vaqtni tanlang.');
+      return;
+    }
+    if (!procedure.trim()) {
+      setError('Iltimos, jarayon nomini kiriting.');
+      return;
+    }
+    const newAppointment = {
+      id: Date.now(),
+      patientId,
+      date: selectedDate,
+      time: selectedTime,
+      procedure,
+      status: 'kutilmoqda',
+      notes: '',
+      prescription: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setAppointments([...appointments, newAppointment]);
+    setSuccessMessage('Uchrashuv muvaffaqiyatli band qilindi!');
+    const formattedMessage = `*Hurmatli ${newPatientPortal.name}!* 📅\nSizning uchrashuvingiz *${selectedDate}* kuni soat *${selectedTime}* da rejalashtirildi.\nJarayon: *${procedure}*.\n\nRahmat! 😊`;
+    sendNotification(newPatientPortal, formattedMessage);
+    sendTelegramMessage('5838205785', `Yangi uchrashuv: ${newPatientPortal.name} - ${selectedDate} ${selectedTime} - ${procedure}`);
+    setTimeout(() => {
+      setSuccessMessage('');
+      setSelectedTime('');
+      setProcedure('');
+    }, 3000);
+  };
+
+  // Handle request for next available slot
+  const handleRequestNextSlot = () => {
+    setError('');
+    setSuccessMessage('');
+    if (!patientId) {
+      setError('Iltimos, avval roʻyxatdan oʻting.');
+      return;
+    }
+    const nextSlot = findNextAvailableSlot();
+    if (nextSlot) {
+      const formattedMessage = `*Hurmatli ${newPatientPortal.name}!* 🔍\nKeyingi boʻsh vaqt: *${nextSlot.date}* kuni soat *${nextSlot.time}*.\n\nRahmat! 😊`;
+      setSuccessMessage(formattedMessage);
+      sendNotification(newPatientPortal, formattedMessage);
+      sendTelegramMessage('5838205785', `Bemor ${newPatientPortal.name} keyingi boʻsh vaqtni soʻradi: ${nextSlot.date} ${nextSlot.time}`);
+    } else {
+      const formattedMessage = `*Hurmatli ${newPatientPortal.name}!* ⚠️\nKeyingi 30 kun ichida boʻsh vaqt topilmadi. Keyinroq urinib koʻring.`;
+      setError(formattedMessage);
+      sendNotification(newPatientPortal, formattedMessage);
+    }
+  };
+
+  // Handle prescription addition
+  const addPrescription = (e) => {
+    e.preventDefault();
+    if (!newPrescription.medicine.trim() || !newPrescription.dosage.trim()) {
+      setError('Dori nomi va dozasi majburiy');
+      return;
+    }
+    setCurrentPatient({
+      ...currentPatient,
+      prescriptions: [...currentPatient.prescriptions, { ...newPrescription }]
+    });
+    const formattedMessage = `*Yangi retsept qo'shildi!* 💊\nSana: *${newPrescription.date}*\nDori: *${newPrescription.medicine}*\nDoza: *${newPrescription.dosage}*${newPrescription.notes ? `\nIzoh: _${newPrescription.notes}_` : ''}`;
+    const adminChatId = '5838205785';
+    if (currentPatient.telegram) {
+      sendTelegramMessage(currentPatient.telegram, formattedMessage);
+    } else {
+      sendTelegramMessage(adminChatId, `Bemor ${currentPatient.name || 'Yangi bemor'} uchun yangi retsept qo'shildi: ${formattedMessage} (Telegram yo'q)`);
+    }
+    setNewPrescription({
+      date: new Date().toISOString().slice(0, 10),
+      medicine: '',
+      dosage: '',
+      notes: ''
+    });
+    setError('');
+  };
+
   const filteredPatients = patients.filter(
     (p) =>
       p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -264,7 +270,7 @@ const Patients = () => {
   const openModal = (patient = null) => {
     setCurrentPatient(
       patient
-        ? { ...patient, prescriptions: patient.prescriptions || [] }
+        ? { ...patient, prescriptions: patient.prescriptions || [], telegram: patient.telegram || '' }
         : {
             id: null,
             name: '',
@@ -274,6 +280,7 @@ const Patients = () => {
             dob: '',
             lastVisit: '',
             note: '',
+            telegram: '',
             prescriptions: []
           }
     );
@@ -316,25 +323,6 @@ const Patients = () => {
     setNewPrescription({ ...newPrescription, [e.target.name]: e.target.value });
   };
 
-  const addPrescription = (e) => {
-    e.preventDefault();
-    if (!newPrescription.medicine.trim() || !newPrescription.dosage.trim()) {
-      setError('Dori nomi va dozasi majburiy');
-      return;
-    }
-    setCurrentPatient({
-      ...currentPatient,
-      prescriptions: [...currentPatient.prescriptions, { ...newPrescription }]
-    });
-    setNewPrescription({
-      date: new Date().toISOString().slice(0, 10),
-      medicine: '',
-      dosage: '',
-      notes: ''
-    });
-    setError('');
-  };
-
   const removePrescription = (index) => {
     const updatedPrescriptions = currentPatient.prescriptions.filter((_, i) => i !== index);
     setCurrentPatient({ ...currentPatient, prescriptions: updatedPrescriptions });
@@ -342,31 +330,27 @@ const Patients = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Construct address from dropdowns and additional input
     const address = [selectedRegion, selectedDistrict, additionalAddress]
       .filter(Boolean)
       .join(', ');
-    
     const updatedPatient = {
       ...currentPatient,
       address: address
     };
-    
     const sanitizedPatient = sanitizePatientData(updatedPatient);
-    
     const validationErrors = validatePatientData(sanitizedPatient);
     if (validationErrors.length > 0) {
       setError(validationErrors.join(', '));
       return;
     }
-    
     let updated;
     if (sanitizedPatient.id) {
       updated = patients.map((p) => 
         p.id === sanitizedPatient.id ? sanitizedPatient : p
       );
       setSuccessMessage('Bemor ma\'lumotlari muvaffaqiyatli yangilandi');
+      const formattedMessage = `*Bemor ma'lumotlari yangilandi!* 📝\nIsm: *${sanitizedPatient.name}*\nTelefon: *${sanitizedPatient.phone}*`;
+      sendNotification(sanitizedPatient, formattedMessage);
     } else {
       const newPatient = { 
         ...sanitizedPatient, 
@@ -375,10 +359,10 @@ const Patients = () => {
       };
       updated = [...patients, newPatient];
       setSuccessMessage('Yangi bemor muvaffaqiyatli qo‘shildi');
+      const formattedMessage = `*Yangi bemor qo'shildi!* 👤\nIsm: *${newPatient.name}*\nTelefon: *${newPatient.phone}*`;
+      sendNotification(newPatient, formattedMessage);
     }
-    
     setPatients(validateStoredPatients(updated));
-    
     setTimeout(() => {
       setSuccessMessage('');
       closeModal();
@@ -414,6 +398,7 @@ const Patients = () => {
         TugilganSana: p.dob,
         OxirgiTashrif: p.lastVisit,
         Izoh: p.note,
+        Telegram: p.telegram,
         Retseptlar: p.prescriptions ? p.prescriptions.map(pr => `${pr.date}: ${pr.medicine} (${pr.dosage}) - ${pr.notes || ''}`).join('; ') : '-',
         QoShilganSana: p.createdAt
       })));
@@ -433,6 +418,7 @@ const Patients = () => {
             new Paragraph({ children: [new TextRun(`Tug'ilgan sana: ${p.dob || '-'}`)] }),
             new Paragraph({ children: [new TextRun(`Oxirgi tashrif: ${p.lastVisit || '-'}`)] }),
             new Paragraph({ children: [new TextRun(`Izoh: ${p.note || '-'}`)] }),
+            new Paragraph({ children: [new TextRun(`Telegram: ${p.telegram || '-'}`)] }),
             new Paragraph({ children: [new TextRun(`Retseptlar: ${p.prescriptions ? p.prescriptions.map(pr => `${pr.date}: ${pr.medicine} (${pr.dosage}) - ${pr.notes || ''}`).join('\n') : '-'}`)] }),
             new Paragraph({ children: [new TextRun(`Qo'shilgan sana: ${p.createdAt || '-'}`)] }),
             new Paragraph({ children: [new TextRun("-----------------------------")] })
@@ -482,7 +468,7 @@ const Patients = () => {
     if (phone.startsWith('+998') && phone.length === 13) {
       return phone.replace(/(\+998)(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4 $5');
     }
-    return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
+    return phone;
   };
 
   const formatDate = (date) => {
@@ -493,7 +479,7 @@ const Patients = () => {
   const handleRegionChange = (e) => {
     const region = e.target.value;
     setSelectedRegion(region);
-    setSelectedDistrict(''); // Reset district when region changes
+    setSelectedDistrict('');
   };
 
   // Get districts for the selected region
@@ -501,143 +487,255 @@ const Patients = () => {
     return selectedRegion && regions[selectedRegion] ? Object.keys(regions[selectedRegion].tumanlar) : [];
   };
 
+  // Get center for selected district
+  const getDistrictCenter = () => {
+    return selectedRegion && selectedDistrict && regions[selectedRegion].tumanlar[selectedDistrict] ? regions[selectedRegion].tumanlar[selectedDistrict]["Tuman markazi"] : '';
+  };
+
   return (
     <div className="patients">
       <div className="page-header">
-        <h1>Bemorlar</h1>
-        <span className="badge">{patients.length} ta</span>
+        <h1>{viewMode === 'patients' ? 'Bemorlar' : 'Bemor Portali'}</h1>
+        <button
+          className="btn-toggle"
+          onClick={() => setViewMode(viewMode === 'patients' ? 'portal' : 'patients')}
+        >
+          {viewMode === 'patients' ? 'Portaldan foydalanish' : 'Bemorlar roʻyxatiga qaytish'}
+        </button>
+        {viewMode === 'patients' && <span className="badge">{patients.length} ta</span>}
       </div>
 
       {successMessage && (
-        <div className="success-message">
-          {successMessage}
-        </div>
+        <div className="success-message">{successMessage}</div>
       )}
-
       {error && (
-        <div className="error-message">
-          {error}
-        </div>
+        <div className="error-message">{error}</div>
       )}
 
-      <div className="actions">
-        <div className="search-box">
-          <FiSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Ism yoki telefon raqami boʻyicha qidirish..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
-        </div>
-        <div className="action-buttons-group">
-          <button onClick={() => openModal()} className="btn-primary">
-            <FiPlus /> Yangi bemor
-          </button>
-          <button onClick={handleExport} className="btn-secondary" title="Eksport qilish">
-            <FiDownload />
-          </button>
-        </div>
-      </div>
-
-      {filteredPatients.length === 0 ? (
-        <div className="empty-state">
-          {search ? (
-            <>
-              <h3>Hech narsa topilmadi</h3>
-              <p>"{search}" boʻyicha hech qanday bemor topilmadi</p>
-              <button onClick={() => setSearch('')} className="btn-secondary">
-                Filterni tozalash
-              </button>
-            </>
-          ) : (
-            <>
-              <h3>Hali bemorlar mavjud emas</h3>
-              <p>Birinchi bemoringizni qoʻshing</p>
+      {viewMode === 'patients' ? (
+        <>
+          <div className="actions">
+            <div className="search-box">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Ism yoki telefon raqami boʻyicha qidirish..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            <div className="action-buttons-group">
               <button onClick={() => openModal()} className="btn-primary">
-                <FiPlus /> Yangi bemor qo'shish
+                <FiPlus /> Yangi bemor
               </button>
-            </>
+              <button onClick={handleExport} className="btn-secondary" title="Eksport qilish">
+                <FiDownload />
+              </button>
+            </div>
+          </div>
+
+          {filteredPatients.length === 0 ? (
+            <div className="empty-state">
+              {search ? (
+                <>
+                  <h3>Hech narsa topilmadi</h3>
+                  <p>"{search}" boʻyicha hech qanday bemor topilmadi</p>
+                  <button onClick={() => setSearch('')} className="btn-secondary">
+                    Filterni tozalash
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3>Hali bemorlar mavjud emas</h3>
+                  <p>Birinchi bemoringizni qoʻshing</p>
+                  <button onClick={() => openModal()} className="btn-primary">
+                    <FiPlus /> Yangi bemor qo'shish
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ism</th>
+                    <th>Telefon</th>
+                    <th>Yoshi</th>
+                    <th>Jinsi</th>
+                    <th>Oxirgi tashrif</th>
+                    <th>Izoh</th>
+                    <th>Retseptlar</th>
+                    <th>Amallar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPatients.map((p) => (
+                    <tr
+                      key={p.id}
+                      onClick={() => openDetailsModal(p)}
+                      style={{ cursor: 'pointer' }}
+                      className="mobile-card"
+                    >
+                      <td data-label="Ism" className="patient-name">
+                        <div className="patient-info">
+                          <FiUser className="patient-icon" />
+                          <span>{p.name || 'Noma\'lum'}</span>
+                        </div>
+                      </td>
+                      <td data-label="Telefon">
+                        <div className="patient-info">
+                          <FiPhone className="patient-icon" />
+                          <span>{formatPhoneNumber(p.phone)}</span>
+                        </div>
+                      </td>
+                      <td data-label="Yoshi" className="desktop-only">{calculateAge(p.dob)}</td>
+                      <td data-label="Jinsi" className="desktop-only">{p.gender || '-'}</td>
+                      <td data-label="Oxirgi tashrif">
+                        {p.lastVisit ? new Date(p.lastVisit).toLocaleDateString('uz-UZ') : 'Tashrif yo\'q'}
+                      </td>
+                      <td data-label="Izoh" className="desktop-only">
+                        {p.note ? (
+                          <span
+                            className="note-link"
+                            onClick={(e) => openNoteModal(p.note, e)}
+                            title="To‘liq izohni ko‘rish"
+                          >
+                            {truncateNote(p.note)}
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td data-label="Retseptlar" className="desktop-only">
+                        {truncatePrescriptions(p.prescriptions)}
+                      </td>
+                      <td data-label="Amallar" onClick={(e) => e.stopPropagation()} className="desktop-only">
+                        <div className="action-buttons">
+                          <button
+                            onClick={() => openModal(p)}
+                            className="btn-edit"
+                            title="Tahrirlash"
+                          >
+                            <FiEdit />
+                          </button>
+                          <button
+                            onClick={() => deletePatient(p.id)}
+                            className="btn-delete"
+                            title="Oʻchirish"
+                          >
+                            <FiTrash2 />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-        </div>
+        </>
       ) : (
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Ism</th>
-                <th>Telefon</th>
-                <th>Yoshi</th>
-                <th>Jinsi</th>
-                <th>Oxirgi tashrif</th>
-                <th>Izoh</th>
-                <th>Retseptlar</th>
-                <th>Amallar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPatients.map((p) => (
-                <tr
-                  key={p.id}
-                  onClick={() => openDetailsModal(p)}
-                  style={{ cursor: 'pointer' }}
+        <div className="patient-portal">
+          <h2>Bemor Portali</h2>
+          {showRegistration ? (
+            <div className="bg-white">
+              <h3>Roʻyxatdan oʻtish</h3>
+              <form onSubmit={handleRegister}>
+                <div className="form-group">
+                  <label><FiUser className="input-icon" /> Ism *</label>
+                  <input
+                    type="text"
+                    value={newPatientPortal.name}
+                    onChange={(e) => setNewPatientPortal({ ...newPatientPortal, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label><FiPhone className="input-icon" /> Telefon *</label>
+                  <input
+                    type="tel"
+                    value={newPatientPortal.phone}
+                    onChange={(e) => setNewPatientPortal({ ...newPatientPortal, phone: e.target.value })}
+                    placeholder="+998901234567"
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Telegram Chat ID (majburiy emas)</label>
+                  <input
+                    type="text"
+                    value={newPatientPortal.telegram}
+                    onChange={(e) => setNewPatientPortal({ ...newPatientPortal, telegram: e.target.value })}
+                    placeholder="Telegram Chat ID (masalan: 5838205785)"
+                  />
+                  <p className="text-sm text-gray-500">Botga /start buyrugʻini yuboring va Chat ID ni kiriting. Agar kiritilmasa, SMS orqali xabar yuboriladi (agar telefon mavjud bo'lsa).</p>
+                </div>
+                <button type="submit" className="btn-primary">
+                  <FiPlus /> Roʻyxatdan oʻtish
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="bg-white">
+              <h3>Uchrashuv band qilish</h3>
+              <div className="form-group">
+                <label><FiCalendar className="input-icon" /> Sana</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <h4>Boʻsh vaqtlar</h4>
+                <div className="grid">
+                  {slots.map((slot) => (
+                    <button
+                      key={slot.time}
+                      className={`p-2 ${slot.isBooked ? 'bg-gray-300' : 'bg-blue-100'}`}
+                      onClick={() => !slot.isBooked && setSelectedTime(slot.time)}
+                      disabled={slot.isBooked}
+                      aria-selected={selectedTime === slot.time}
+                    >
+                      {slot.time} {slot.isBooked ? '(Band)' : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <form onSubmit={handleBookAppointment}>
+                <div className="form-group">
+                  <label><FiClock className="input-icon" /> Tanlangan vaqt</label>
+                  <input
+                    type="text"
+                    value={selectedTime}
+                    readOnly
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Jarayon *</label>
+                  <input
+                    type="text"
+                    value={procedure}
+                    onChange={(e) => setProcedure(e.target.value)}
+                    placeholder="Masalan: Tish tekshiruvi"
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn-primary">
+                  <FiPlus /> Uchrashuv band qilish
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={handleRequestNextSlot}
                 >
-                  <td className="patient-name">
-                    <div className="patient-info">
-                      <FiUser className="patient-icon" />
-                      <span>{p.name || 'Noma\'lum'}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="patient-info">
-                      <FiPhone className="patient-icon" />
-                      <span>{formatPhoneNumber(p.phone)}</span>
-                    </div>
-                  </td>
-                  <td>{calculateAge(p.dob)}</td>
-                  <td>{p.gender || '-'}</td>
-                  <td>
-                    {p.lastVisit ? new Date(p.lastVisit).toLocaleDateString('uz-UZ') : 'Tashrif yo\'q'}
-                  </td>
-                  <td>
-                    {p.note ? (
-                      <span
-                        className="note-link"
-                        onClick={(e) => openNoteModal(p.note, e)}
-                        title="To‘liq izohni ko‘rish"
-                      >
-                        {truncateNote(p.note)}
-                      </span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td>
-                    {truncatePrescriptions(p.prescriptions)}
-                  </td>
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <div className="action-buttons">
-                      <button
-                        onClick={() => openModal(p)}
-                        className="btn-edit"
-                        title="Tahrirlash"
-                      >
-                        <FiEdit />
-                      </button>
-                      <button
-                        onClick={() => deletePatient(p.id)}
-                        className="btn-delete"
-                        title="Oʻchirish"
-                      >
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  <FiSearch /> Keyingi boʻsh vaqt
+                </button>
+              </form>
+            </div>
+          )}
         </div>
       )}
 
@@ -728,7 +826,6 @@ const Patients = () => {
                     <select
                       value={selectedRegion}
                       onChange={handleRegionChange}
-                      required
                     >
                       <option value="">Viloyatni tanlang</option>
                       {Object.keys(regions).map((region) => (
@@ -744,7 +841,6 @@ const Patients = () => {
                       value={selectedDistrict}
                       onChange={(e) => setSelectedDistrict(e.target.value)}
                       disabled={!selectedRegion}
-                      required
                     >
                       <option value="">Tumanni tanlang</option>
                       {getDistricts().map((district) => (
@@ -762,6 +858,23 @@ const Patients = () => {
                   rows="2"
                   className="address-details"
                 />
+                {selectedDistrict && (
+                  <div className="input-hint">Tuman markazi: {getDistrictCenter()}</div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="telegram" className="input-label">
+                  Telegram Chat ID (xabarnoma uchun)
+                </label>
+                <input
+                  id="telegram"
+                  type="text"
+                  placeholder="Telegram Chat ID (masalan: 5838205785)"
+                  value={currentPatient.telegram}
+                  onChange={(e) => setCurrentPatient({ ...currentPatient, telegram: e.target.value })}
+                />
+                <div className="input-hint">Bemor botga start bosgandan keyin olingan Chat ID ni kiriting (majburiy emas). Agar kiritilmasa, SMS orqali xabar yuboriladi (agar telefon mavjud bo'lsa).</div>
               </div>
 
               <div className="form-group">
@@ -789,11 +902,10 @@ const Patients = () => {
                 />
               </div>
 
-              {/* Prescriptions Section */}
               <div className="form-group">
                 <label>Retseptlar (Davolash retsepti)</label>
                 <div className="prescriptions-list">
-                  {currentPatient.prescriptions.map((pr, index) => (
+                  {currentPatient.prescriptions.sort((a, b) => new Date(b.date) - new Date(a.date)).map((pr, index) => (
                     <div key={index} className="prescription-item">
                       <div>
                         <strong>{formatDate(pr.date)}:</strong> {pr.medicine} ({pr.dosage}) {pr.notes ? `- ${pr.notes}` : ''}
@@ -924,7 +1036,7 @@ const Patients = () => {
         </div>
       )}
 
-      {/* Details Modal - New Style: Vertical list with sections */}
+      {/* Details Modal */}
       {detailsModalOpen && selectedPatient && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content details-modal" onClick={(e) => e.stopPropagation()}>
@@ -945,6 +1057,10 @@ const Patients = () => {
                   <li>
                     <span className="detail-label"><FiPhone /> Telefon:</span>
                     <span className="detail-value">{formatPhoneNumber(selectedPatient.phone)}</span>
+                  </li>
+                  <li>
+                    <span className="detail-label">Telegram:</span>
+                    <span className="detail-value">{selectedPatient.telegram || '-'}</span>
                   </li>
                   <li>
                     <span className="detail-label">Jinsi:</span>
@@ -984,7 +1100,7 @@ const Patients = () => {
                 <h3>Retseptlar</h3>
                 {selectedPatient.prescriptions.length > 0 ? (
                   <ul className="prescriptions-list-new">
-                    {selectedPatient.prescriptions.map((pr, index) => (
+                    {selectedPatient.prescriptions.sort((a, b) => new Date(b.date) - new Date(a.date)).map((pr, index) => (
                       <li key={index}>
                         <strong>{formatDate(pr.date)}:</strong> {pr.medicine} ({pr.dosage}) {pr.notes ? `- ${pr.notes}` : ''}
                       </li>

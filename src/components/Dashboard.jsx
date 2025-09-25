@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FiUsers, FiCalendar, FiPackage, FiDownload, FiPlusCircle } from 'react-icons/fi';
 import { AppContext } from '../App';
-import CountUp from 'react-countup'; // Hisoblagich animatsiyasi uchun
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -46,33 +45,16 @@ const Dashboard = () => {
 
   return (
     <div className={`dashboard ${darkMode ? 'dark' : ''}`}>
-<<<<<<< HEAD
-      <div className="page-header">
-        <h1>Bosh Sahifa (Admin)</h1>
-=======
       <div className="dashboard-header">
         <h1>Bosh Sahifa</h1>
         <button onClick={exportQuickReport} className="export-btn">
           <FiDownload /> Hisobotni Yuklab Olish
         </button>
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
       </div>
 
       {/* Statistikalar */}
       <div className="stats-grid">
         <div className="stat-card">
-<<<<<<< HEAD
-          <FiUsers className="stat-icon" />
-          <h3>Bemorlar</h3>
-          <p>
-            <CountUp
-              end={patients.length}
-              duration={2.5} // Animatsiya davomiyligi (sekundlarda)
-              separator=" " // Raqamlarni formatlash (masalan, 1000 -> 1 000)
-              suffix=" ta" // Oxiriga "ta" so‘zini qo‘shish
-            />
-          </p>
-=======
           <div className="stat-icon-container">
             <FiUsers className="stat-icon" />
           </div>
@@ -83,22 +65,9 @@ const Dashboard = () => {
           <Link to="/bemorlar" className="stat-link">
             <FiPlusCircle />
           </Link>
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
         </div>
         
         <div className="stat-card">
-<<<<<<< HEAD
-          <FiCalendar className="stat-icon" />
-          <h3>Uchrashuvlar</h3>
-          <p>
-            <CountUp
-              end={appointments.length}
-              duration={2.5}
-              separator=" "
-              suffix=" ta"
-            />
-          </p>
-=======
           <div className="stat-icon-container">
             <FiCalendar className="stat-icon" />
           </div>
@@ -109,22 +78,9 @@ const Dashboard = () => {
           <Link to="/uchrashuvlar" className="stat-link">
             <FiPlusCircle />
           </Link>
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
         </div>
         
         <div className="stat-card">
-<<<<<<< HEAD
-          <FiPackage className="stat-icon" />
-          <h3>Dorilar</h3>
-          <p>
-            <CountUp
-              end={medications.length}
-              duration={2.5}
-              separator=" "
-              suffix=" ta"
-            />
-          </p>
-=======
           <div className="stat-icon-container">
             <FiPackage className="stat-icon" />
           </div>
@@ -145,7 +101,6 @@ const Dashboard = () => {
             <h3>Bugungi Uchrashuvlar</h3>
             <p>{todayAppointments.length} ta</p>
           </div>
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
         </div>
       </div>
 
@@ -198,102 +153,7 @@ const Dashboard = () => {
             )}
           </div>
         </div>
- 
-      {/* Bugungi Uchrashuvlar */}
-      <div className="today-appointments">
-        <h2>Bugungi Uchrashuvlar</h2>
-        {todayAppointments.length === 0 ? (
-          <p>Bugun uchun uchrashuvlar yo‘q</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Bemor</th>
-                <th>Vaqt</th>
-                <th>Jarayon</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todayAppointments.map((a) => (
-                <tr key={a.id}>
-                  <td>{getPatientName(a.patientId)}</td>
-                  <td>{a.time || '-'}</td>
-                  <td>{a.procedure || '-'}</td>
-                  <td>{a.status || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
 
-      {/* So‘nggi Uchrashuvlar */}
-      <div className="recent-appointments">
-        <h2>So‘nggi Uchrashuvlar</h2>
-        {recentAppointments.length === 0 ? (
-          <p>Hali uchrashuvlar yo‘q</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Bemor</th>
-                <th>Sana</th>
-                <th>Vaqt</th>
-                <th>Jarayon</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentAppointments.map((a) => (
-                <tr key={a.id}>
-                  <td>{getPatientName(a.patientId)}</td>
-                  <td>{a.date ? new Date(a.date).toLocaleDateString('uz-UZ') : '-'}</td>
-                  <td>{a.time || '-'}</td>
-                  <td>{a.procedure || '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {/* Kam Qoldiq Dorilar */}
-      <div className="low-stock-medications">
-        <h2>Kam Qoldiq Dorilar</h2>
-        {lowStockMedications.length === 0 ? (
-          <p>Kam qoldiq dorilar yo‘q</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Nomi</th>
-                <th>Miqdori</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lowStockMedications.map((m) => (
-                <tr key={m.id}>
-                  <td>{m.name}</td>
-                  <td className="low-stock">
-                    <CountUp
-                      end={m.quantity}
-                      duration={2}
-                      separator=" "
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {/* Tezkor Hisobot */}
-      <div className="quick-report">
-        <button onClick={exportQuickReport} className="btn-primary">
-          <FiDownload /> Tezkor Hisobotni Yuklab Olish
-        </button>
-=======
         {/* O'ng ustun */}
         <div className="content-column">
           {/* So'nggi Uchrashuvlar */}
@@ -344,7 +204,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
       </div>
     </div>
   );

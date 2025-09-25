@@ -1,7 +1,12 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import { FiSearch, FiPlus, FiEdit, FiTrash2, FiBriefcase, FiClock, FiUser, FiPhone, FiCalendar, FiX } from 'react-icons/fi';
 import { AppContext } from '../App';
 import './Staff.css';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+// Register Chart.js components
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 const Staff = () => {
   const { staff, setStaff, darkMode } = useContext(AppContext);
@@ -13,7 +18,7 @@ const Staff = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [filterRole, setFilterRole] = useState('');
 
-  // Xodimlarni qidirish va filtrlash
+  // Filtered staff
   const filteredStaff = staff.filter(s =>
     (s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -21,14 +26,83 @@ const Staff = () => {
     (filterRole ? s.role === filterRole : true)
   );
 
+  // Calculate monthly salaries for chart
+  const getMonthlySalaries = () => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const salaryData = staff.map(s => {
+      const monthlySalary = calculateMonthlySalary(s);
+      return months.map(() => monthlySalary);
+    });
+
+    return {
+      labels: months,
+      datasets: staff.map((s, index) => ({
+        label: s.name,
+        data: salaryData[index],
+        backgroundColor: `hsl(${index * 60}, 70%, 50%)`,
+      })),
+    };
+  };
+
+  // Calculate monthly salary for a staff member
+  const calculateMonthlySalary = (staffMember) => {
+    let baseSalary = parseFloat(staffMember.salary) || 0;
+    const shiftMultiplier = staffMember.shift === 'Tungi' ? 1.2 : 1; // 20% increase for night shift
+    return baseSalary * shiftMultiplier;
+  };
+
+  // Calculate daily salary
+  const calculateDailySalary = (staffMember) => {
+    if (staffMember.dailyRate) {
+      const shiftMultiplier = staffMember.shift === 'Tungi' ? 1.2 : 1;
+      return parseFloat(staffMember.dailyRate) * shiftMultiplier;
+    }
+    const monthlySalary = calculateMonthlySalary(staffMember);
+    const workDaysCount = staffMember.workHours?.days?.length || 22; // Default to 22 working days
+    return monthlySalary / workDaysCount;
+  };
+
+  // Individual staff monthly salary breakdown
+  const getIndividualSalaryChart = (staffMember) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlySalary = calculateMonthlySalary(staffMember);
+    const dailySalary = calculateDailySalary(staffMember);
+    const workDaysCount = staffMember.workHours?.days?.length || 22;
+
+    return {
+      labels: months,
+      datasets: [
+        {
+          label: `${staffMember.name} - Oylik Maosh`,
+          data: months.map(() => monthlySalary),
+          backgroundColor: '#4CAF50',
+        },
+        {
+          label: `${staffMember.name} - Kunlik Maosh`,
+          data: months.map(() => dailySalary * workDaysCount),
+          backgroundColor: '#2196F3',
+        },
+      ],
+    };
+  };
+
   const openModal = (staffMember = null) => {
-    setCurrentStaff(staffMember ? { ...staffMember } : {
+    setCurrentStaff(staffMember ? {
+      ...staffMember,
+      workHours: {
+        start: staffMember.workHours?.start || '09:00',
+        end: staffMember.workHours?.end || '18:00',
+        days: Array.isArray(staffMember.workHours?.days) ? [...staffMember.workHours.days] : ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma']
+      }
+    } : {
       id: null,
       name: '',
       role: '',
       phone: '',
       schedule: '',
       notes: '',
+      salary: '',
+      dailyRate: '',
       workHours: { start: '09:00', end: '18:00', days: ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma'] },
       shift: 'Kunduzgi'
     });
@@ -38,7 +112,14 @@ const Staff = () => {
   };
 
   const openViewModal = (staffMember) => {
-    setCurrentStaff(staffMember);
+    setCurrentStaff({
+      ...staffMember,
+      workHours: {
+        start: staffMember.workHours?.start || '09:00',
+        end: staffMember.workHours?.end || '18:00',
+        days: Array.isArray(staffMember.workHours?.days) ? [...staffMember.workHours.days] : []
+      }
+    });
     setViewModalOpen(true);
   };
 
@@ -59,6 +140,23 @@ const Staff = () => {
       setError('Telefon raqami +998XXXXXXXXX formatida bo‘lishi kerak');
       return;
     }
+    if (!currentStaff.salary && !currentStaff.dailyRate) {
+      setError('Oylik yoki kunlik maosh kiritilishi shart');
+      return;
+    }
+    if (currentStaff.salary && isNaN(parseFloat(currentStaff.salary))) {
+      setError('Oylik maosh raqam bo‘lishi kerak');
+      return;
+    }
+    if (currentStaff.dailyRate && isNaN(parseFloat(currentStaff.dailyRate))) {
+      setError('Kunlik maosh raqam bo‘lishi kerak');
+      return;
+    }
+    if (!currentStaff.workHours.days.length) {
+      setError('Kamida bitta ish kuni tanlanishi kerak');
+      return;
+    }
+
     const updated = currentStaff.id
       ? staff.map(s => (s.id === currentStaff.id ? currentStaff : s))
       : [...staff, { ...currentStaff, id: Date.now() }];
@@ -78,18 +176,20 @@ const Staff = () => {
     }
   };
 
-  // Ish soatlari va kunlarini boshqarish
   const handleWorkDaysChange = (day) => {
-    const updatedDays = currentStaff.workHours.days.includes(day)
-      ? currentStaff.workHours.days.filter(d => d !== day)
-      : [...currentStaff.workHours.days, day];
-    
-    setCurrentStaff({
-      ...currentStaff,
-      workHours: {
-        ...currentStaff.workHours,
-        days: updatedDays
-      }
+    setCurrentStaff(prev => {
+      const currentDays = Array.isArray(prev.workHours?.days) ? [...prev.workHours.days] : [];
+      const updatedDays = currentDays.includes(day)
+        ? currentDays.filter(d => d !== day)
+        : [...currentDays, day];
+      
+      return {
+        ...prev,
+        workHours: {
+          ...prev.workHours,
+          days: updatedDays
+        }
+      };
     });
   };
 
@@ -132,6 +232,29 @@ const Staff = () => {
         </button>
       </div>
 
+      {/* Monthly Salary Chart */}
+      {staff.length > 0 && (
+        <div className="chart-container">
+          <h3>Oylik Maoshlar (Umumiy)</h3>
+          <Bar
+            data={getMonthlySalaries()}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: 'Xodimlar Oylik Maoshlari' },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: { display: true, text: 'Maosh (UZS)' },
+                },
+              },
+            }}
+          />
+        </div>
+      )}
+
       {filteredStaff.length === 0 ? (
         <div className="empty-state">
           {searchTerm || filterRole ? (
@@ -162,6 +285,8 @@ const Staff = () => {
                 <th>Telefon</th>
                 <th>Ish soatlari</th>
                 <th>Navbatchilik</th>
+                <th>Oylik Maosh</th>
+                <th>Kunlik Maosh</th>
                 <th>Amallar</th>
               </tr>
             </thead>
@@ -193,6 +318,8 @@ const Staff = () => {
                       {s.shift || '-'}
                     </div>
                   </td>
+                  <td>{new Intl.NumberFormat('uz-UZ', { style: 'currency', currency: 'UZS' }).format(calculateMonthlySalary(s))}</td>
+                  <td>{new Intl.NumberFormat('uz-UZ', { style: 'currency', currency: 'UZS' }).format(calculateDailySalary(s))}</td>
                   <td>
                     <div className="action-buttons">
                       <button onClick={(e) => { e.stopPropagation(); openModal(s); }} className="btn-edit" title="Tahrirlash">
@@ -251,7 +378,24 @@ const Staff = () => {
                   placeholder="+998901234567"
                 />
               </div>
-              
+              <div className="form-group">
+                <label>Oylik Maosh (UZS)</label>
+                <input
+                  type="number"
+                  value={currentStaff.salary}
+                  onChange={(e) => setCurrentStaff({ ...currentStaff, salary: e.target.value })}
+                  placeholder="Masalan: 4000000"
+                />
+              </div>
+              <div className="form-group">
+                <label>Kunlik Maosh (UZS, ixtiyoriy)</label>
+                <input
+                  type="number"
+                  value={currentStaff.dailyRate}
+                  onChange={(e) => setCurrentStaff({ ...currentStaff, dailyRate: e.target.value })}
+                  placeholder="Masalan: 200000"
+                />
+              </div>
               <div className="form-group">
                 <label>Ish soatlari</label>
                 <div className="time-inputs">
@@ -280,9 +424,8 @@ const Staff = () => {
                   />
                 </div>
               </div>
-              
               <div className="form-group">
-                <label>Ish kunlari</label>
+                <label>Ish kunlari *</label>
                 <div className="days-selector">
                   {['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'].map(day => (
                     <label key={day} className="day-checkbox">
@@ -296,7 +439,6 @@ const Staff = () => {
                   ))}
                 </div>
               </div>
-              
               <div className="form-group">
                 <label>Navbatchilik</label>
                 <select
@@ -308,7 +450,6 @@ const Staff = () => {
                   <option value="Tungi">Tungi</option>
                 </select>
               </div>
-              
               <div className="form-group">
                 <label>Izoh</label>
                 <textarea
@@ -333,7 +474,6 @@ const Staff = () => {
               <h2>Xodim Ma'lumotlari</h2>
               <button type="button" onClick={closeModal} className="close-button">&times;</button>
             </div>
-            
             <div className="staff-detail-content">
               <div className="staff-detail-header">
                 <div className="staff-avatar">
@@ -344,7 +484,6 @@ const Staff = () => {
                   <p className="staff-role">{currentStaff.role}</p>
                 </div>
               </div>
-              
               <div className="staff-detail-section">
                 <h4>Aloqa Ma'lumotlari</h4>
                 <div className="detail-item">
@@ -352,23 +491,24 @@ const Staff = () => {
                   <span>{currentStaff.phone || 'Telefon raqami kiritilmagan'}</span>
                 </div>
               </div>
-              
               <div className="staff-detail-section">
                 <h4>Ish Jadvali</h4>
                 <div className="detail-item">
                   <FiClock className="detail-icon" />
                   <span>{currentStaff.workHours ? `${currentStaff.workHours.start} - ${currentStaff.workHours.end}` : (currentStaff.schedule || 'Jadval kiritilmagan')}</span>
                 </div>
-                
                 <div className="detail-item">
                   <FiCalendar className="detail-icon" />
                   <div className="work-days">
-                    {currentStaff.workHours?.days?.map(day => (
-                      <span key={day} className="day-tag">{day}</span>
-                    )) || 'Ish kunlari belgilanmagan'}
+                    {currentStaff.workHours?.days?.length > 0 ? (
+                      currentStaff.workHours.days.map(day => (
+                        <span key={day} className="day-tag">{day}</span>
+                      ))
+                    ) : (
+                      'Ish kunlari belgilanmagan'
+                    )}
                   </div>
                 </div>
-                
                 <div className="detail-item">
                   <span className="detail-label">Navbatchilik:</span>
                   <span className={`shift-tag ${currentStaff.shift?.toLowerCase()}`}>
@@ -376,15 +516,43 @@ const Staff = () => {
                   </span>
                 </div>
               </div>
-              
+              <div className="staff-detail-section">
+                <h4>Maosh Ma'lumotlari</h4>
+                <div className="detail-item">
+                  <span className="detail-label">Oylik Maosh:</span>
+                  <span>{new Intl.NumberFormat('uz-UZ', { style: 'currency', currency: 'UZS' }).format(calculateMonthlySalary(currentStaff))}</span>
+                </div>
+                <div className="detail-item">
+                  <span className="detail-label">Kunlik Maosh:</span>
+                  <span>{new Intl.NumberFormat('uz-UZ', { style: 'currency', currency: 'UZS' }).format(calculateDailySalary(currentStaff))}</span>
+                </div>
+              </div>
               {currentStaff.notes && (
                 <div className="staff-detail-section">
                   <h4>Qo'shimcha Izohlar</h4>
                   <p className="staff-notes">{currentStaff.notes}</p>
                 </div>
               )}
+              <div className="chart-container">
+                <h4>{currentStaff.name} - Maosh Grafiki</h4>
+                <Bar
+                  data={getIndividualSalaryChart(currentStaff)}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: { position: 'top' },
+                      title: { display: true, text: `${currentStaff.name} - Oylik va Kunlik Maosh` },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        title: { display: true, text: 'Maosh (UZS)' },
+                      },
+                    },
+                  }}
+                />
+              </div>
             </div>
-            
             <div className="modal-actions">
               <button onClick={() => { setViewModalOpen(false); openModal(currentStaff); }} className="btn-primary">
                 <FiEdit /> Tahrirlash

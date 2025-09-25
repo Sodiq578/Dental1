@@ -1,0 +1,133 @@
+.spinner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.dental-animation {
+  width: 80px;
+  height: 60px;
+  animation: extractionPulse 1s ease-in-out infinite;
+}
+
+.patient-head {
+  animation: patientWince 1.5s ease-in-out infinite;
+}
+
+.patient-eye-left,
+.patient-eye-right {
+  animation: eyeBlink 2s ease-in-out infinite;
+}
+
+.patient-mouth {
+  animation: mouthOpen 1.2s ease-in-out infinite;
+}
+
+.tooth-body {
+  animation: toothExtract 1s ease-in-out infinite;
+}
+
+.tooth-root {
+  animation: rootPull 1s ease-in-out infinite;
+}
+
+.extraction-tool {
+  animation: toolRotate 0.8s linear infinite;
+}
+
+.pain-line {
+  animation: painWave 1s ease-in-out infinite;
+}
+
+/* Animatsiya kalitlari */
+@keyframes extractionPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes patientWince {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); } /* Bemorning boshini silkitish */
+}
+
+@keyframes eyeBlink {
+  0%, 90% { r: 2; }
+  95% { r: 1; } /* Ko'z qisish */
+  100% { r: 2; }
+}
+
+@keyframes mouthOpen {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.5); } /* Og'iz ochilishi */
+}
+
+@keyframes toothExtract {
+  0% { y: 35; }
+  50% { y: 30; transform: skewX(10deg); } /* Tish chiqarilishi */
+  100% { y: 35; }
+}
+
+@keyframes rootPull {
+  0% { width: 0; }
+  50% { width: 5; x: 15; } /* Ildiz tortilishi */
+  100% { width: 0; }
+}
+
+@keyframes toolRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); } /* Asbob aylanishi */
+}
+
+@keyframes painWave {
+  0% { stroke-dasharray: 5,5; stroke-dashoffset: 0; }
+  50% { stroke-dashoffset: 10; opacity: 0.5; }
+  100% { stroke-dashoffset: 0; opacity: 1; } /* Og'riq to'lqini */
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+.dark .loading-overlay {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.dark .patient-head { fill: #f39c12; }
+.dark .patient-body { fill: #e67e22; }
+.dark .tooth-body { fill: #bdc3c7; }
+.dark .tooth-root { fill: #95a5a6; }
+.dark .extraction-tool { fill: #74b9ff; }
+.dark .pain-line { stroke: #e74c3c; }
+
+.spinner-text {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+.dark .spinner-text {
+  color: #f0f0f0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

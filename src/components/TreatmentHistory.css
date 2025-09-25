@@ -312,7 +312,7 @@ thead tr {
 
 th {
   padding: 16px;
-  text-align: left;
+ 
   font-weight: 600;
   color: var(--text-color);
   border-bottom: 2px solid var(--border-color);

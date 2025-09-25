@@ -51,7 +51,7 @@ body {
     line-height: 1.6;
     color: var(--gray-800);
     background-color: var(--gray-100);
-    padding: 20px;
+    padding: 0px;
     transition: var(--transition);
 }
 
@@ -193,11 +193,7 @@ table {
     border-collapse: collapse;
 }
 
-th, td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--gray-200);
-}
+ 
 
 th {
     background-color: var(--gray-100);
@@ -356,3 +352,50 @@ tr:hover {
     color: var(--gray-800);
     background-color: var(--gray-100);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

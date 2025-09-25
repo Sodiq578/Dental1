@@ -1,211 +1,267 @@
-*{
-    margin: 0 ;
-    padding: 0;
-}
-
-body{
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-}
-
-/* Login.css - Dental temaga mos: oq va ko'k ranglar, yumshoq gradientlar, orqa fon dental rasm (berilgan havola), zamonaviy animatsiyalar, desktop uchun responsive va chiroyli */
 .login-container {
-    width: 100%;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url('https://images.unsplash.com/photo-1643660526741-094639fbe53a?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
   position: relative;
-  padding: 0;
-}
-
- 
-.login-form-wrapper {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 400px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 20px;
 }
 
-.login-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 2rem;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+.login-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('https://t4.ftcdn.net/jpg/05/41/06/39/360_F_541063985_DM2hM99qpcfNLFOIeSDI3zyJRHLlm8ik.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.1;
+  z-index: -1;
 }
 
-.login-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+.login-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 123, 255, 0.1);
+  width: 100%;
+  max-width: 450px;
+  animation: slideUp 0.6s ease-out;
+  border: 1px solid #e3f2fd;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
 }
 
 .login-title {
-  font-size: 2rem;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #2c3e50;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #1976d2;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  text-shadow: 0 2px 4px rgba(25, 118, 210, 0.1);
 }
 
-.error-message {
-  color: #e74c3c;
-  text-align: center;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  animation: shake 0.5s ease-in-out;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+.login-subtitle {
+  color: #666;
+  font-size: 1.1rem;
+  margin: 0;
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 20px;
 }
 
-.input-group {
-  position: relative;
-  margin-bottom: 1rem;
+.form-group {
+  display: flex;
+  flex-direction: column;
 }
 
-.input-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #3498db;
-  font-size: 1.2rem;
-  z-index: 2;
+.form-group label {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
 }
 
-.input-field {
-  width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
-  border: 2px solid #ecf0f1;
+.form-group input {
+  padding: 15px;
+  border: 2px solid #e0e0e0;
   border-radius: 10px;
   font-size: 1rem;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  background: #fff;
 }
 
-.input-field:focus {
+.form-group input:focus {
   outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-.submit-button {
-  width: 100%;
-  padding: 0.75rem;
-  background: linear-gradient(135deg, #3498db, #2980b9);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
-  margin-top: 0.5rem;
-}
-
-.submit-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2980b9, #3498db);
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
   transform: translateY(-2px);
 }
 
-.submit-button:disabled {
-  background: #bdc3c7;
+.form-group input:hover {
+  border-color: #90caf9;
+}
+
+.token-hint {
+  color: #666;
+  font-size: 0.8rem;
+  margin-top: 5px;
+  text-align: center;
+  font-style: italic;
+}
+
+.login-btn {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(25, 118, 210, 0.3);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+}
+
+.login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 25px;
+  text-align: center;
+}
+
+.switch-mode-btn,
+.token-mode-btn {
+  background: transparent;
+  border: 2px solid #1976d2;
+  color: #1976d2;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.switch-mode-btn:hover,
+.token-mode-btn:hover {
+  background: #1976d2;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.keyboard-shortcuts {
+  margin-top: 30px;
+  padding: 15px;
+  background: #e3f2fd;
+  border-radius: 10px;
+  border-left: 4px solid #1976d2;
+}
+
+.keyboard-shortcuts h4 {
+  color: #1976d2;
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+}
+
+.keyboard-shortcuts p {
+  margin: 5px 0;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.alert {
+  padding: 12px 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.alert-error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.alert-success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 10px;
+  }
+  
+  .login-card {
+    padding: 30px 25px;
+    margin: 10px;
+  }
+  
+  .login-title {
+    font-size: 2rem;
+  }
+  
+  .login-subtitle {
+    font-size: 1rem;
+  }
+  
+  .form-group input {
+    padding: 12px;
+  }
+  
+  .login-btn {
+    padding: 12px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 25px 20px;
+  }
+  
+  .login-title {
+    font-size: 1.8rem;
+  }
+  
+  .keyboard-shortcuts {
+    padding: 12px;
+  }
+  
+  .keyboard-shortcuts h4 {
+    font-size: 0.8rem;
+  }
+  
+  .keyboard-shortcuts p {
+    font-size: 0.75rem;
+  }
+}
+
+/* Loading animation */
+.login-btn:disabled {
+  background: #ccc;
   cursor: not-allowed;
   transform: none;
 }
 
-.toggle-link {
-  text-align: center;
-  margin-top: 1rem;
-  color: #7f8c8d;
-  font-size: 0.9rem;
-}
-
-.toggle-button {
-  background: none;
-  border: none;
-  color: #3498db;
-  cursor: pointer;
-  text-decoration: underline;
-  margin-left: 0.5rem;
-  transition: color 0.3s ease;
-}
-
-.toggle-button:hover {
-  color: #2980b9;
-}
-
-/* Desktop uchun moslashuvchanlik: katta ekranlarda kengroq */
-@media (min-width: 768px) {
-  .login-form-wrapper {
-    padding: 40px;
-  }
-  
-  .login-card {
-    padding: 3rem;
-  }
-  
-  .login-title {
-    font-size: 2.5rem;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-.login-form-wrapper {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 700px; /* oldin 400px edi */
-  padding: 20px;
-}
-
-.login-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 3rem; /* oldin 2rem edi */
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.login-title {
-  font-size: 3rem; /* oldin 2rem edi */
-}
-
-.input-field {
-  font-size: 1.1rem;
-  padding: 1rem 1rem 1rem 3rem;
-}
-
-.submit-button {
-  font-size: 1.2rem;
-  padding: 1rem;
+.login-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
 }

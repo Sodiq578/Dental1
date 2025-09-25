@@ -1,12 +1,8 @@
-<<<<<<< HEAD
-// src/App.jsx
-=======
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
 import React, { useState, useEffect, createContext } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { FiMenu, FiDatabase } from "react-icons/fi";
 
-// Komponentlar
+// Components
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
 import Patients from "./components/Patients";
@@ -21,13 +17,9 @@ import PatientPortal from "./components/PatientPortal";
 import Charting from "./components/Charting";
 import DentalAssistance from "./components/DentalAssistance";
 import Tooth from "./components/ToothCard";
-<<<<<<< HEAD
-import Login from "./pages/Login";
-import UserDashboard from "./pages/UserDashboard";
-=======
 import Login from "./components/Login";
 import UserDashboard from "./components/UserDashboard";
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
+import Spinner from "./adds/Spinner";
 
 // Utils
 import { getFromLocalStorage, saveToLocalStorage, initializeData } from "./utils";
@@ -37,14 +29,16 @@ import "./App.css";
 export const AppContext = createContext();
 
 const App = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [fontSize, setFontSize] = useState(16);
-  const [layout, setLayout] = useState("normal");
+  // State for UI and authentication
+  const [sidebarOpen, setSidebarOpen] = useState(getFromLocalStorage("sidebarOpen", false));
+  const [darkMode, setDarkMode] = useState(getFromLocalStorage("darkMode", false));
+  const [fontSize, setFontSize] = useState(getFromLocalStorage("fontSize", 16));
+  const [layout, setLayout] = useState(getFromLocalStorage("layout", "normal"));
   const [dataLoaded, setDataLoaded] = useState(false);
   const [storageStatus, setStorageStatus] = useState("checking");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Data state
   const [patients, setPatients] = useState([]);
@@ -55,46 +49,54 @@ const App = () => {
   const [staff, setStaff] = useState([]);
   const [users, setUsers] = useState([]);
 
-  // Boshlang‘ich ma’lumotlarni yuklash
+  // Initialize data on mount
   useEffect(() => {
-    try {
-      initializeData();
+    const loadInitialData = async () => {
+      try {
+        initializeData(); // Initialize local storage with default data
 
-      setSidebarOpen(getFromLocalStorage("sidebarOpen", false));
-      setDarkMode(getFromLocalStorage("darkMode", false));
-      setFontSize(getFromLocalStorage("fontSize", 16));
-      setLayout(getFromLocalStorage("layout", "normal"));
-      setPatients(getFromLocalStorage("patients", []));
-      setAppointments(getFromLocalStorage("appointments", []));
-      setMedications(getFromLocalStorage("medications", []));
-      setBillings(getFromLocalStorage("billings", []));
-      setInventory(getFromLocalStorage("inventory", []));
-      setStaff(getFromLocalStorage("staff", []));
-      setUsers(getFromLocalStorage("users", []));
+        // Load state from local storage
+        setSidebarOpen(getFromLocalStorage("sidebarOpen", false));
+        setDarkMode(getFromLocalStorage("darkMode", false));
+        setFontSize(getFromLocalStorage("fontSize", 16));
+        setLayout(getFromLocalStorage("layout", "normal"));
+        setPatients(getFromLocalStorage("patients", []));
+        setAppointments(getFromLocalStorage("appointments", []));
+        setMedications(getFromLocalStorage("medications", []));
+        setBillings(getFromLocalStorage("billings", []));
+        setInventory(getFromLocalStorage("inventory", []));
+        setStaff(getFromLocalStorage("staff", []));
+        setUsers(getFromLocalStorage("users", []));
 
-      const savedUser = getFromLocalStorage("currentUser", null);
-      if (savedUser) {
-        setCurrentUser(savedUser);
-        setIsLoggedIn(true);
-      }
+        // Check for logged-in user
+        const savedUser = getFromLocalStorage("currentUser", null);
+        if (savedUser) {
+          setCurrentUser(savedUser);
+          setIsLoggedIn(true);
+        }
 
-      const testKey = "storage_test";
-      localStorage.setItem(testKey, "test");
-      if (localStorage.getItem(testKey) !== "test") {
+        // Verify localStorage availability
+        const testKey = "storage_test";
+        localStorage.setItem(testKey, "test");
+        if (localStorage.getItem(testKey) !== "test") {
+          setStorageStatus("unavailable");
+        } else {
+          setStorageStatus("available");
+        }
+        localStorage.removeItem(testKey);
+
+        setDataLoaded(true);
+      } catch (error) {
+        console.error("Ma'lumotlarni yuklashda xato:", error);
         setStorageStatus("unavailable");
-      } else {
-        setStorageStatus("available");
+        setDataLoaded(true); // Allow app to render even if there's an error
       }
-      localStorage.removeItem(testKey);
+    };
 
-      setDataLoaded(true);
-    } catch (error) {
-      console.error("Ma'lumotlarni yuklashda xato:", error);
-      setStorageStatus("unavailable");
-    }
+    loadInitialData();
   }, []);
 
-  // O‘zgarishlarni LocalStorage’ga saqlash
+  // Save state changes to localStorage
   useEffect(() => {
     if (!dataLoaded) return;
 
@@ -126,21 +128,24 @@ const App = () => {
     currentUser,
   ]);
 
+  // Toggle sidebar
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
+  // Handle login
   const handleLogin = (userData) => {
     setCurrentUser(userData);
     setIsLoggedIn(true);
     saveToLocalStorage("currentUser", userData);
   };
 
+  // Handle logout
   const handleLogout = () => {
     setCurrentUser(null);
     setIsLoggedIn(false);
     saveToLocalStorage("currentUser", null);
-    window.location.href = "/login"; // Redirect to login after logout
   };
 
+  // Handle storage unavailable
   if (storageStatus === "unavailable") {
     return (
       <div className="storage-error">
@@ -152,11 +157,11 @@ const App = () => {
     );
   }
 
+  // Show loading spinner until data is loaded
   if (!dataLoaded) {
     return (
       <div className="loading-screen">
-        <div className="loading-spinner"></div>
-        <p>Ma'lumotlar yuklanmoqda...</p>
+        <Spinner />
       </div>
     );
   }
@@ -188,22 +193,35 @@ const App = () => {
         currentUser,
         isLoggedIn,
         handleLogout,
+        isLoading,
+        setIsLoading,
         getFromLocalStorage,
-        saveToLocalStorage, // Added for components that need direct access
+        saveToLocalStorage,
       }}
     >
       <Router>
-        <div className={`app ${darkMode ? "dark" : ""}`}>
+        <div className={`app ${darkMode ? "dark" : ""}`} style={{ fontSize: `${fontSize}px` }}>
+          {isLoading && (
+            <div className="loading-overlay">
+              <Spinner />
+            </div>
+          )}
           {!isLoggedIn ? (
             <Routes>
               <Route path="/login" element={<Login onLogin={handleLogin} />} />
-<<<<<<< HEAD
-              <Route path="/bemor-portali" element={<PatientPortal />} /> {/* Public route for PatientPortal */}
-=======
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
+              <Route path="/bemor-portali" element={<PatientPortal />} />
               <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
+          ) : currentUser.role === "patient" ? (
+            // Patient view: No sidebar, only UserDashboard
+            <main className="main-content full-width">
+              <Routes>
+                <Route path="/foydalanuvchi" element={<UserDashboard />} />
+                <Route path="*" element={<Navigate to="/foydalanuvchi" />} />
+              </Routes>
+            </main>
           ) : (
+            // Admin/staff view: Full system with sidebar
             <>
               <button
                 className="menu-btn"
@@ -212,7 +230,6 @@ const App = () => {
               >
                 <FiMenu />
               </button>
-
               <Sidebar
                 isOpen={sidebarOpen}
                 toggleSidebar={toggleSidebar}
@@ -220,13 +237,8 @@ const App = () => {
                 currentUser={currentUser}
                 onLogout={handleLogout}
               />
-
-              <main className="main-content">
+              <main className={`main-content ${sidebarOpen ? "sidebar-open" : ""}`}>
                 <Routes>
-<<<<<<< HEAD
-=======
-                  
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/bemorlar" element={<Patients />} />
                   <Route path="/uchrashuvlar" element={<Appointments />} />
@@ -241,10 +253,7 @@ const App = () => {
                   <Route path="/davolashda-yordam" element={<DentalAssistance />} />
                   <Route path="/tooth" element={<Tooth />} />
                   <Route path="/foydalanuvchi" element={<UserDashboard />} />
-<<<<<<< HEAD
                   <Route path="*" element={<Navigate to="/" />} />
-=======
->>>>>>> b08cf083a51d595f34963d5295124e42b0c68f7e
                 </Routes>
               </main>
             </>

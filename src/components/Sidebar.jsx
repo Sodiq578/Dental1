@@ -11,8 +11,21 @@ import { backupAllData, restoreFromBackup } from '../utils';
 import './Sidebar.css';
 
 const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => { // Added onLogout prop
-  const { setDarkMode, setFontSize, setLayout } = useContext(AppContext);
+  const { setDarkMode, setFontSize, setLayout, setIsLoading } = useContext(AppContext); // setIsLoading qo'shildi
   const location = useLocation();
+
+  // Spinner uchun handleNavClick funksiyasi - 1 soniya ko'rsatib, o'chiradi
+ const handleNavClick = () => {
+  setIsLoading(true);
+  console.log("Sidebar link bosildi, spinner ko'rsatilmoqda"); // Debug uchun
+  const timer = setTimeout(() => {
+    setIsLoading(false);
+    console.log("Spinner tezroq o'chirildi"); // Debug uchun
+  }, 300); // 300 ms (0.3 soniya)
+
+  return () => clearTimeout(timer);
+};
+
 
   const menuItems = [
     { path: '/', icon: <FiHome />, label: 'Bosh sahifa' },
@@ -44,14 +57,17 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => { // Added on
                 <Link 
                   to={item.path} 
                   className={location.pathname === item.path ? 'active' : ''}
-                  onClick={toggleSidebar}
+                  onClick={(e) => {
+                    handleNavClick(); // Spinner ishga tushirish
+                    toggleSidebar(); // Sidebar yopish
+                  }}
                 >
                   {item.icon}
                   <span>{item.label}</span>
                 </Link>
               </li>
             ))}
-            {/* Logout Button */}
+            {/* Logout Button - Spinner qo'shilmagan, chunki login sahifasiga o'tkazadi */}
             <li>
               <button 
                 className="sidebar-logout-btn"

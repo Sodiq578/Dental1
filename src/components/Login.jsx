@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUser, FiLock, FiUserPlus } from "react-icons/fi";
-import { useContext } from "react";
+import { FiUser, FiLock, FiX } from "react-icons/fi";
 import { AppContext } from "../App";
+import "./Login.css";
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState("patient"); // Default role: patient
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: "", message: "" });
   const navigate = useNavigate();
   const { users, setUsers } = useContext(AppContext);
 
@@ -19,14 +22,27 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
     setError("");
 
-    const user = users.find((u) => u.email === email && u.password === password);
-    if (user) {
-      onLogin(user);
-      navigate("/foydalanuvchi");
-    } else {
-      setError("Noto'g'ri email yoki parol");
-    }
-    setIsLoading(false);
+    setTimeout(() => {
+      const user = users.find((u) => u.email === email && u.password === password);
+      if (user) {
+        onLogin(user);
+        setModalContent({
+          title: "Muvaffaqiyatli kirish",
+          message: "Tizimga muvaffaqiyatli kirdingiz!",
+        });
+        setShowModal(true);
+        setTimeout(() => {
+          if (user.role === "patient") {
+            navigate("/foydalanuvchi"); // Mijoz uchun shaxsiy kabinet
+          } else {
+            navigate("/"); // Xodim/admin uchun dashboard
+          }
+        }, 1500);
+      } else {
+        setError("Noto‘g‘ri email yoki parol. Agar tizimga kira olmasangiz, token orqali kirish uchun adminga murojaat qiling.");
+      }
+      setIsLoading(false);
+    }, 1000);
   };
 
   const handleRegister = (e) => {
@@ -34,24 +50,38 @@ const Login = ({ onLogin }) => {
     setIsLoading(true);
     setError("");
 
-    if (users.find((u) => u.email === email)) {
-      setError("Bu email allaqachon ro'yxatdan o'tgan");
-      setIsLoading(false);
-      return;
-    }
+    setTimeout(() => {
+      if (users.find((u) => u.email === email)) {
+        setError("Bu email allaqachon ro‘yxatdan o‘tgan");
+        setIsLoading(false);
+        return;
+      }
 
-    const newUser = {
-      id: users.length + 1,
-      name,
-      email,
-      password,
-      patientId: users.length + 1,
-    };
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    onLogin(newUser);
-    navigate("/foydalanuvchi");
-    setIsLoading(false);
+      const newUser = {
+        id: users.length + 1,
+        name,
+        email,
+        password,
+        role, // Role saqlanadi
+        patientId: role === "patient" ? users.length + 1 : null, // Faqat mijoz uchun patientId
+      };
+      const updatedUsers = [...users, newUser];
+      setUsers(updatedUsers);
+      onLogin(newUser);
+      setModalContent({
+        title: "Muvaffaqiyatli ro‘yxatdan o‘tish",
+        message: "Hisobingiz muvaffaqiyatli yaratildi va tizimga kirdingiz!",
+      });
+      setShowModal(true);
+      setTimeout(() => {
+        if (newUser.role === "patient") {
+          navigate("/foydalanuvchi"); // Mijoz uchun shaxsiy kabinet
+        } else {
+          navigate("/"); // Xodim/admin uchun dashboard
+        }
+      }, 1500);
+      setIsLoading(false);
+    }, 1000);
   };
 
   const toggleMode = () => {
@@ -60,69 +90,117 @@ const Login = ({ onLogin }) => {
     setEmail("");
     setPassword("");
     setName("");
+    setRole("patient"); // Har safar rejim o'zgarganda patient default bo'ladi
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">
-          {isRegisterMode ? "Ro'yxatdan o'tish" : "Kirish"}
-        </h2>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+    <div className="login-page">
+      <div className="login-card">
+        <h2 className="login-title">{isRegisterMode ? "Ro‘yxatdan o‘tish" : "Mijoz sifatida kirish"}</h2>
+        {error && <div className="alert-error">{error}</div>}
         <form onSubmit={isRegisterMode ? handleRegister : handleLogin}>
           {isRegisterMode && (
-            <div className="mb-4 relative">
-              <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Ism"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                required
-              />
-            </div>
+            <>
+              <div className="input-group">
+                <FiUser className="input-icon" />
+                <input
+                  type="text"
+                  placeholder="Ism"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
+              {/* Role tanlash: Mijoz default bo'ladi */}
+              <div className="role-selection">
+                <h4>Bo'limni tanlang:</h4>
+                <label>
+                  <input
+                    type="radio"
+                    value="patient"
+                    checked={role === "patient"}
+                    onChange={(e) => setRole(e.target.value)}
+                  />
+                  Mijoz sifatida (shaxsiy kabinet)
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    value="staff"
+                    checked={role === "staff"}
+                    onChange={(e) => setRole(e.target.value)}
+                  />
+                  Xodim sifatida (to'liq tizim)
+                </label>
+              </div>
+            </>
           )}
-          <div className="mb-4 relative">
-            <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+          <div className="input-group">
+            <FiUser className="input-icon" />
             <input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="input-field"
               required
             />
           </div>
-          <div className="mb-6 relative">
-            <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+          <div className="input-group">
+            <FiLock className="input-icon" />
             <input
               type="password"
               placeholder="Parol"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="input-field"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:bg-indigo-400"
+            className="submit-button"
             disabled={isLoading}
           >
-            {isLoading ? "Yuklanmoqda..." : isRegisterMode ? "Ro'yxatdan o'tish" : "Kirish"}
+            {isLoading ? (
+              <div className="loading-spinner">
+                Yuklanmoqda...
+              </div>
+            ) : isRegisterMode ? "Ro‘yxatdan o‘tish" : "Kirish"}
           </button>
         </form>
-        <p className="text-center mt-4">
-          {isRegisterMode ? "Allaqachon hisobingiz bormi?" : "Hisobingiz yo'qmi?"}
-          <button
-            onClick={toggleMode}
-            className="text-indigo-600 hover:underline ml-1"
-          >
-            {isRegisterMode ? "Kirish" : "Ro'yxatdan o'tish"}
+        <p className="toggle-text">
+          {isRegisterMode ? "Allaqachon hisobingiz bormi?" : "Hisobingiz yo‘qmi?"}
+          <button onClick={toggleMode} className="toggle-button">
+            {isRegisterMode ? "Kirish" : "Ro‘yxatdan o‘tish"}
           </button>
         </p>
       </div>
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>{modalContent.title}</h2>
+              <button className="modal-close" onClick={closeModal}>
+                <FiX />
+              </button>
+            </div>
+            <div className="modal-content">
+              <p>{modalContent.message}</p>
+            </div>
+            <div className="modal-footer">
+              <button className="modal-btn modal-btn-cancel" onClick={closeModal}>
+                Yopish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
