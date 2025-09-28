@@ -45,16 +45,6 @@
     box-sizing: border-box;
 }
 
-body {
-    font-family: var(--font-family);
-    font-size: var(--base-font-size);
-    line-height: 1.6;
-    color: var(--gray-800);
-    background-color: var(--gray-100);
-    padding: 0px;
-    transition: var(--transition);
-}
-
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -193,8 +183,6 @@ table {
     border-collapse: collapse;
 }
 
- 
-
 th {
     background-color: var(--gray-100);
     font-weight: 600;
@@ -258,22 +246,22 @@ tr:hover {
 }
 
 .modal-content {
-  background-color: var(--white);
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  width: 100%;
-  max-width: var(--layout-width);
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: fadeIn 0.3s ease;
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    width: 100%;
+    max-width: var(--layout-width);
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: fadeIn 0.3s ease;
 
-  /* Scrollbarni yashirish */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer va Edge */
+    /* Scrollbarni yashirish */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer va Edge */
 }
 
 .modal-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari va Opera */
+    display: none; /* Chrome, Safari va Opera */
 }
 
 .modal-header {
@@ -321,81 +309,3 @@ tr:hover {
 .status.tasdiqlangan { background-color: #d4edda; color: #155724; }
 .status.yakunlangan { background-color: #d1ecf1; color: #0c5460; }
 .status.bekor_qilingan { background-color: #f8d7da; color: #721c24; }
-
-/* ===== DARK MODE ===== */
-.app.dark-mode {
-    --primary-color: #4361ee;
-    --secondary-color: #7bb74f;
-    --accent-color: #ff2e87;
-    --success-color: #38bdf8;
-    --danger-color: #ff6b6b;
-    --warning-color: #ffd166;
-    --info-color: #118ab2;
-    --purple: #9d4edd;
-    --teal: #0db39e;
-    --pink: #ff85a2;
-    --orange: #ffb74d;
-
-    --gray-100: #1a1a1a;
-    --gray-200: #2d2d2d;
-    --gray-300: #404040;
-    --gray-400: #535353;
-    --gray-500: #666666;
-    --gray-600: #858585;
-    --gray-700: #a3a3a3;
-    --gray-800: #c2c2c2;
-    --gray-900: #e0e0e0;
-    --white: #121212;
-    --dark-color: #f8f9fa;
-    --light-color: #2d2d2d;
-
-    color: var(--gray-800);
-    background-color: var(--gray-100);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

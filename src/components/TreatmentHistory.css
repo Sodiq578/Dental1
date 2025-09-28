@@ -1,430 +1,709 @@
- 
-/* TreatmentHistory.css */
+/* TreatmentHistory Komponenti - Zamonaviy Dizayn */
 
-/* CSS Variables - Standardized Color Scheme */
 :root {
-  --primary-color: #2563eb; /* Professional blue for primary actions */
-  --secondary-color: #4b5563; /* Neutral gray for secondary elements */
-  --accent-color: #10b981; /* Green for highlights and success */
-  --error-color: #ef4444; /* Red for errors */
-  --background-color: #f9fafb; /* Light background */
-  --surface-color: #ffffff; /* White for cards and modals */
-  --text-color: #1f2937; /* Dark gray for text */
-  --text-secondary: #6b7280; /* Lighter gray for secondary text */
-  --border-color: #e5e7eb; /* Light border color */
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-  --transition: all 0.2s ease; /* Smooth transitions */
-  --border-radius: 8px; /* Rounded corners */
-  --font-size-base: 16px; /* Base font size */
-  --padding-base: 20px; /* Base padding */
+  /* Asosiy ranglar */
+  --primary-blue: #2563eb;
+  --primary-blue-dark: #1e40af;
+  --primary-blue-light: #3b82f6;
+  
+  /* Yordamchi ranglar */
+  --accent-green: #10b981;
+  --accent-green-dark: #047857;
+  --warning-orange: #f59e0b;
+  --error-red: #ef4444;
+  
+  /* Neytral ranglar */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  /* Oq va qora */
+  --white: #ffffff;
+  --black: #000000;
+  
+  /* Gradientlar */
+  --gradient-primary: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+  --gradient-accent: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark));
+  
+  /* O'lchamlar */
+  --border-radius-sm: 6px;
+  --border-radius: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 24px;
+  
+  /* Shadow effektlar */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  
+  /* Transitionlar */
+  --transition-fast: all 0.15s ease;
+  --transition: all 0.3s ease;
+  --transition-slow: all 0.5s ease;
+  
+  /* Font o'lchamlari */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  
+  /* Paddinglar */
+  --padding-xs: 0.5rem;
+  --padding-sm: 0.75rem;
+  --padding: 1rem;
+  --padding-lg: 1.5rem;
+  --padding-xl: 2rem;
+  --padding-2xl: 3rem;
 }
 
-/* Dark Mode Variables */
-.dark {
-  --primary-color: #60a5fa; /* Lighter blue for dark mode */
-  --secondary-color: #9ca3af; /* Light gray for secondary elements */
-  --accent-color: #34d399; /* Brighter green for dark mode */
-  --error-color: #f87171; /* Lighter red for errors */
-  --background-color: #1f2937; /* Dark background */
-  --surface-color: #374151; /* Darker surface for cards */
-  --text-color: #f3f4f6; /* Light text */
-  --text-secondary: #9ca3af; /* Lighter gray for secondary text */
-  --border-color: #4b5563; /* Darker border */
+/* Dark Mode */
+.dark-mode {
+  --bg-primary: var(--gray-900);
+  --bg-secondary: var(--gray-800);
+  --bg-tertiary: var(--gray-700);
+  --text-primary: var(--gray-100);
+  --text-secondary: var(--gray-300);
+  --text-tertiary: var(--gray-400);
+  --border-color: var(--gray-600);
+  --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
-/* General styles */
-.treatment-history {
-  padding: var(--padding-base);
-  background-color: var(--background-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  max-width: 1200px;
+/* Light Mode */
+:not(.dark-mode) {
+  --bg-primary: var(--white);
+  --bg-secondary: var(--gray-50);
+  --bg-tertiary: var(--gray-100);
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-tertiary: var(--gray-500);
+  --border-color: var(--gray-200);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Umumiy stillar */
+.davolash-tarixi {
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* Konteyner */
+.davolash-tarixi .container {
+  max-width: 1400px;
   margin: 0 auto;
-  min-height: calc(100vh - 80px);
+  padding: 0 var(--padding);
 }
 
-/* Page Header */
-.page-header {
+ 
+ 
+@keyframes float {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-20px, -20px); }
+}
+
+.sarlavha-ichki {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.sarlavha-ichki h1 {
+  font-size: var(--font-size-4xl);
+  font-weight: 800;
+  margin-bottom: var(--padding);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
+  justify-content: center;
+  gap: var(--padding);
 }
 
-.page-header h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--primary-color);
+.sarlavha-ichki p {
+  font-size: var(--font-size-lg);
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 .badge {
-  background-color: var(--accent-color);
-  color: var(--surface-color);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: var(--padding-xs) var(--padding-lg);
+  border-radius: var(--border-radius-xl);
+  font-size: var(--font-size-sm);
   font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Messages */
-.success-message,
-.error-message {
-  padding: 12px 16px;
+/* Asosiy kontent */
+.asosiy-kontent {
+  padding: var(--padding-xl) 0;
+}
+
+/* Filtr va qidiruv paneli */
+.filtr-paneli {
+  background: var(--bg-primary);
+  padding: var(--padding-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--padding-2xl);
+  border: 1px solid var(--border-color);
+}
+
+.filtr-ichki {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--padding-lg);
+  align-items: end;
+}
+
+.qidiruv-guruhi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-xs);
+}
+
+.qidiruv-guruhi label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.qidiruv-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.qidiruv-input input {
+  width: 100%;
+  padding: var(--padding) var(--padding) var(--padding) var(--padding-2xl);
+  border: 2px solid var(--border-color);
   border-radius: var(--border-radius);
-  margin-bottom: 16px;
-  font-size: 14px;
-  text-align: center;
-  font-weight: 500;
+  font-size: var(--font-size-base);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: var(--transition);
 }
 
-.success-message {
-  background-color: var(--accent-color);
-  color: var(--surface-color);
+.qidiruv-input input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.error-message {
-  background-color: var(--error-color);
-  color: var(--surface-color);
+.qidiruv-input .search-icon {
+  position: absolute;
+  left: var(--padding);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-lg);
 }
 
-/* Actions */
-.actions {
+.amal-tugmalari {
+  display: flex;
+  gap: var(--padding);
+}
+
+/* Bemorlar ro'yxati */
+.bemorlar-royxati {
+  margin-bottom: var(--padding-2xl);
+}
+
+.royxat-sarlavha {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  gap: 16px;
+  margin-bottom: var(--padding-lg);
 }
 
-.search-box {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background-color: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  padding: 10px 14px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.royxat-sarlavha h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-.search-icon {
-  color: var(--text-secondary);
-  margin-right: 10px;
-  font-size: 20px;
-}
-
-.search-input {
-  border: none;
-  outline: none;
-  width: 100%;
-  font-size: var(--font-size-base);
-  background-color: transparent;
-  color: var(--text-color);
-}
-
-.search-input::placeholder {
-  color: var(--text-secondary);
-}
-
-.action-buttons-group {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-primary,
-.btn-secondary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: var(--border-radius);
-  font-size: 14px;
-  cursor: pointer;
-  transition: var(--transition);
-  font-weight: 500;
-}
-
-.btn-primary {
-  background-color: var(--primary-color);
-  color: var(--surface-color);
-  border: none;
-}
-
-.btn-primary:hover {
-  background-color: #1d4ed8; /* Darker blue */
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  background-color: var(--secondary-color);
-  color: var(--surface-color);
-  border: none;
-}
-
-.btn-secondary:hover {
-  background-color: #6b7280; /* Darker gray */
-  transform: translateY(-1px);
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 48px;
-  background-color: var(--surface-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-}
-
-.empty-state h3 {
-  font-size: 24px;
-  color: var(--text-color);
-  margin-bottom: 12px;
-  font-weight: 600;
-}
-
-.empty-state p {
-  color: var(--text-secondary);
-  margin-bottom: 20px;
-  font-size: var(--font-size-base);
-}
-
-/* Patient List */
-.patient-list {
+.bemorlar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
-  padding: 0 10px;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--padding-lg);
 }
 
-.patient-card {
-  background-color: var(--surface-color);
+.bemor-karta {
+  background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  border-radius: var(--border-radius-lg);
+  padding: var(--padding-lg);
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: var(--shadow);
-  min-height: 100px;
-  width: 100%;
-  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
 }
 
-.patient-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--primary-color);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+.bemor-karta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary-blue);
+  transition: var(--transition);
 }
 
-.patient-card.selected {
-  border-color: var(--primary-color);
-  background-color: rgba(37, 99, 235, 0.05);
-  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.1);
+.bemor-karta:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-blue);
 }
 
-.patient-icon {
-  color: var(--primary-color);
-  font-size: 24px;
+.bemor-karta.tanlangan {
+  background: linear-gradient(135deg, var(--bg-primary), rgba(37, 99, 235, 0.05));
+  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-md);
+}
+
+.bemor-karta.tanlangan::before {
+  background: var(--accent-green);
+}
+
+.bemor-sarlavha {
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+  margin-bottom: var(--padding);
+}
+
+.bemor-ikon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--border-radius);
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: var(--font-size-xl);
   flex-shrink: 0;
 }
 
-.patient-info {
-  flex: 1;
-}
-
-.patient-info h3 {
-  font-size: 18px;
+.bemor-malumot h3 {
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  color: var(--text-color);
-  margin: 0 0 8px;
-  line-height: 1.4;
+  margin: 0 0 var(--padding-xs) 0;
+  color: var(--text-primary);
 }
 
-.patient-info p {
-  font-size: 14px;
+.bemor-malumot p {
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  margin: 4px 0;
-  line-height: 1.4;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--padding-xs);
 }
 
-/* History Modal */
-.history-modal {
-  background-color: var(--surface-color);
-  border-radius: var(--border-radius);
-  padding: 24px;
-  box-shadow: var(--shadow);
-  margin-top: 24px;
-  max-width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
+.bemor-statistika {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--padding);
+  margin-top: var(--padding);
+  padding-top: var(--padding);
+  border-top: 1px solid var(--border-color);
 }
 
-.modal-header {
+.stat-element {
+  text-align: center;
+}
+
+.stat-raqam {
+  display: block;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--primary-blue);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: var(--padding-xs);
+}
+
+/* Tarix modal oynasi */
+.tarix-modal {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-color);
+  animation: modalOpen 0.3s ease-out;
+}
+
+@keyframes modalOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-sarlavha {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: var(--padding-lg);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
 }
 
-.modal-header h2 {
-  font-size: 26px;
-  color: var(--primary-color);
+.modal-sarlavha h2 {
+  font-size: var(--font-size-2xl);
   font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
 }
 
-.close-button {
+.yopish-tugmasi {
   background: none;
   border: none;
-  font-size: 30px;
-  color: var(--text-secondary);
+  font-size: var(--font-size-2xl);
+  color: var(--text-tertiary);
   cursor: pointer;
+  padding: var(--padding-xs);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  line-height: 1;
+}
+
+.yopish-tugmasi:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.modal-tanasi {
+  padding: var(--padding-lg);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Jadval dizayni */
+.jadval-konteyner {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.tarix-jadval {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+}
+
+.tarix-jadval thead {
+  background: var(--bg-tertiary);
+}
+
+.tarix-jadval th {
+  padding: var(--padding);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.tarix-jadval td {
+  padding: var(--padding);
+  border-bottom: 1px solid var(--border-color);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+.tarix-jadval tbody tr {
   transition: var(--transition);
 }
 
-.close-button:hover {
-  color: var(--text-color);
+.tarix-jadval tbody tr:hover {
+  background: var(--bg-secondary);
 }
 
-.no-history {
-  text-align: center;
-  font-size: var(--font-size-base);
-  color: var(--text-secondary);
-  padding: 20px;
+.tarix-jadval tbody tr:last-child td {
+  border-bottom: none;
 }
 
-/* Table */
-.table-container {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-thead tr {
-  background-color: var(--background-color);
-}
-
-th {
-  padding: 16px;
- 
+/* Status badge */
+.holat-badge {
+  padding: var(--padding-xs) var(--padding);
+  border-radius: var(--border-radius-xl);
+  font-size: var(--font-size-xs);
   font-weight: 600;
-  color: var(--text-color);
-  border-bottom: 2px solid var(--border-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.holat-yakunlangan {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent-green);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.holat-kutilmoqda {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--warning-orange);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.holat-bekor {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error-red);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Bo'sh holat */
+.bosh-holat {
+  text-align: center;
+  padding: var(--padding-2xl);
+  color: var(--text-tertiary);
+}
+
+.bosh-holat .bosh-ikon {
+  font-size: 4rem;
+  color: var(--border-color);
+  margin-bottom: var(--padding);
+  opacity: 0.5;
+}
+
+.bosh-holat h3 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--padding-xs);
+  color: var(--text-secondary);
+}
+
+.bosh-holat p {
   font-size: var(--font-size-base);
+  margin: 0;
 }
 
-td {
-  padding: 16px;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-color);
+/* Tugmalar */
+.tugma {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--padding-xs);
+  padding: var(--padding) var(--padding-lg);
+  border: none;
+  border-radius: var(--border-radius);
   font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
 }
 
-tr:hover {
-  background-color: var(--background-color);
+.tugma::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: var(--transition);
 }
 
-/* Modal Overlay */
+.tugma:hover::before {
+  left: 100%;
+}
+
+.tugma-birlamchi {
+  background: var(--gradient-primary);
+  color: var(--white);
+}
+
+.tugma-birlamchi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.tugma-ikkilamchi {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.tugma-ikkilamchi:hover {
+  background: var(--bg-secondary);
+  transform: translateY(-2px);
+}
+
+/* Modal overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
+  padding: var(--padding);
+  animation: overlayOpen 0.3s ease-out;
 }
 
-/* Export Modal */
-.modal-content {
-  background-color: var(--surface-color);
-  padding: 24px;
-  border-radius: var(--border-radius);
-  max-width: 400px;
-  width: 90%;
-  box-shadow: var(--shadow);
-  position: relative;
+@keyframes overlayOpen {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.form-group {
-  margin-bottom: 20px;
+/* Responsive dizayn */
+@media (max-width: 1200px) {
+  .bemorlar-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
 }
 
-.form-group select {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-base);
-  color: var(--text-color);
-  background-color: var(--surface-color);
-  transition: var(--transition);
-}
-
-.form-group select:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-  outline: none;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-/* Responsive Adjustments */
 @media (max-width: 768px) {
-  .patient-list {
+  :root {
+    --padding: 0.75rem;
+    --padding-lg: 1rem;
+    --padding-xl: 1.5rem;
+    --padding-2xl: 2rem;
+  }
+
+  .sarlavha-ichki h1 {
+    font-size: var(--font-size-3xl);
+    flex-direction: column;
+    gap: var(--padding);
+  }
+
+  .filtr-ichki {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: var(--padding);
   }
 
-  .patient-card {
-    min-height: 80px;
+  .amal-tugmalari {
+    justify-content: stretch;
   }
 
-  .history-modal {
-    padding: 16px;
+  .tugma {
+    flex: 1;
+    justify-content: center;
   }
 
-  th, td {
-    padding: 12px;
-    font-size: 14px;
+  .bemorlar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bemor-statistika {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .tarix-jadval {
+    display: block;
+    overflow-x: auto;
   }
 }
 
 @media (max-width: 480px) {
-  .page-header h1 {
-    font-size: 24px;
+ 
+
+  .sarlavha-ichki h1 {
+    font-size: var(--font-size-2xl);
   }
 
-  .modal-header h2 {
-    font-size: 22px;
+  .bemor-sarlavha {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--padding);
   }
 
-  .patient-info h3 {
-    font-size: 16px;
+  .bemor-statistika {
+    grid-template-columns: 1fr;
+    gap: var(--padding-sm);
   }
 
-  .patient-info p {
-    font-size: 13px;
+  .modal-sarlavha {
+    flex-direction: column;
+    gap: var(--padding);
+    text-align: center;
   }
 
-  .btn-primary,
-  .btn-secondary {
-    padding: 8px 12px;
-    font-size: 13px;
+  .tarix-jadval th,
+  .tarix-jadval td {
+    padding: var(--padding-sm);
+    font-size: var(--font-size-sm);
   }
 }
- 
+
+/* Yuklanayotgan holat */
+.yuklanmoqda {
+  opacity: 0.7;
+  pointer-events: none;
+  position: relative;
+}
+
+.yuklanmoqda::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Scrollbar dizayni */
+.tarix-jadval::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.tarix-jadval::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.tarix-jadval::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.tarix-jadval::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}

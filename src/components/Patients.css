@@ -1,720 +1,911 @@
-/* CSS Variables - Standardized Color Scheme */
+/* Patients Komponenti - Zamonaviy Tibbiy Dizayn */
+
 :root {
-  --primary-color: #2563eb;
-  --secondary-color: #4b5563;
-  --accent-color: #10b981;
-  --error-color: #ef4444;
-  --background-color: #f9fafb;
-  --surface-color: #ffffff;
-  --text-color: #1f2937;
-  --text-secondary: #6b7280;
-  --border-color: #e5e7eb;
+  /* Asosiy ranglar */
+  --primary-blue: #2563eb;
+  --primary-blue-dark: #1e40af;
+  --primary-blue-light: #3b82f6;
+  --accent-green: #10b981;
+  --accent-green-dark: #047857;
+  --warning-orange: #f59e0b;
+  --error-red: #ef4444;
+  --info-cyan: #06b6d4;
+  
+  /* Neytral ranglar */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  /* Oq va qora */
+  --white: #ffffff;
+  --black: #000000;
+  
+  /* Gradientlar */
+  --gradient-primary: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+  --gradient-accent: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark));
+  --gradient-medical: linear-gradient(135deg, var(--primary-blue), var(--accent-green));
+  
+  /* O'lchamlar */
+  --border-radius-sm: 8px;
+  --border-radius: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 20px;
+  
+  /* Shadow effektlar */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --transition: all 0.2s ease;
-  --border-radius: 8px;
-  --font-size-base: 16px;
-  --font-size-small: 14px;
-  --padding-base: 16px;
-  --padding-small: 12px;
-  --touch-target: 44px;
+  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+  
+  /* Transitionlar */
+  --transition-fast: all 0.15s ease;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.5s ease;
+  
+  /* Font o'lchamlari */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  
+  /* Paddinglar */
+  --padding-xs: 0.5rem;
+  --padding-sm: 0.75rem;
+  --padding: 1rem;
+  --padding-lg: 1.5rem;
+  --padding-xl: 2rem;
+  --padding-2xl: 3rem;
 }
 
-/* Dark Mode Variables */
-.dark {
-  --primary-color: #60a5fa;
-  --secondary-color: #9ca3af;
-  --accent-color: #34d399;
-  --error-color: #f87171;
-  --background-color: #1f2937;
-  --surface-color: #374151;
-  --text-color: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --border-color: #4b5563;
+/* Dark Mode */
+.dark-mode {
+  --primary-blue: #60a5fa;
+  --primary-blue-dark: #3b82f6;
+  --primary-blue-light: #93c5fd;
+  --accent-green: #34d399;
+  --accent-green-dark: #10b981;
+  --warning-orange: #fbbf24;
+  --error-red: #f87171;
+  --info-cyan: #22d3ee;
+  
+  --gray-50: #111827;
+  --gray-100: #1f2937;
+  --gray-200: #374151;
+  --gray-300: #4b5563;
+  --gray-400: #6b7280;
+  --gray-500: #9ca3af;
+  --gray-600: #d1d5db;
+  --gray-700: #e5e7eb;
+  --gray-800: #f3f4f6;
+  --gray-900: #f9fafb;
+  
+  --white: #1f2937;
+  --black: #f9fafb;
 }
 
-/* General styles */
-.patients {
-  padding: var(--padding-base);
-  background-color: var(--background-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  max-width: 1200px;
+/* Umumiy stillar */
+.bemorlar {
+  min-height: 100vh;
+  background: var(--gray-50);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: var(--gray-900);
+}
+
+/* Konteyner */
+.konteyner {
+  max-width: 1400px;
   margin: 0 auto;
-  min-height: calc(100vh - 80px);
+  padding: 0 var(--padding);
 }
 
-/* Page Header */
-.page-header {
+/* Sarlavha bo'limi */
+.sahifa-sarlavha {
+  background: var(--gradient-medical);
+  color: var(--white);
+  padding: var(--padding-2xl) 0;
+  margin-bottom: var(--padding-2xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.sahifa-sarlavha::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
+  animation: float 20s infinite linear;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-50px, -50px) rotate(360deg); }
+}
+
+.sarlavha-ichki {
+  position: relative;
+  z-index: 2;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
-  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--padding);
 }
 
-.page-header h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--primary-color);
+.sarlavha-ichki h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--padding);
+}
+
+.sarlavha-ikona {
+  font-size: var(--font-size-2xl);
 }
 
 .badge {
-  background-color: var(--accent-color);
-  color: var(--surface-color);
-  padding: 6px 12px;
-  border-radius: 16px;
-  font-size: var(--font-size-small);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: var(--padding-xs) var(--padding-lg);
+  border-radius: var(--border-radius-xl);
+  font-size: var(--font-size-sm);
   font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Messages */
-.success-message,
-.error-message {
-  padding: var(--padding-small) 16px;
+/* Rejimni o'zgartirish tugmasi */
+.rejim-tugmasi {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--white);
+  padding: var(--padding-sm) var(--padding-lg);
   border-radius: var(--border-radius);
-  margin-bottom: 12px;
-  font-size: var(--font-size-small);
-  text-align: center;
-  font-weight: 500;
-}
-
-.success-message {
-  background-color: var(--accent-color);
-  color: var(--surface-color);
-}
-
-.error-message {
-  background-color: var(--error-color);
-  color: var(--surface-color);
-}
-
-/* Actions */
-.actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  margin-bottom: 16px;
-  gap: 12px;
-}
-
-.search-box {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
   display: flex;
   align-items: center;
-  background-color: var(--surface-color);
-  border: 1px solid var(--border-color);
+  gap: var(--padding-sm);
+}
+
+.rejim-tugmasi:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Xabarlar */
+.xabar-muvaffaqiyatli,
+.xabar-xato {
+  padding: var(--padding);
   border-radius: var(--border-radius);
-  padding: 10px 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: var(--padding-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-align: center;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.xabar-muvaffaqiyatli {
+  background: var(--accent-green);
+  color: var(--white);
+  border-left: 4px solid var(--accent-green-dark);
+}
+
+.xabar-xato {
+  background: var(--error-red);
+  color: var(--white);
+  border-left: 4px solid #dc2626;
+}
+
+/* Amallar paneli */
+.amallar-paneli {
+  background: var(--white);
+  padding: var(--padding-lg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  margin-bottom: var(--padding-2xl);
+  border: 1px solid var(--gray-200);
+}
+
+.qidiruv-guruhi {
+  display: flex;
+  gap: var(--padding);
+  align-items: end;
+}
+
+.qidiruv-input {
+  flex: 1;
+  position: relative;
+}
+
+.qidiruv-input label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: var(--padding-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .search-icon {
-  color: var(--text-secondary);
-  margin-right: 8px;
-  font-size: 18px;
+  position: absolute;
+  left: var(--padding);
+  color: var(--gray-400);
+  font-size: var(--font-size-lg);
+  z-index: 2;
 }
 
-.search-input {
-  border: none;
-  outline: none;
+.qidiruv-input input {
   width: 100%;
-  font-size: var(--font-size-base);
-  background-color: transparent;
-  color: var(--text-color);
-}
-
-.search-input::placeholder {
-  color: var(--text-secondary);
-}
-
-.action-buttons-group {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.btn-primary,
-.btn-secondary,
-.btn-edit,
-.btn-delete,
-.btn-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  padding: var(--padding) var(--padding) var(--padding) var(--padding-2xl);
+  border: 2px solid var(--gray-200);
   border-radius: var(--border-radius);
-  font-size: var(--font-size-small);
+  font-size: var(--font-size-base);
+  background: var(--gray-50);
+  color: var(--gray-900);
+  transition: var(--transition);
+}
+
+.qidiruv-input input:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.amal-tugmalari {
+  display: flex;
+  gap: var(--padding-sm);
+}
+
+/* Tugmalar */
+.tugma {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--padding-xs);
+  padding: var(--padding) var(--padding-lg);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  font-weight: 500;
-  min-height: var(--touch-target);
+  text-decoration: none;
 }
 
-.btn-primary {
-  background-color: var(--primary-color);
-  color: var(--surface-color);
-  border: none;
+.tugma-birlamchi {
+  background: var(--gradient-primary);
+  color: var(--white);
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: #1d4ed8;
-  transform: translateY(-1px);
+.tugma-birlamchi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
-.btn-primary:disabled {
-  background-color: var(--text-secondary);
-  cursor: not-allowed;
+.tugma-ikkilamchi {
+  background: var(--gray-100);
+  color: var(--gray-900);
+  border: 1px solid var(--gray-200);
 }
 
-.btn-secondary {
-  background-color: var(--secondary-color);
-  color: var(--surface-color);
-  border: none;
+.tugma-ikkilamchi:hover {
+  background: var(--gray-200);
+  transform: translateY(-2px);
 }
 
-.btn-secondary:hover:not(:disabled) {
-  background-color: #6b7280;
-  transform: translateY(-1px);
+.tugma-tahrir {
+  background: transparent;
+  color: var(--primary-blue);
+  border: 1px solid var(--primary-blue);
 }
 
-.btn-edit {
-  background: none;
-  color: var(--primary-color);
-  border: none;
+.tugma-tahrir:hover {
+  background: var(--primary-blue);
+  color: var(--white);
 }
 
-.btn-edit:hover:not(:disabled) {
-  color: #1d4ed8;
+.tugma-ochirish {
+  background: transparent;
+  color: var(--error-red);
+  border: 1px solid var(--error-red);
 }
 
-.btn-delete {
-  background: none;
-  color: var(--error-color);
-  border: none;
+.tugma-ochirish:hover {
+  background: var(--error-red);
+  color: var(--white);
 }
 
-.btn-delete:hover:not(:disabled) {
-  color: #dc2626;
+.tugma-kichik {
+  padding: var(--padding-xs) var(--padding-sm);
+  font-size: var(--font-size-xs);
 }
 
-.btn-delete.small {
-  padding: 6px;
-  font-size: 12px;
-  min-height: 32px;
-}
-
-.btn-toggle {
-  background-color: var(--secondary-color);
-  color: var(--surface-color);
-  border: none;
-}
-
-.btn-toggle:hover:not(:disabled) {
-  background-color: #6b7280;
-  transform: translateY(-1px);
-}
-
-/* Empty State */
-.empty-state {
+/* Bo'sh holat */
+.bosh-holat {
   text-align: center;
-  padding: 32px;
-  background-color: var(--surface-color);
-  border-radius: var(--border-radius);
+  padding: var(--padding-2xl);
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow);
+  border: 1px solid var(--gray-200);
 }
 
-.empty-state h3 {
-  font-size: 20px;
-  color: var(--text-color);
-  margin-bottom: 10px;
+.bosh-holat h3 {
+  font-size: var(--font-size-xl);
+  color: var(--gray-600);
+  margin-bottom: var(--padding);
   font-weight: 600;
 }
 
-.empty-state p {
-  color: var(--text-secondary);
-  margin-bottom: 16px;
-  font-size: var(--font-size-small);
+.bosh-holat p {
+  color: var(--gray-500);
+  margin-bottom: var(--padding-lg);
+  font-size: var(--font-size-base);
 }
 
-/* Table and Card Layout */
-.table-container {
-  background-color: var(--surface-color);
-  border-radius: var(--border-radius);
+/* Jadval konteyneri */
+.jadval-konteyner {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow);
-  overflow-x: auto;
+  overflow: hidden;
+  border: 1px solid var(--gray-200);
 }
 
-table {
+/* Jadval dizayni */
+.bemorlar-jadval {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
+  background: var(--white);
 }
 
-thead tr {
-  background-color: var(--background-color);
+.bemorlar-jadval thead {
+  background: var(--gray-50);
 }
 
-th {
-  padding: var(--padding-small) 12px;
- 
+.bemorlar-jadval th {
+  padding: var(--padding);
+  text-align: left;
   font-weight: 600;
-  color: var(--text-color);
-  border-bottom: 2px solid var(--border-color);
-  font-size: var(--font-size-small);
+  color: var(--gray-600);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--gray-200);
+  white-space: nowrap;
 }
 
-td {
-  padding: var(--padding-small) 12px;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-color);
-  font-size: var(--font-size-small);
+.bemorlar-jadval td {
+  padding: var(--padding);
+  border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-900);
+  font-size: var(--font-size-sm);
+  vertical-align: middle;
 }
 
-tr:hover:not(.mobile-card) {
-  background-color: var(--background-color);
+.bemor-qatori {
+  transition: var(--transition);
   cursor: pointer;
 }
 
-.patient-info {
+.bemor-qatori:hover {
+  background: var(--gray-50);
+}
+
+.bemorlar-jadval tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Bemor ma'lumotlari */
+.bemor-malumot {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--padding-sm);
 }
 
-.patient-icon {
-  color: var(--primary-color);
-  font-size: 18px;
+.bemor-ikon {
+  color: var(--primary-blue);
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
 }
 
-.action-buttons {
+/* Izoh ko'rsatgichi */
+.izoh-korsatgichi {
+  color: var(--primary-blue);
+  cursor: pointer;
+  text-decoration: underline;
+  transition: var(--transition);
+}
+
+.izoh-korsatgichi:hover {
+  color: var(--primary-blue-dark);
+}
+
+/* Amallar tugmalari */
+.amallar-tugmalari {
   display: flex;
-  gap: 10px;
+  gap: var(--padding-xs);
 }
 
-/* Mobile Card Layout */
-@media (max-width: 768px) {
-  .table-container {
-    padding: 0;
-  }
-
-  table {
-    display: block;
-  }
-
-  thead {
-    display: none;
-  }
-
-  tbody, tr {
-    display: block;
-  }
-
-  tr.mobile-card {
-    background-color: var(--surface-color);
-    border-radius: var(--border-radius);
-    margin-bottom: 12px;
-    padding: var(--padding-small);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    cursor: pointer;
-  }
-
-  td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    border-bottom: none;
-  }
-
-  td:before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: var(--text-color);
-    min-width: 120px;
-  }
-
-  .desktop-only {
-    display: none;
-  }
-
-  .action-buttons {
-    justify-content: flex-end;
-  }
+/* Bemor portali */
+.bemor-portali {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  padding: var(--padding-2xl);
+  border: 1px solid var(--gray-200);
+  margin-bottom: var(--padding-2xl);
 }
 
-/* Modal Overlay */
+.bemor-portali h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--padding-lg);
+  text-align: center;
+}
+
+.bemor-portali h3 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--padding);
+}
+
+/* Form guruhlari */
+.form-guruhi {
+  margin-bottom: var(--padding-lg);
+}
+
+.form-guruhi label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: var(--padding-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--padding-xs);
+}
+
+.input-ikon {
+  color: var(--primary-blue);
+  font-size: var(--font-size-base);
+}
+
+.form-guruhi input,
+.form-guruhi select,
+.form-guruhi textarea {
+  width: 100%;
+  padding: var(--padding);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  background: var(--gray-50);
+  color: var(--gray-900);
+  transition: var(--transition);
+}
+
+.form-guruhi input:focus,
+.form-guruhi select:focus,
+.form-guruhi textarea:focus {
+  outline: none;
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.input-hint {
+  font-size: var(--font-size-xs);
+  color: var(--gray-500);
+  margin-top: var(--padding-xs);
+}
+
+/* Vaqt slotalari */
+.vaqt-slotlari {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: var(--padding-sm);
+  margin-bottom: var(--padding);
+}
+
+.vaqt-sloti {
+  padding: var(--padding-sm);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--border-radius);
+  background: var(--gray-50);
+  color: var(--gray-700);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+  border: none;
+}
+
+.vaqt-sloti:hover:not(.band) {
+  border-color: var(--primary-blue);
+  background: var(--primary-blue);
+  color: var(--white);
+}
+
+.vaqt-sloti.tanlangan {
+  border-color: var(--accent-green);
+  background: var(--accent-green);
+  color: var(--white);
+}
+
+.vaqt-sloti.band {
+  background: var(--gray-300);
+  color: var(--gray-500);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Modal dizayni */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
+  padding: var(--padding);
+  animation: overlayOpen 0.3s ease;
 }
 
-/* Modal Content */
+@keyframes overlayOpen {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .modal-content {
-  background-color: var(--surface-color);
-  padding: var(--padding-base);
-  border-radius: var(--border-radius);
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-xl);
   width: 90%;
-  max-width: 600px;
-  box-shadow: var(--shadow);
+  max-width: 800px;
   max-height: 90vh;
+  overflow-y: auto;
+  animation: modalOpen 0.3s ease;
+}
+
+@keyframes modalOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-sarlavha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--padding-lg);
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.modal-sarlavha h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.yopish-tugmasi {
+  background: none;
+  border: none;
+  font-size: var(--font-size-2xl);
+  color: var(--gray-500);
+  cursor: pointer;
+  padding: var(--padding-xs);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  line-height: 1;
+}
+
+.yopish-tugmasi:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.modal-tanasi {
+  padding: var(--padding-lg);
+}
+
+/* Form qatorlari */
+.form-qatorlari {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--padding);
+}
+
+/* Retseptlar ro'yxati */
+.retseptlar-royxati {
+  background: var(--gray-50);
+  border-radius: var(--border-radius);
+  padding: var(--padding);
+  margin-bottom: var(--padding);
+  max-height: 200px;
   overflow-y: auto;
 }
 
-.modal-header {
+.retsept-elementi {
+  background: var(--white);
+  padding: var(--padding);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--padding-sm);
+  border-left: 4px solid var(--accent-green);
+}
+
+.retsept-elementi:last-child {
+  margin-bottom: 0;
+}
+
+.retsept-sarlavha {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: var(--padding-xs);
 }
 
-.modal-header h2 {
-  font-size: 22px;
-  color: var(--primary-color);
-  font-weight: 700;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 28px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: var(--transition);
-  min-height: var(--touch-target);
-  min-width: var(--touch-target);
-}
-
-.close-button:hover:not(:disabled) {
-  color: var(--text-color);
-}
-
-/* Form Groups */
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.retsept-sana {
   font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 6px;
-  font-size: var(--font-size-small);
+  color: var(--gray-700);
 }
 
-.input-icon {
-  color: var(--primary-color);
-  font-size: 18px;
+.retsept-malumot {
+  color: var(--gray-600);
+  font-size: var(--font-size-sm);
 }
 
-.form-group input,
-.form-group select,
-.form-group textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border-color);
+.yangi-retsept {
+  background: var(--white);
+  padding: var(--padding);
   border-radius: var(--border-radius);
-  font-size: var(--font-size-small);
-  color: var(--text-color);
-  background-color: var(--surface-color);
-  transition: var(--transition);
-  min-height: var(--touch-target);
+  border: 2px dashed var(--gray-200);
 }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-  outline: none;
-}
-
-.form-group select:disabled {
-  background-color: var(--background-color);
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.input-hint {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-}
-
-/* Error Input Styling */
-.input-error {
-  border-color: var(--error-color) !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
-}
-
-/* Form Row */
-.form-row {
+/* Bemor tafsilotlari */
+.bemor-tafsilotlari {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: var(--padding-lg);
 }
 
-/* Address Details Textarea */
-.address-details {
-  margin-top: 10px;
+.tafsilot-bolimi {
+  background: var(--gray-50);
+  padding: var(--padding);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--primary-blue);
 }
 
-/* Prescriptions List */
-.prescriptions-list {
-  margin-bottom: 12px;
-}
-
-.prescription-item {
+.tafsilot-bolimi h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--padding);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  background-color: var(--background-color);
-  border-radius: var(--border-radius);
-  margin-bottom: 8px;
-  font-size: var(--font-size-small);
-  color: var(--text-color);
+  gap: var(--padding-xs);
 }
 
-.prescription-item strong {
-  font-weight: 600;
-}
-
-.add-prescription {
-  padding: 12px;
-  background-color: var(--background-color);
-  border-radius: var(--border-radius);
-  margin-top: 12px;
-}
-
-/* Modal Actions */
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-/* Note Modal */
-.note-modal {
-  max-width: 90%;
-}
-
-/* Details Modal */
-.details-modal {
-  max-width: 90%;
-}
-
-.patient-details-new {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.detail-section {
-  background-color: var(--surface-color);
-  padding: var(--padding-small);
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.detail-section h3 {
-  font-size: 18px;
-  color: var(--primary-color);
-  margin-bottom: 12px;
-  font-weight: 600;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 6px;
-}
-
-.detail-section ul {
+.tafsilot-royxati {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.detail-section li {
+.tafsilot-royxati li {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-color);
+  padding: var(--padding-sm) 0;
+  border-bottom: 1px solid var(--gray-200);
 }
 
-.detail-section li:last-child {
+.tafsilot-royxati li:last-child {
   border-bottom: none;
 }
 
-.detail-label {
+.tafsilot-yorligi {
   font-weight: 600;
-  color: var(--text-color);
+  color: var(--gray-700);
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 140px;
+  gap: var(--padding-xs);
+  min-width: 150px;
 }
 
-.detail-label svg {
-  color: var(--primary-color);
-  font-size: 16px;
-}
-
-.detail-value {
-  color: var(--text-secondary);
+.tafsilot-qiymati {
+  color: var(--gray-600);
+  text-align: right;
   flex: 1;
 }
 
-.detail-note-text {
-  white-space: pre-wrap;
-  line-height: 1.5;
-  color: var(--text-color);
-  background-color: var(--background-color);
-  padding: 10px;
-  border-radius: var(--border-radius);
+/* Modal amallari */
+.modal-amallar {
+  display: flex;
+  gap: var(--padding-sm);
+  justify-content: flex-end;
+  margin-top: var(--padding-lg);
+  padding-top: var(--padding);
+  border-top: 1px solid var(--gray-200);
 }
 
-.prescriptions-list-new {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.prescriptions-list-new li {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-color);
-  color: var(--text-color);
-  font-size: var(--font-size-small);
-}
-
-.prescriptions-list-new li:last-child {
-  border-bottom: none;
-}
-
-.prescriptions-list-new strong {
-  color: var(--primary-color);
-}
-
-/* Export Modal */
-.export-modal {
-  max-width: 90%;
-}
-
-/* Patient Portal Section */
-.patient-portal {
-  padding: var(--padding-small);
-  background-color: var(--surface-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-}
-
-.patient-portal h2 {
-  font-size: 22px;
-  color: var(--primary-color);
-  margin-bottom: 16px;
-}
-
-.patient-portal h3 {
-  font-size: 18px;
-  color: var(--text-color);
-  margin-bottom: 12px;
-}
-
-/* Time Slots */
-.bg-blue-100 {
-  background-color: var(--primary-color);
-  color: var(--surface-color);
-  opacity: 0.8;
-}
-
-.bg-blue-100:hover:not(:disabled) {
-  opacity: 1;
-}
-
-.bg-gray-300 {
-  background-color: var(--text-secondary);
-  color: var(--surface-color);
-  cursor: not-allowed;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
-}
-
-.grid button {
-  padding: 10px;
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-small);
-  transition: var(--transition);
-  border: 1px solid var(--border-color);
-  min-height: var(--touch-target);
-}
-
-.grid button:disabled {
-  opacity: 0.6;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  :root {
-    --font-size-base: 14px;
-    --font-size-small: 12px;
-    --padding-base: 12px;
-    --padding-small: 10px;
-  }
-
-  .patients {
-    padding: var(--padding-small);
-  }
-
-  .page-header h1 {
-    font-size: 20px;
-  }
-
-  .modal-content {
-    padding: var(--padding-small);
-  }
-
-  .modal-header h2 {
-    font-size: 18px;
-  }
-
-  .form-row {
+/* Responsive dizayn */
+@media (max-width: 1024px) {
+  .form-qatorlari {
     grid-template-columns: 1fr;
   }
+}
 
-  .patient-portal {
-    padding: var(--padding-small);
+@media (max-width: 768px) {
+  :root {
+    --padding: 0.75rem;
+    --padding-lg: 1rem;
+    --padding-xl: 1.5rem;
+    --padding-2xl: 2rem;
   }
-
-  .patient-portal h2 {
-    font-size: 20px;
+  
+  .sahifa-sarlavha {
+    padding: var(--padding-xl) 0;
   }
-
-  .patient-portal h3 {
-    font-size: 16px;
+  
+  .sarlavha-ichki {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: var(--padding-sm);
+  }
+  
+  .sarlavha-ichki h1 {
+    font-size: var(--font-size-2xl);
+    justify-content: center;
+  }
+  
+  .amallar-paneli {
+    padding: var(--padding);
+  }
+  
+  .qidiruv-guruhi {
+    flex-direction: column;
+    gap: var(--padding);
+  }
+  
+  .amal-tugmalari {
+    justify-content: center;
+  }
+  
+  .bemor-portali {
+    padding: var(--padding-lg);
+  }
+  
+  .vaqt-slotlari {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: var(--padding);
+  }
+  
+  .modal-amallar {
+    flex-direction: column;
   }
 }
 
 @media (max-width: 480px) {
-  .grid {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  .sahifa-sarlavha {
+    padding: var(--padding-lg) 0;
   }
+  
+  .sarlavha-ichki h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .bemorlar-jadval {
+    display: block;
+    overflow-x: auto;
+  }
+  
+  .bemor-malumot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--padding-xs);
+  }
+  
+  .amallar-tugmalari {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .tugma {
+    justify-content: center;
+  }
+}
 
-  .btn-primary,
-  .btn-secondary,
-  .btn-toggle {
-    padding: 10px 12px;
-    font-size: var(--font-size-small);
+/* Scrollbar dizayni */
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: var(--gray-100);
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: var(--border-radius);
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+/* Aksessuarlik uchun */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
+}
+
+/* Fokus holatlari */
+.tugma:focus,
+.vaqt-sloti:focus,
+.form-guruhi input:focus,
+.form-guruhi select:focus,
+.form-guruhi textarea:focus {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
 }

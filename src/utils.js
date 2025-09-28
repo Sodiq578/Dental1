@@ -1,4 +1,3 @@
-// utils.js (Your original utilities code, unchanged)
 export const initializeData = () => {
   console.log("🦷 Keksri Dental - Ma'lumotlarni ishga tushiramiz...");
   
@@ -200,7 +199,7 @@ export const initializeData = () => {
         name: "Dr. Aziza",
         email: "aziza@keksri.uz",
         password: "aziza123",
-        role: "doctor",
+        role: "staff",
         phone: "+998902223344",
         specialty: "Ortodont",
         bio: "Bolalar va kattalar ortodontiyasi",
@@ -211,7 +210,7 @@ export const initializeData = () => {
         name: "Dr. Jamshid",
         email: "jamshid@keksri.uz",
         password: "jamshid123",
-        role: "doctor",
+        role: "staff",
         phone: "+998903334455",
         specialty: "Xirurg",
         bio: "Tish xirurgiyasi va implantologiya",
@@ -767,6 +766,24 @@ export const getKeksriStats = () => {
     pendingAppointments: pendingAppointments.length,
     totalRevenue: totalRevenue
   };
+};
+
+export const logLogin = (user) => {
+  try {
+    const logins = getFromLocalStorage('logins', []);
+    logins.push({
+      id: Date.now(),
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      timestamp: new Date().toISOString()
+    });
+    saveToLocalStorage('logins', logins);
+    console.log("✅ Login qayd etildi");
+  } catch (error) {
+    console.error("💥 Login qayd etish xatosi:", error);
+  }
 };
 
 console.log("🦷 Keksri Utils yuklandi!");

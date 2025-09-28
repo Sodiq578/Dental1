@@ -20,9 +20,11 @@ import Tooth from "./components/ToothCard";
 import Login from "./components/Login";
 import UserDashboard from "./components/UserDashboard";
 import Spinner from "./adds/Spinner";
+import LoggedInUsers from "./components/LoggedInUsers";
+import TokenLogin from "./components/TokenLogin";
 
 // Utils
-import { getFromLocalStorage, saveToLocalStorage, initializeData } from "./utils";
+import { getFromLocalStorage, saveToLocalStorage, initializeData, logLogin } from "./utils";
 import "./App.css";
 
 // Context
@@ -31,7 +33,6 @@ export const AppContext = createContext();
 const App = () => {
   // State for UI and authentication
   const [sidebarOpen, setSidebarOpen] = useState(getFromLocalStorage("sidebarOpen", false));
-  const [darkMode, setDarkMode] = useState(getFromLocalStorage("darkMode", false));
   const [fontSize, setFontSize] = useState(getFromLocalStorage("fontSize", 16));
   const [layout, setLayout] = useState(getFromLocalStorage("layout", "normal"));
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -39,6 +40,7 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [tokenLoginOpen, setTokenLoginOpen] = useState(false);
 
   // Data state
   const [patients, setPatients] = useState([]);
@@ -48,16 +50,15 @@ const App = () => {
   const [inventory, setInventory] = useState([]);
   const [staff, setStaff] = useState([]);
   const [users, setUsers] = useState([]);
+  const [logins, setLogins] = useState(getFromLocalStorage("logins", []));
 
   // Initialize data on mount
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        initializeData(); // Initialize local storage with default data
+        initializeData();
 
-        // Load state from local storage
         setSidebarOpen(getFromLocalStorage("sidebarOpen", false));
-        setDarkMode(getFromLocalStorage("darkMode", false));
         setFontSize(getFromLocalStorage("fontSize", 16));
         setLayout(getFromLocalStorage("layout", "normal"));
         setPatients(getFromLocalStorage("patients", []));
@@ -67,15 +68,14 @@ const App = () => {
         setInventory(getFromLocalStorage("inventory", []));
         setStaff(getFromLocalStorage("staff", []));
         setUsers(getFromLocalStorage("users", []));
+        setLogins(getFromLocalStorage("logins", []));
 
-        // Check for logged-in user
         const savedUser = getFromLocalStorage("currentUser", null);
         if (savedUser) {
           setCurrentUser(savedUser);
           setIsLoggedIn(true);
         }
 
-        // Verify localStorage availability
         const testKey = "storage_test";
         localStorage.setItem(testKey, "test");
         if (localStorage.getItem(testKey) !== "test") {
@@ -89,7 +89,7 @@ const App = () => {
       } catch (error) {
         console.error("Ma'lumotlarni yuklashda xato:", error);
         setStorageStatus("unavailable");
-        setDataLoaded(true); // Allow app to render even if there's an error
+        setDataLoaded(true);
       }
     };
 
@@ -101,7 +101,6 @@ const App = () => {
     if (!dataLoaded) return;
 
     saveToLocalStorage("sidebarOpen", sidebarOpen);
-    saveToLocalStorage("darkMode", darkMode);
     saveToLocalStorage("fontSize", fontSize);
     saveToLocalStorage("layout", layout);
     saveToLocalStorage("patients", patients);
@@ -112,9 +111,9 @@ const App = () => {
     saveToLocalStorage("staff", staff);
     saveToLocalStorage("users", users);
     saveToLocalStorage("currentUser", currentUser);
+    saveToLocalStorage("logins", logins);
   }, [
     sidebarOpen,
-    darkMode,
     fontSize,
     layout,
     dataLoaded,
@@ -126,26 +125,25 @@ const App = () => {
     staff,
     users,
     currentUser,
+    logins,
   ]);
 
-  // Toggle sidebar
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // Handle login
   const handleLogin = (userData) => {
     setCurrentUser(userData);
     setIsLoggedIn(true);
     saveToLocalStorage("currentUser", userData);
+    logLogin(userData);
+    setLogins(getFromLocalStorage("logins", []));
   };
 
-  // Handle logout
   const handleLogout = () => {
     setCurrentUser(null);
     setIsLoggedIn(false);
     saveToLocalStorage("currentUser", null);
   };
 
-  // Handle storage unavailable
   if (storageStatus === "unavailable") {
     return (
       <div className="storage-error">
@@ -157,7 +155,6 @@ const App = () => {
     );
   }
 
-  // Show loading spinner until data is loaded
   if (!dataLoaded) {
     return (
       <div className="loading-screen">
@@ -169,8 +166,6 @@ const App = () => {
   return (
     <AppContext.Provider
       value={{
-        darkMode,
-        setDarkMode,
         fontSize,
         setFontSize,
         layout,
@@ -197,10 +192,12 @@ const App = () => {
         setIsLoading,
         getFromLocalStorage,
         saveToLocalStorage,
+        logins,
+        setLogins,
       }}
     >
       <Router>
-        <div className={`app ${darkMode ? "dark" : ""}`} style={{ fontSize: `${fontSize}px` }}>
+        <div className="app" style={{ fontSize: `${fontSize}px` }}>
           {isLoading && (
             <div className="loading-overlay">
               <Spinner />
@@ -208,20 +205,18 @@ const App = () => {
           )}
           {!isLoggedIn ? (
             <Routes>
-              <Route path="/login" element={<Login onLogin={handleLogin} />} />
+              <Route path="/login" element={<Login onLogin={handleLogin} onOpenTokenLogin={() => setTokenLoginOpen(true)} />} />
               <Route path="/bemor-portali" element={<PatientPortal />} />
               <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
           ) : currentUser.role === "patient" ? (
-            // Patient view: No sidebar, only UserDashboard
-            <main className="main-content full-width">
+            <main className="">
               <Routes>
                 <Route path="/foydalanuvchi" element={<UserDashboard />} />
                 <Route path="*" element={<Navigate to="/foydalanuvchi" />} />
               </Routes>
             </main>
           ) : (
-            // Admin/staff view: Full system with sidebar
             <>
               <button
                 className="menu-btn"
@@ -233,7 +228,6 @@ const App = () => {
               <Sidebar
                 isOpen={sidebarOpen}
                 toggleSidebar={toggleSidebar}
-                darkMode={darkMode}
                 currentUser={currentUser}
                 onLogout={handleLogout}
               />
@@ -253,11 +247,19 @@ const App = () => {
                   <Route path="/davolashda-yordam" element={<DentalAssistance />} />
                   <Route path="/tooth" element={<Tooth />} />
                   <Route path="/foydalanuvchi" element={<UserDashboard />} />
+                  <Route path="/kirganlar" element={<LoggedInUsers />} />
+                  <Route path="/mijozlar" element={<Patients />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </main>
             </>
           )}
+          {/* Token Login Modal */}
+          <TokenLogin 
+            isOpen={tokenLoginOpen}
+            onClose={() => setTokenLoginOpen(false)}
+            onLogin={handleLogin}
+          />
         </div>
       </Router>
     </AppContext.Provider>

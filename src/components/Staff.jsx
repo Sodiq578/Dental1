@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { FiSearch, FiPlus, FiEdit, FiTrash2, FiBriefcase, FiClock, FiUser, FiPhone, FiCalendar, FiX } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEdit, FiTrash2, FiBriefcase, FiClock, FiUser, FiPhone, FiCalendar, FiX, FiMail, FiKey } from 'react-icons/fi';
 import { AppContext } from '../App';
 import './Staff.css';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
@@ -12,19 +12,59 @@ const Staff = () => {
   const { staff, setStaff, darkMode } = useContext(AppContext);
   const [modalOpen, setModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [tokenModalOpen, setTokenModalOpen] = useState(false);
   const [currentStaff, setCurrentStaff] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [filterRole, setFilterRole] = useState('');
+  const [generatedToken, setGeneratedToken] = useState('');
 
   // Filtered staff
   const filteredStaff = staff.filter(s =>
     (s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.phone.includes(searchTerm)) &&
+    s.phone.includes(searchTerm) ||
+    (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))) &&
     (filterRole ? s.role === filterRole : true)
   );
+
+  // Generate random token (10 characters, alphanumeric)
+  const generateToken = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 10; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+  };
+
+  // Generate token for staff member
+  const handleGenerateToken = (staffMember) => {
+    const token = generateToken();
+    const tokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    
+    const updatedStaff = staff.map(s => 
+      s.id === staffMember.id 
+        ? { 
+            ...s, 
+            token: token,
+            tokenExpiry: tokenExpiry.toISOString(),
+            tokenGeneratedAt: new Date().toISOString()
+          }
+        : s
+    );
+    
+    setStaff(updatedStaff);
+    setGeneratedToken(token);
+    setTokenModalOpen(true);
+  };
+
+  // Check if token is expired
+  const isTokenExpired = (staffMember) => {
+    if (!staffMember.tokenExpiry) return true;
+    return new Date() > new Date(staffMember.tokenExpiry);
+  };
 
   // Calculate monthly salaries for chart
   const getMonthlySalaries = () => {
@@ -97,6 +137,7 @@ const Staff = () => {
     } : {
       id: null,
       name: '',
+      email: '',
       role: '',
       phone: '',
       schedule: '',
@@ -126,6 +167,7 @@ const Staff = () => {
   const closeModal = () => {
     setModalOpen(false);
     setViewModalOpen(false);
+    setTokenModalOpen(false);
     setError('');
     setSuccessMessage('');
   };
@@ -134,6 +176,10 @@ const Staff = () => {
     e.preventDefault();
     if (!currentStaff.name.trim()) {
       setError('Ism kiritilishi shart');
+      return;
+    }
+    if (currentStaff.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(currentStaff.email)) {
+      setError('Noto‘g‘ri email formati');
       return;
     }
     if (currentStaff.phone && !/^\+998\d{9}$/.test(currentStaff.phone)) {
@@ -208,7 +254,7 @@ const Staff = () => {
             <FiSearch className="search-icon" />
             <input
               type="text"
-              placeholder="Ism, rol yoki telefon bo‘yicha qidirish..."
+              placeholder="Ism, rol, email yoki telefon bo‘yicha qidirish..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -224,6 +270,8 @@ const Staff = () => {
               <option value="Doktor">Doktor</option>
               <option value="Yordamchi">Yordamchi</option>
               <option value="Admin">Admin</option>
+              <option value="Hamshira">Hamshira</option>
+              <option value="Administrator">Administrator</option>
             </select>
           </div>
         </div>
@@ -281,12 +329,13 @@ const Staff = () => {
             <thead>
               <tr>
                 <th>Ism</th>
+                <th>Email</th>
                 <th>Rol</th>
                 <th>Telefon</th>
                 <th>Ish soatlari</th>
                 <th>Navbatchilik</th>
                 <th>Oylik Maosh</th>
-                <th>Kunlik Maosh</th>
+                <th>Token</th>
                 <th>Amallar</th>
               </tr>
             </thead>
@@ -297,6 +346,12 @@ const Staff = () => {
                     <div className="staff-name">
                       <FiUser className="staff-icon" />
                       {s.name}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="staff-email">
+                      <FiMail className="staff-icon" />
+                      {s.email || '-'}
                     </div>
                   </td>
                   <td>{s.role}</td>
@@ -319,13 +374,24 @@ const Staff = () => {
                     </div>
                   </td>
                   <td>{new Intl.NumberFormat('uz-UZ', { style: 'currency', currency: 'UZS' }).format(calculateMonthlySalary(s))}</td>
-                  <td>{new Intl.NumberFormat('uz-UZ', { style: 'currency', currency: 'UZS' }).format(calculateDailySalary(s))}</td>
+                  <td>
+                    <div className="token-status">
+                      {s.token && !isTokenExpired(s) ? (
+                        <span className="token-active">Faol (10 daqiqa)</span>
+                      ) : (
+                        <span className="token-inactive">Faol emas</span>
+                      )}
+                    </div>
+                  </td>
                   <td>
                     <div className="action-buttons">
                       <button onClick={(e) => { e.stopPropagation(); openModal(s); }} className="btn-edit" title="Tahrirlash">
                         <FiEdit />
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); deleteStaff(s.id); }} className="btn-delete" title="O‘chirish">
+                      <button onClick={(e) => { e.stopPropagation(); handleGenerateToken(s); }} className="btn-token" title="Token yaratish">
+                        <FiKey />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); deleteStaff(s.id); }} className="btn-delete" title="O'chirish">
                         <FiTrash2 />
                       </button>
                     </div>
@@ -342,7 +408,7 @@ const Staff = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <form onSubmit={handleSubmit}>
               <div className="modal-header">
-                <h2>{currentStaff.id ? 'Xodimni Tahrirlash' : 'Yangi Xodim Qo‘shish'}</h2>
+                <h2>{currentStaff.id ? 'Xodimni Tahrirlash' : 'Yangi Xodim Qoshish'}</h2>
                 <button type="button" onClick={closeModal} className="close-button">&times;</button>
               </div>
               {error && <div className="error-message">{error}</div>}
@@ -357,6 +423,15 @@ const Staff = () => {
                 />
               </div>
               <div className="form-group">
+                <label><FiMail /> Email</label>
+                <input
+                  type="email"
+                  value={currentStaff.email}
+                  onChange={(e) => setCurrentStaff({ ...currentStaff, email: e.target.value })}
+                  placeholder="xodim@example.com"
+                />
+              </div>
+              <div className="form-group">
                 <label>Rol *</label>
                 <select
                   value={currentStaff.role}
@@ -367,6 +442,8 @@ const Staff = () => {
                   <option value="Doktor">Doktor</option>
                   <option value="Yordamchi">Yordamchi</option>
                   <option value="Admin">Admin</option>
+                  <option value="Hamshira">Hamshira</option>
+                  <option value="Administrator">Administrator</option>
                 </select>
               </div>
               <div className="form-group">
@@ -379,12 +456,13 @@ const Staff = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Oylik Maosh (UZS)</label>
+                <label>Oylik Maosh (UZS) *</label>
                 <input
                   type="number"
                   value={currentStaff.salary}
                   onChange={(e) => setCurrentStaff({ ...currentStaff, salary: e.target.value })}
                   placeholder="Masalan: 4000000"
+                  required
                 />
               </div>
               <div className="form-group">
@@ -482,6 +560,7 @@ const Staff = () => {
                 <div className="staff-info">
                   <h3>{currentStaff.name}</h3>
                   <p className="staff-role">{currentStaff.role}</p>
+                  {currentStaff.email && <p className="staff-email">{currentStaff.email}</p>}
                 </div>
               </div>
               <div className="staff-detail-section">
@@ -490,6 +569,12 @@ const Staff = () => {
                   <FiPhone className="detail-icon" />
                   <span>{currentStaff.phone || 'Telefon raqami kiritilmagan'}</span>
                 </div>
+                {currentStaff.email && (
+                  <div className="detail-item">
+                    <FiMail className="detail-icon" />
+                    <span>{currentStaff.email}</span>
+                  </div>
+                )}
               </div>
               <div className="staff-detail-section">
                 <h4>Ish Jadvali</h4>
@@ -533,6 +618,27 @@ const Staff = () => {
                   <p className="staff-notes">{currentStaff.notes}</p>
                 </div>
               )}
+              <div className="staff-detail-section">
+                <h4>Token Ma'lumotlari</h4>
+                <div className="detail-item">
+                  <span className="detail-label">Token holati:</span>
+                  <span className={currentStaff.token && !isTokenExpired(currentStaff) ? "token-active" : "token-inactive"}>
+                    {currentStaff.token && !isTokenExpired(currentStaff) ? 'Faol (10 daqiqa)' : 'Faol emas'}
+                  </span>
+                </div>
+                {currentStaff.tokenGeneratedAt && (
+                  <div className="detail-item">
+                    <span className="detail-label">Yaratilgan vaqt:</span>
+                    <span>{new Date(currentStaff.tokenGeneratedAt).toLocaleString('uz-UZ')}</span>
+                  </div>
+                )}
+                <button 
+                  onClick={() => handleGenerateToken(currentStaff)}
+                  className="btn-token"
+                >
+                  <FiKey /> Yangi Token Yaratish
+                </button>
+              </div>
               <div className="chart-container">
                 <h4>{currentStaff.name} - Maosh Grafiki</h4>
                 <Bar
@@ -558,6 +664,37 @@ const Staff = () => {
                 <FiEdit /> Tahrirlash
               </button>
               <button onClick={closeModal} className="btn-secondary">Yopish</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tokenModalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content token-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Token Yaratildi</h2>
+              <button type="button" onClick={closeModal} className="close-button">&times;</button>
+            </div>
+            <div className="token-content">
+              <div className="token-display">
+                <FiKey className="token-icon" />
+                <h3>{generatedToken}</h3>
+                <p>Ushbu token 10 daqiqa davomida amal qiladi</p>
+                <p className="token-warning">Tokenni hech kimga bermang va yopishdan oldin eslab qoling!</p>
+              </div>
+              <div className="token-actions">
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedToken);
+                    alert('Token nusxalandi!');
+                  }}
+                  className="btn-primary"
+                >
+                  Nusxalash
+                </button>
+                <button onClick={closeModal} className="btn-secondary">Yopish</button>
+              </div>
             </div>
           </div>
         </div>

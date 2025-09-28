@@ -4,28 +4,25 @@ import {
   FiHome, FiUsers, FiCalendar, FiPackage, FiBarChart2, FiSettings,
   FiMoon, FiSun, FiType, FiLayout, FiDownload, FiUpload, FiClock,
   FiDollarSign, FiBox, FiBriefcase, FiGlobe, FiGrid, FiHelpCircle, FiSmile,
-  FiLogOut // Added logout icon
+  FiLogOut
 } from 'react-icons/fi';
 import { AppContext } from '../App';
-import { backupAllData, restoreFromBackup } from '../utils'; 
+import { backupAllData, restoreFromBackup } from '../utils';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => { // Added onLogout prop
-  const { setDarkMode, setFontSize, setLayout, setIsLoading } = useContext(AppContext); // setIsLoading qo'shildi
+const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => {
+  const { setDarkMode, setFontSize, setLayout, setIsLoading } = useContext(AppContext);
   const location = useLocation();
 
-  // Spinner uchun handleNavClick funksiyasi - 1 soniya ko'rsatib, o'chiradi
- const handleNavClick = () => {
-  setIsLoading(true);
-  console.log("Sidebar link bosildi, spinner ko'rsatilmoqda"); // Debug uchun
-  const timer = setTimeout(() => {
-    setIsLoading(false);
-    console.log("Spinner tezroq o'chirildi"); // Debug uchun
-  }, 300); // 300 ms (0.3 soniya)
-
-  return () => clearTimeout(timer);
-};
-
+  const handleNavClick = () => {
+    setIsLoading(true);
+    console.log("Sidebar link bosildi, spinner ko'rsatilmoqda");
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      console.log("Spinner tezroq o'chirildi");
+    }, 300);
+    return () => clearTimeout(timer);
+  };
 
   const menuItems = [
     { path: '/', icon: <FiHome />, label: 'Bosh sahifa' },
@@ -39,7 +36,10 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => { // Added on
     { path: '/xodimlar', icon: <FiBriefcase />, label: 'Xodimlar' },
     { path: '/bemor-portali', icon: <FiGlobe />, label: 'Bemor Portali' },
     { path: '/davolashda-yordam', icon: <FiHelpCircle />, label: 'Davolashda Yordam' },
-    { path: '/tooth', icon: <FiSmile />, label: 'Tishlar' }
+    { path: '/tooth', icon: <FiSmile />, label: 'Tishlar' },
+    { path: '/foydalanuvchi', icon: <FiUsers />, label: 'Foydalanuvchi' },
+    { path: '/mijozlar', icon: <FiUsers />, label: 'Mijozlar' },
+    { path: '/kirganlar', icon: <FiUsers />, label: 'Kirganlar' },
   ];
 
   return (
@@ -58,8 +58,8 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => { // Added on
                   to={item.path} 
                   className={location.pathname === item.path ? 'active' : ''}
                   onClick={(e) => {
-                    handleNavClick(); // Spinner ishga tushirish
-                    toggleSidebar(); // Sidebar yopish
+                    handleNavClick();
+                    toggleSidebar();
                   }}
                 >
                   {item.icon}
@@ -67,7 +67,6 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => { // Added on
                 </Link>
               </li>
             ))}
-            {/* Logout Button - Spinner qo'shilmagan, chunki login sahifasiga o'tkazadi */}
             <li>
               <button 
                 className="sidebar-logout-btn"

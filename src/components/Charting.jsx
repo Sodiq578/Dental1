@@ -178,7 +178,7 @@ const Charting = () => {
 
       {selectedPatient && (
         <div className="chart-section">
-          <div className="chart-header">
+          <div className="">
             <h2>{selectedPatient.name} uchun Tish Diagrammasi</h2>
             <button onClick={() => setSelectedPatient(null)} className="btn-secondary">Boshqa Bemor</button>
           </div>
