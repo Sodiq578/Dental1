@@ -86,7 +86,7 @@ const TreatmentHistory = () => {
                     }}
                   >
                     <div className="bemor-sarlavha">
-                      <div className="bemor-ikon">
+                      <div className="bemor-ikon-tarix">
                         <FiUser />
                       </div>
                       <div className="bemor-malumot">

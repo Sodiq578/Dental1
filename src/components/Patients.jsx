@@ -13,8 +13,15 @@ import {
   FiDownload, 
   FiX,
   FiMail,
-  FiHeart
-} from 'react-icons/fi';
+  FiHeart,
+  FiUserCheck,   // 🔹 qo‘shildi
+  FiPhoneCall,   // 🔹 qo‘shildi
+  FiEdit3,       // 🔹 qo‘shildi
+  FiTrash        // 🔹 qo‘shildi
+} from "react-icons/fi";
+
+import { User2, Phone, Pencil, Trash2 } from 'lucide-react'; // Import modern icons from lucide-react
+
 import { AppContext } from '../App';
 import { validateStoredPatients, sanitizePatientData, validatePatientData, addNewPatient, sendTelegramMessage } from '../utils';
 import * as XLSX from 'xlsx';
@@ -517,79 +524,81 @@ const Patients = () => {
               </div>
             ) : (
               <div className="jadval-konteyner">
-                <table className="bemorlar-jadval">
-                  <thead>
-                    <tr>
-                      <th>Bemor</th>
-                      <th>Aloqa</th>
-                      <th>Yoshi</th>
-                      <th>Oxirgi tashrif</th>
-                      <th>Izoh</th>
-                      <th>Amallar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredPatients.map(patient => (
-                      <tr 
-                        key={patient.id}
-                        onClick={() => openDetailsModal(patient)}
-                        className="bemor-qatori"
-                      >
-                        <td>
-                          <div className="bemor-malumot">
-                            <FiUser className="bemor-ikon" />
-                            <span>{patient.name || 'Noma\'lum'}</span>
-                          </div>
-                        </td>
-                        
-                        <td>
-                          <div className="bemor-malumot">
-                            <FiPhone className="bemor-ikon" />
-                            <span>{formatPhoneNumber(patient.phone)}</span>
-                          </div>
-                        </td>
-                        
-                        <td>{calculateAge(patient.dob)}</td>
-                        
-                        <td>
-                          {patient.lastVisit ? formatDate(patient.lastVisit) : 'Tashrif yo\'q'}
-                        </td>
-                        
-                        <td>
-                          {patient.note ? (
-                            <span className="izoh-korsatgichi">
-                              {truncateText(patient.note)}
-                            </span>
-                          ) : '-'}
-                        </td>
-                        
-                        <td>
-                          <div className="amallar-tugmalari">
-                            <button
-                              className="tugma tugma-tahrir tugma-kichik"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openModal(patient);
-                              }}
-                            >
-                              <FiEdit />
-                            </button>
-                            
-                            <button
-                              className="tugma tugma-ochirish tugma-kichik"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deletePatient(patient.id);
-                              }}
-                            >
-                              <FiTrash2 />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+           <table className="bemorlar-jadval">
+  <thead>
+    <tr>
+      <th>Bemor</th>
+      <th>Aloqa</th>
+      <th>Yoshi</th>
+      <th>Oxirgi tashrif</th>
+      <th>Izoh</th>
+      <th>Amallar</th>
+    </tr>
+  </thead>
+  <tbody>
+    {filteredPatients.map(patient => (
+      <tr 
+        key={patient.id}
+        onClick={() => openDetailsModal(patient)}
+        className="bemor-qatori"
+      >
+        <td>
+          <div className="bemor-malumot">
+            <User2 className="bemor-ikon" /> {/* Replaced FiUserCheck with User2 */}
+            
+            <span>{patient.name || 'Noma\'lum'}</span>
+          </div>
+        </td>
+        
+        <td>
+          <div className="bemor-malumot">
+            <Phone className="bemor-ikon" /> {/* Replaced FiPhoneCall with Phone */}
+            <span>{formatPhoneNumber(patient.phone)}</span>
+          </div>
+        </td>
+        
+        <td>{calculateAge(patient.dob)}</td>
+        
+        <td>
+          {patient.lastVisit ? formatDate(patient.lastVisit) : 'Tashrif yo\'q'}
+        </td>
+        
+        <td>
+          {patient.note ? (
+            <span className="izoh-korsatgichi">
+              {truncateText(patient.note)}
+            </span>
+          ) : '-'}
+        </td>
+        
+        <td>
+          <div className="amallar-tugmalari">
+            <button
+              className="tugma tugma-tahrir tugma-kichik"
+              onClick={(e) => {
+                e.stopPropagation();
+                openModal(patient);
+              }}
+            >
+              <Pencil /> {/* Replaced FiEdit3 with Pencil */}
+            </button>
+            
+            <button
+              className="tugma tugma-ochirish tugma-kichik"
+              onClick={(e) => {
+                e.stopPropagation();
+                deletePatient(patient.id);
+              }}
+            >
+              <Trash2 /> {/* Replaced FiTrash with Trash2 */}
+            </button>
+          </div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
               </div>
             )}
           </>
