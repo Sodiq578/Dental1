@@ -1,11 +1,11 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
-import { FiUsers, FiCalendar, FiPackage, FiDownload, FiPlusCircle } from 'react-icons/fi';
+import { FiUsers, FiCalendar, FiPackage, FiDownload, FiPlusCircle, FiUser } from 'react-icons/fi';
 import { AppContext } from '../App';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { patients, appointments, medications, darkMode } = useContext(AppContext);
+  const { patients, appointments, medications, currentUser } = useContext(AppContext);
 
   // Bugungi uchrashuvlar
   const today = new Date().toISOString().split('T')[0];
@@ -44,12 +44,18 @@ const Dashboard = () => {
   };
 
   return (
-    <div className={`dashboard ${darkMode ? 'dark' : ''}`}>
+    <div className="dashboard">
       <div className="dashboard-header">
         <h1>Bosh Sahifa</h1>
-        <button onClick={exportQuickReport} className="export-btn">
-          <FiDownload /> Hisobotni Yuklab Olish
-        </button>
+        <div className="header-right">
+          <Link to="/foydalanuvchi" className="user-profile">
+            <FiUser className="user-icon" />
+            <span className="user-name">{currentUser?.name || 'Foydalanuvchi'}</span>
+          </Link>
+          <button onClick={exportQuickReport} className="export-btn">
+            <FiDownload /> Hisobotni Yuklab Olish
+          </button>
+        </div>
       </div>
 
       {/* Statistikalar */}

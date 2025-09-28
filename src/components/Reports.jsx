@@ -191,7 +191,7 @@ const Reports = () => {
       {/* Asosiy statistikalar */}
       <div className="stats-grid">
         <div className="stat-card primary">
-          <div className="stat-icon">
+          <div className="stat-icon-report">
             <FiUsers />
           </div>
           <div className="stat-content">
@@ -204,7 +204,7 @@ const Reports = () => {
         </div>
 
         <div className="stat-card success">
-          <div className="stat-icon">
+          <div className="stat-icon-report">
             <FiCalendar />
           </div>
           <div className="stat-content">
@@ -217,7 +217,7 @@ const Reports = () => {
         </div>
 
         <div className="stat-card warning">
-          <div className="stat-icon">
+          <div className="stat-icon-report">
             <FiDollarSign />
           </div>
           <div className="stat-content">
@@ -230,7 +230,7 @@ const Reports = () => {
         </div>
 
         <div className="stat-card info">
-          <div className="stat-icon">
+          <div className="stat-icon-report">
             <FiTrendingUp />
           </div>
           <div className="stat-content">

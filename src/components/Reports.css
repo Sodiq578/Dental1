@@ -181,7 +181,7 @@
   box-shadow: var(--shadow-xl);
 }
 
-.stat-icon {
+.stat-icon-report {
   width: 60px;
   height: 60px;
   border-radius: var(--border-radius);
@@ -518,7 +518,7 @@ tr:hover {
   align-items: center;
   gap: var(--padding-xs);
   padding: var(--padding-sm) var(--padding-lg);
-  background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+  background: #0000ff;
   color: white;
   border: none;
   border-radius: var(--border-radius);
