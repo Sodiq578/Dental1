@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AppContext } from '../App';
 import { FiKey, FiX, FiUser, FiClock } from 'react-icons/fi';
 import './TokenLogin.css';
@@ -7,6 +7,19 @@ const TokenLogin = ({ isOpen, onClose, onLogin }) => {
   const { staff } = useContext(AppContext);
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
+
+  // Modal ochilganda body ga overflow: hidden qo'shish
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -42,6 +55,18 @@ const TokenLogin = ({ isOpen, onClose, onLogin }) => {
       setError('Noto‘g‘ri yoki muddati o‘tgan token');
     }
   };
+
+  // Escape tugmasi bilan yopish
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 

@@ -230,7 +230,7 @@ const Reports = () => {
         </div>
 
         <div className="stat-card info">
-          <div className="stat-icon-report">
+          <div className="stat-icon">
             <FiTrendingUp />
           </div>
           <div className="stat-content">

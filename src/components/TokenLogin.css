@@ -1,192 +1,530 @@
+/* TokenLogin.css */
 .token-login-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
+  z-index: 10000;
+  padding: 20px;
+  animation: overlayFadeIn 0.3s ease;
+  overflow-y: auto; /* Skroll qilish imkoniyati */
 }
 
 .token-login-modal {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  max-width: 500px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  width: 100%;
+  max-width: 480px;
+  animation: modalSlideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  max-height: 90vh; /* Maksimal balandlik */
+  margin: auto; /* Markazga joylashish */
 }
 
+.token-login-content {
+  padding: 32px;
+  max-height: calc(90vh - 64px); /* Content uchun maksimal balandlik */
+  overflow-y: auto; /* Content ichida skroll */
+}
+
+/* Skrollbar stilini yaxshilash */
+.token-login-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.token-login-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.token-login-content::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 3px;
+}
+
+.token-login-content::-webkit-scrollbar-thumb:hover {
+  background: #4f46e5;
+}
+
+/* Kichik ekranlar uchun moslashuv */
+@media (max-width: 520px) {
+  .token-login-overlay {
+    padding: 10px;
+    align-items: flex-start; /* Yuqoridan boshlash */
+  }
+  
+  .token-login-modal {
+    max-height: 95vh; /* Kichik ekranda balandroq */
+    margin: 20px auto; /* Yuqori va pastki margin */
+  }
+  
+  .token-login-content {
+    max-height: calc(95vh - 64px);
+    padding: 24px;
+  }
+}
+
+@media (max-width: 380px) {
+  .token-login-content {
+    padding: 20px;
+    max-height: calc(95vh - 56px);
+  }
+}
+
+/* Modal balandligi juda katta bo'lsa */
+.token-login-modal.auto-height {
+  max-height: none; /* Avtomatik balandlik */
+}
+
+.token-login-content.auto-height {
+  max-height: none; /* Avtomatik balandlik */
+  overflow-y: visible; /* Skrollsiz */
+}
+
+/* Qolgan stilar o'zgarmaydi */
 .token-login-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  padding: 24px 32px;
+  color: white;
+  position: relative;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 15px;
+  justify-content: space-between;
+  flex-shrink: 0; /* Header qisqarmasligi uchun */
 }
 
 .token-login-header h2 {
   margin: 0;
+  font-size: 22px;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #333;
+  gap: 12px;
+}
+
+.token-login-header h2 svg {
+  font-size: 24px;
+  opacity: 0.9;
 }
 
 .close-button {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
-  font-size: 24px;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: #666;
-  padding: 5px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  font-size: 18px;
+  flex-shrink: 0; /* Tugma qisqarmasligi uchun */
 }
 
-.token-login-content {
-  text-align: center;
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
 }
 
 .token-info {
-  margin-bottom: 25px;
+  background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 100%);
+  border: 2px solid #e0e7ff;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.token-info::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
 }
 
 .token-user-icon {
-  font-size: 3rem;
-  color: #4CAF50;
-  margin-bottom: 15px;
+  font-size: 48px;
+  color: #4f46e5;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.token-info p {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 500;
 }
 
 .token-note {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 6px;
-  padding: 10px;
-  margin-top: 15px;
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .note-icon {
-  color: #ff9800;
+  color: #4f46e5;
+  font-size: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.token-note p {
+  margin: 0;
+  color: #4f46e5;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.token-note strong {
+  font-weight: 600;
 }
 
 .token-form {
-  margin-bottom: 25px;
+  margin-bottom: 28px;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.error-message::before {
+  content: '!';
+  background: #dc2626;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
 .form-group {
-  margin-bottom: 20px;
-  text-align: left;
+  margin-bottom: 24px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  color: #374151;
   font-weight: 600;
-  color: #333;
+  font-size: 14px;
 }
 
 .token-input {
   width: 100%;
-  padding: 15px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  font-size: 1.2rem;
-  text-align: center;
+  padding: 16px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+  color: #1f2937;
   letter-spacing: 2px;
+  text-align: center;
   font-family: 'Courier New', monospace;
-  text-transform: uppercase;
+}
+
+.token-input::placeholder {
+  color: #9ca3af;
+  font-weight: normal;
+  letter-spacing: normal;
 }
 
 .token-input:focus {
   outline: none;
-  border-color: #4CAF50;
+  border-color: #4f46e5;
+  background: white;
+  box-shadow: 
+    0 0 0 3px rgba(79, 70, 229, 0.1),
+    0 4px 12px rgba(79, 70, 229, 0.1);
+  transform: translateY(-1px);
 }
 
 .token-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.token-help {
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: left;
-}
-
-.token-help h4 {
-  margin-bottom: 15px;
-  color: #333;
-}
-
-.token-help ol {
-  padding-left: 20px;
-  margin: 0;
-}
-
-.token-help li {
-  margin-bottom: 8px;
-  line-height: 1.4;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 8px;
 }
 
 .btn-primary {
-  background: #4CAF50;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   color: white;
   border: none;
-  padding: 12px 25px;
-  border-radius: 6px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1rem;
-  transition: background 0.3s;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
 }
 
 .btn-primary:hover {
-  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(79, 70, 229, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .btn-secondary {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 12px 25px;
-  border-radius: 6px;
+  background: #f8fafc;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
-  background: #5a6268;
+  background: white;
+  border-color: #4f46e5;
+  color: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.error-message {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 15px;
-  border-left: 4px solid #dc3545;
+.token-help {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
 }
 
-@media (max-width: 768px) {
+.token-help::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 16px 16px 0 0;
+}
+
+.token-help h4 {
+  margin: 0 0 16px 0;
+  color: #059669;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.token-help h4::before {
+  content: '💡';
+  font-size: 18px;
+}
+
+.token-help ol {
+  margin: 0;
+  padding-left: 20px;
+  color: #374151;
+}
+
+.token-help li {
+  margin-bottom: 10px;
+  line-height: 1.5;
+  font-size: 14px;
+  position: relative;
+  padding-left: 8px;
+}
+
+.token-help li:last-child {
+  margin-bottom: 0;
+}
+
+.token-help li::marker {
+  color: #059669;
+  font-weight: 600;
+}
+
+/* Animation for token input focus */
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(79, 70, 229, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+}
+
+.token-input:focus {
+  animation: pulseGlow 2s infinite;
+}
+
+/* Loading state for submit button */
+.btn-primary.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.btn-primary.loading::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 8px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
   .token-login-modal {
-    margin: 20px;
-    width: calc(100% - 40px);
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    border-color: rgba(255, 255, 255, 0.1);
   }
   
-  .token-actions {
-    flex-direction: column;
+  .token-info {
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    border-color: #4b5563;
+  }
+  
+  .token-info p {
+    color: #e5e7eb;
+  }
+  
+  .token-note {
+    background: rgba(79, 70, 229, 0.2);
+    border-color: rgba(79, 70, 229, 0.3);
+  }
+  
+  .form-group label {
+    color: #e5e7eb;
+  }
+  
+  .token-input {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+  
+  .token-input:focus {
+    background: #1f2937;
+    border-color: #4f46e5;
+  }
+  
+  .btn-secondary {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+  }
+  
+  .btn-secondary:hover {
+    background: #4b5563;
+    border-color: #4f46e5;
+  }
+  
+  .token-help {
+    background: #374151;
+    border-color: #4b5563;
+  }
+  
+  .token-help ol {
+    color: #e5e7eb;
+  }
+  
+  /* Dark mode uchun skrollbar */
+  .token-login-content::-webkit-scrollbar-track {
+    background: #374151;
+  }
+  
+  .token-login-content::-webkit-scrollbar-thumb {
+    background: #4f46e5;
+  }
+  
+  .token-login-content::-webkit-scrollbar-thumb:hover {
+    background: #7c3aed;
   }
 }

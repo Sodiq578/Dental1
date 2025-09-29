@@ -1,188 +1,107 @@
-/* TreatmentHistory Komponenti - Zamonaviy Dizayn */
+/* src/TreatmentHistory.css */
 
+/* Root variables for consistent theming */
 :root {
-  /* Asosiy ranglar */
-  --primary-blue: #2563eb;
-  --primary-blue-dark: #1e40af;
-  --primary-blue-light: #3b82f6;
-  
-  /* Yordamchi ranglar */
-  --accent-green: #10b981;
-  --accent-green-dark: #047857;
-  --warning-orange: #f59e0b;
-  --error-red: #ef4444;
-  
-  /* Neytral ranglar */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
-  
-  /* Oq va qora */
-  --white: #ffffff;
-  --black: #000000;
-  
-  /* Gradientlar */
-  --gradient-primary: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
-  --gradient-accent: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark));
-  
-  /* O'lchamlar */
-  --border-radius-sm: 6px;
-  --border-radius: 12px;
-  --border-radius-lg: 16px;
-  --border-radius-xl: 24px;
-  
-  /* Shadow effektlar */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.25);
-  
-  /* Transitionlar */
-  --transition-fast: all 0.15s ease;
-  --transition: all 0.3s ease;
-  --transition-slow: all 0.5s ease;
-  
-  /* Font o'lchamlari */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-  
-  /* Paddinglar */
-  --padding-xs: 0.5rem;
-  --padding-sm: 0.75rem;
-  --padding: 1rem;
-  --padding-lg: 1.5rem;
-  --padding-xl: 2rem;
-  --padding-2xl: 3rem;
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --background-color: #f8f9fa;
+  --text-color: #333;
+  --card-bg: #fff;
+  --border-color: #dee2e6;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --modal-overlay: rgba(0, 0, 0, 0.5);
 }
 
-/* Dark Mode */
+/* Dark mode styles */
 .dark-mode {
-  --bg-primary: var(--gray-900);
-  --bg-secondary: var(--gray-800);
-  --bg-tertiary: var(--gray-700);
-  --text-primary: var(--gray-100);
-  --text-secondary: var(--gray-300);
-  --text-tertiary: var(--gray-400);
-  --border-color: var(--gray-600);
-  --shadow-color: rgba(0, 0, 0, 0.3);
+  --primary-color: #66b0ff;
+  --secondary-color: #adb5bd;
+  --background-color: #1a1a1a;
+  --text-color: #e9ecef;
+  --card-bg: #2c2c2c;
+  --border-color: #444;
+  --modal-overlay: rgba(0, 0, 0, 0.7);
 }
 
-/* Light Mode */
-:not(.dark-mode) {
-  --bg-primary: var(--white);
-  --bg-secondary: var(--gray-50);
-  --bg-tertiary: var(--gray-100);
-  --text-primary: var(--gray-900);
-  --text-secondary: var(--gray-600);
-  --text-tertiary: var(--gray-500);
-  --border-color: var(--gray-200);
-  --shadow-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Umumiy stillar */
+/* General container */
 .davolash-tarixi {
+  background-color: var(--background-color);
+  color: var(--text-color);
   min-height: 100vh;
-  background: var(--bg-secondary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
-  color: var(--text-primary);
+  font-family: "Arial", sans-serif;
+  transition: all 0.3s ease;
 }
 
-/* Konteyner */
-.davolash-tarixi .container {
-  max-width: 1400px;
+/* Header styles */
+.header {
+  background-color: var(--card-bg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+}
+
+.header-inner {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--padding);
-}
-
- 
- 
-@keyframes float {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-20px, -20px); }
-}
-
-.sarlavha-ichki {
-  position: relative;
-  z-index: 2;
-  text-align: center;
 }
 
 .sarlavha-ichki h1 {
-  font-size: var(--font-size-4xl);
-  font-weight: 800;
-  margin-bottom: var(--padding);
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--padding);
+  gap: 0.5rem;
+  font-size: 1.8rem;
+  margin: 0;
 }
 
 .sarlavha-ichki p {
-  font-size: var(--font-size-lg);
-  opacity: 0.9;
-  max-width: 600px;
-  margin: 0 auto;
+  margin: 0.5rem 0;
+  color: var(--secondary-color);
 }
 
 .badge {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  padding: var(--padding-xs) var(--padding-lg);
-  border-radius: var(--border-radius-xl);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
 }
 
-/* Asosiy kontent */
-.asosiy-kontent {
-  padding: var(--padding-xl) 0;
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-/* Filtr va qidiruv paneli */
+/* Filter panel */
 .filtr-paneli {
-  background: var(--bg-primary);
-  padding: var(--padding-lg);
-  border-radius: var(--border-radius-lg);
+  background-color: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 8px;
   box-shadow: var(--shadow);
-  margin-bottom: var(--padding-2xl);
-  border: 1px solid var(--border-color);
+  margin-bottom: 2rem;
 }
 
 .filtr-ichki {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--padding-lg);
-  align-items: end;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .qidiruv-guruhi {
-  display: flex;
-  flex-direction: column;
-  gap: var(--padding-xs);
+  flex: 1;
+  min-width: 250px;
 }
 
 .qidiruv-guruhi label {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
 }
 
 .qidiruv-input {
@@ -193,517 +112,446 @@
 
 .qidiruv-input input {
   width: 100%;
-  padding: var(--padding) var(--padding) var(--padding) var(--padding-2xl);
-  border: 2px solid var(--border-color);
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-base);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  transition: var(--transition);
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  transition: border-color 0.3s ease;
 }
 
 .qidiruv-input input:focus {
   outline: none;
-  border-color: var(--primary-blue);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
 }
 
-.qidiruv-input .search-icon {
+.search-icon {
   position: absolute;
-  left: var(--padding);
-  color: var(--text-tertiary);
-  font-size: var(--font-size-lg);
+  left: 0.75rem;
+  color: var(--secondary-color);
+}
+
+.qidiruv-input .clear-search {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--secondary-color);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.qidiruv-input .clear-search:hover {
+  color: var(--danger-color);
 }
 
 .amal-tugmalari {
   display: flex;
-  gap: var(--padding);
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
-/* Bemorlar ro'yxati */
+.tugma {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.tugma-birlamchi {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.tugma-birlamchi:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.tugma:disabled {
+  background-color: var(--secondary-color);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Patients list */
 .bemorlar-royxati {
-  margin-bottom: var(--padding-2xl);
+  margin-bottom: 2rem;
 }
 
 .royxat-sarlavha {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--padding-lg);
+  margin-bottom: 1rem;
 }
 
 .royxat-sarlavha h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--text-primary);
+  margin: 0;
+  font-size: 1.5rem;
 }
 
 .bemorlar-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: var(--padding-lg);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
+/* 🟦 Bemor kartasi umumiy stil */
 .bemor-karta {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: var(--padding-lg);
+  background: linear-gradient(145deg, #ffffff, #f8f9fb);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  padding: 1.2rem;
   cursor: pointer;
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  
 }
 
-.bemor-karta::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--primary-blue);
-  transition: var(--transition);
+/* Hover va focus */
+.bemor-karta:hover,
+.bemor-karta:focus {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  border-color: var(--primary-color, #007bff);
 }
 
-.bemor-karta:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--primary-blue);
-}
-
+/* Tanlangan bemor */
 .bemor-karta.tanlangan {
-  background: linear-gradient(135deg, var(--bg-primary), rgba(37, 99, 235, 0.05));
-  border-color: var(--primary-blue);
-  box-shadow: var(--shadow-md);
+  border: 2px solid var(--primary-color, #007bff);
+  box-shadow: 0 0 12px rgba(0, 123, 255, 0.25);
 }
 
-.bemor-karta.tanlangan::before {
-  background: var(--accent-green);
+/* Accessibility uchun focus */
+.bemor-karta:focus {
+  outline: none;
 }
 
+/* 🔹 Sarlavha qismi */
 .bemor-sarlavha {
   display: flex;
+  gap: 1rem;
   align-items: center;
-  gap: var(--padding);
-  margin-bottom: var(--padding);
+  margin-bottom: 1rem;
 }
 
+/* Ikonka */
 .bemor-ikon-tarix {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--border-radius);
-  background: var(--gradient-primary);
+  font-size: 2.4rem;
+  color: var(--primary-color, #007bff);
+  background: rgba(0, 123, 255, 0.1);
+  padding: 0.6rem;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--white);
-  font-size: var(--font-size-xl);
-  flex-shrink: 0;
 }
 
+/* Bemor ma’lumotlari */
 .bemor-malumot h3 {
-  font-size: var(--font-size-lg);
+  margin: 0;
+  font-size: 1.3rem;
   font-weight: 600;
-  margin: 0 0 var(--padding-xs) 0;
-  color: var(--text-primary);
+  color: #333;
 }
 
 .bemor-malumot p {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--padding-xs);
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+  color: var(--secondary-color, #555);
 }
 
+/* 📊 Statistika bo‘limi */
 .bemor-statistika {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--padding);
-  margin-top: var(--padding);
-  padding-top: var(--padding);
-  border-top: 1px solid var(--border-color);
+  gap: 0.8rem;
+  text-align: center;
+  margin-top: 1rem;
 }
 
 .stat-element {
-  text-align: center;
+  background: #f1f4f9;
+  padding: 0.6rem;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.stat-element:hover {
+  background: #e9f2ff;
 }
 
 .stat-raqam {
   display: block;
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--primary-blue);
-  line-height: 1;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #222;
 }
 
 .stat-label {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-top: var(--padding-xs);
+  font-size: 0.85rem;
+  color: #666;
 }
 
-/* Tarix modal oynasi */
-.tarix-modal {
-  background: var(--bg-primary);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--border-color);
-  animation: modalOpen 0.3s ease-out;
-}
-
-@keyframes modalOpen {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
+/* 📱 Responsiv */
+@media (max-width: 600px) {
+  .bemor-statistika {
+    grid-template-columns: 1fr;
   }
 }
 
-.modal-sarlavha {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--padding-lg);
-  border-bottom: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--secondary-color);
 }
 
-.modal-sarlavha h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  margin: 0;
-  color: var(--text-primary);
-}
-
-.yopish-tugmasi {
-  background: none;
-  border: none;
-  font-size: var(--font-size-2xl);
-  color: var(--text-tertiary);
-  cursor: pointer;
-  padding: var(--padding-xs);
-  border-radius: var(--border-radius);
-  transition: var(--transition);
-  line-height: 1;
-}
-
-.yopish-tugmasi:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.modal-tanasi {
-  padding: var(--padding-lg);
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-/* Jadval dizayni */
-.jadval-konteyner {
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-}
-
-.tarix-jadval {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--bg-primary);
-}
-
-.tarix-jadval thead {
-  background: var(--bg-tertiary);
-}
-
-.tarix-jadval th {
-  padding: var(--padding);
-  text-align: left;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid var(--border-color);
-}
-
-.tarix-jadval td {
-  padding: var(--padding);
-  border-bottom: 1px solid var(--border-color);
-  font-size: var(--font-size-base);
-  color: var(--text-primary);
-}
-
-.tarix-jadval tbody tr {
-  transition: var(--transition);
-}
-
-.tarix-jadval tbody tr:hover {
-  background: var(--bg-secondary);
-}
-
-.tarix-jadval tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* Status badge */
-.holat-badge {
-  padding: var(--padding-xs) var(--padding);
-  border-radius: var(--border-radius-xl);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.holat-yakunlangan {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--accent-green);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-.holat-kutilmoqda {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--warning-orange);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-}
-
-.holat-bekor {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--error-red);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
-/* Bo'sh holat */
 .bosh-holat {
   text-align: center;
-  padding: var(--padding-2xl);
-  color: var(--text-tertiary);
+  padding: 2rem;
+  color: var(--secondary-color);
 }
 
-.bosh-holat .bosh-ikon {
-  font-size: 4rem;
-  color: var(--border-color);
-  margin-bottom: var(--padding);
-  opacity: 0.5;
+.bosh-ikon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
 }
 
-.bosh-holat h3 {
-  font-size: var(--font-size-xl);
-  margin-bottom: var(--padding-xs);
-  color: var(--text-secondary);
-}
-
-.bosh-holat p {
-  font-size: var(--font-size-base);
-  margin: 0;
-}
-
-/* Tugmalar */
-.tugma {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--padding-xs);
-  padding: var(--padding) var(--padding-lg);
-  border: none;
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  text-decoration: none;
-  position: relative;
-  overflow: hidden;
-}
-
-.tugma::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: var(--transition);
-}
-
-.tugma:hover::before {
-  left: 100%;
-}
-
-.tugma-birlamchi {
-  background: var(--gradient-primary);
-  color: var(--white);
-}
-
-.tugma-birlamchi:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.tugma-ikkilamchi {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-}
-
-.tugma-ikkilamchi:hover {
-  background: var(--bg-secondary);
-  transform: translateY(-2px);
-}
-
-/* Modal overlay */
+/* Modal styles */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background-color: var(--modal-overlay);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
-  padding: var(--padding);
-  animation: overlayOpen 0.3s ease-out;
 }
 
-@keyframes overlayOpen {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.tarix-modal {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  max-width: 90%;
+  width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  position: relative;
 }
 
-/* Responsive dizayn */
-@media (max-width: 1200px) {
-  .bemorlar-grid {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+.modal-sarlavha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-sarlavha h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.yopish-tugmasi {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.yopish-tugmasi:hover, .yopish-tugmasi:focus {
+  color: var(--danger-color);
+}
+
+.yopish-tugmasi:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.modal-tanasi {
+  padding: 1rem;
+}
+
+.jadval-konteyner {
+  overflow-x: auto;
+}
+
+.tarix-jadval {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tarix-jadval th,
+.tarix-jadval td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.tarix-jadval th {
+  background-color: var(--background-color);
+  font-weight: 600;
+}
+
+.holat-badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.holat-kutilmoqda {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.holat-amalga-oshirildi {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.holat-bekor-qilindi {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
   }
 }
 
+/* Responsive design */
 @media (max-width: 768px) {
-  :root {
-    --padding: 0.75rem;
-    --padding-lg: 1rem;
-    --padding-xl: 1.5rem;
-    --padding-2xl: 2rem;
-  }
-
-  .sarlavha-ichki h1 {
-    font-size: var(--font-size-3xl);
-    flex-direction: column;
-    gap: var(--padding);
-  }
-
   .filtr-ichki {
-    grid-template-columns: 1fr;
-    gap: var(--padding);
-  }
-
-  .amal-tugmalari {
-    justify-content: stretch;
-  }
-
-  .tugma {
-    flex: 1;
-    justify-content: center;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .bemorlar-grid {
     grid-template-columns: 1fr;
-  }
-
-  .bemor-statistika {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .tarix-jadval {
-    display: block;
-    overflow-x: auto;
-  }
-}
-
-@media (max-width: 480px) {
- 
-
-  .sarlavha-ichki h1 {
-    font-size: var(--font-size-2xl);
-  }
-
-  .bemor-sarlavha {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--padding);
-  }
-
-  .bemor-statistika {
-    grid-template-columns: 1fr;
-    gap: var(--padding-sm);
-  }
-
-  .modal-sarlavha {
-    flex-direction: column;
-    gap: var(--padding);
-    text-align: center;
   }
 
   .tarix-jadval th,
   .tarix-jadval td {
-    padding: var(--padding-sm);
-    font-size: var(--font-size-sm);
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+
+  .tarix-modal {
+    width: 95%;
+    max-height: 90vh;
   }
 }
 
-/* Yuklanayotgan holat */
-.yuklanmoqda {
-  opacity: 0.7;
-  pointer-events: none;
-  position: relative;
+@media (max-width: 480px) {
+  .sarlavha-ichki h1 {
+    font-size: 1.5rem;
+  }
+
+  .tugma {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .bemor-statistika {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
 }
 
-.yuklanmoqda::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--border-color);
-  border-top: 3px solid var(--primary-blue);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+
+
+
+
+
+
+
+
+
+
+
+
+.modal-tugmalar {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-@keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+.tugma-ikkinchi {
+  background-color: #6c757d;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-/* Scrollbar dizayni */
-.tarix-jadval::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.tugma-ikkinchi:hover {
+  background-color: #5a6268;
 }
 
-.tarix-jadval::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+select#export-format {
+  padding: 8px;
+  margin: 10px 0;
+  width: 100%;
+  border-radius: 4px;
 }
 
-.tarix-jadval::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: var(--border-radius);
+
+
+
+
+
+
+
+
+.modal-tugmalar {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.tarix-jadval::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
+.tugma-ikkinchi {
+  background-color: #6c757d;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tugma-ikkinchi:hover {
+  background-color: #5a6268;
+}
+
+select#export-format {
+  padding: 8px;
+  margin: 10px 0;
+  width: 100%;
+  border-radius: 4px;
 }

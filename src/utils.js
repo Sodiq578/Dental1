@@ -1,3 +1,110 @@
+// utils.js (yangilangan)
+
+///////////////////////
+// Telegram token (zarurat bo'lsa dinamik o'rnatish uchun)
+let TELEGRAM_BOT_TOKEN = '8446018868:AAGMBw9ZFI2gDP3a_XA7qpVDX4_ar76IxlU';
+export const setTelegramBotToken = (token) => {
+  TELEGRAM_BOT_TOKEN = token;
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('telegramBotToken', token);
+    }
+  } catch (e) {
+    console.warn('Telegram token saqlanmadi:', e);
+  }
+};
+
+///////////////////////
+// Helper: normalize tooth status (yo'q / yoq / yoʻq kabi variantlarni birlashtirish)
+export const normalizeToothStatus = (status) => {
+  if (!status && status !== 0) return '';
+  let s = String(status).toLowerCase().trim();
+
+  // Replace various apostrophe-like characters with a simple apostrophe
+  s = s.replace(/[’‘ʼ`ʻ]/g, "'");
+
+  // Normalize common Uzbek variants for "yo'q"
+  s = s.replace(/yo['’`ʻ]q/g, 'yoq');
+
+  // Remove extra whitespace
+  s = s.replace(/\s+/g, ' ').trim();
+
+  return s;
+};
+
+///////////////////////
+// Tooth status -> color mapping
+export const getToothStatusColor = (status) => {
+  const s = normalizeToothStatus(status);
+  const colors = {
+    'sog': '#4CAF50',
+    'karies': '#FF9800',
+    'plomba': '#2196F3',
+    'koronka': '#9C27B0',
+    'protez': '#607D8B',
+    'yoq': '#F44336',
+    'davl': '#FFC107'
+  };
+  return colors[s] || '#CCCCCC';
+};
+
+///////////////////////
+// Sanitize patient: normalizatsiya qilish (toothChart status ham to'g'rilanadi)
+export const sanitizePatientData = (patient) => {
+  const toothChart = Array.isArray(patient?.toothChart)
+    ? patient.toothChart.map(tc => {
+        const status = normalizeToothStatus(tc?.status || '');
+        return {
+          ...tc,
+          status,
+          color: tc?.color || getToothStatusColor(status)
+        };
+      })
+    : [];
+
+  return {
+    ...patient,
+    name: patient?.name ? String(patient.name).trim() : '',
+    phone: patient?.phone ? String(patient.phone).trim() : '',
+    address: patient?.address ? String(patient.address).trim() : '',
+    note: patient?.note ? String(patient.note).trim() : '',
+    gender: patient?.gender || '',
+    dob: patient?.dob || '',
+    telegram: patient?.telegram ? String(patient.telegram).trim() : '',
+    lastVisit: patient?.lastVisit || '',
+    prescriptions: Array.isArray(patient?.prescriptions) ? patient.prescriptions : [],
+    toothChart,
+    createdAt: patient?.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+};
+
+///////////////////////
+// LocalStorage helpers
+export const getFromLocalStorage = (key, defaultValue = null) => {
+  try {
+    if (typeof window === 'undefined') return defaultValue;
+    const item = window.localStorage.getItem(key);
+    // console.log(`📖 Keksri o'qiyapti: ${key}`);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.error(`💥 Keksri o'qish xatosi (${key}):`, error);
+    return defaultValue;
+  }
+};
+
+export const saveToLocalStorage = (key, value) => {
+  try {
+    if (typeof window === 'undefined') return;
+    // console.log(`💾 Keksri saqlayapti: ${key}`, value);
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`💥 Keksri saqlash xatosi (${key}):`, error);
+  }
+};
+
+///////////////////////
+// Initialization (o'zgartirmadim, lekin normal ishlashi uchun qoldirdim)
 export const initializeData = () => {
   console.log("🦷 Keksri Dental - Ma'lumotlarni ishga tushiramiz...");
   
@@ -298,90 +405,19 @@ export const initializeData = () => {
   });
 };
 
-export const getFromLocalStorage = (key, defaultValue = null) => {
-  try {
-    if (typeof window === 'undefined') return defaultValue;
-    const item = window.localStorage.getItem(key);
-    console.log(`📖 Keksri o'qiyapti: ${key}`);
-    return item ? JSON.parse(item) : defaultValue;
-  } catch (error) {
-    console.error(`💥 Keksri o'qish xatosi (${key}):`, error);
-    return defaultValue;
-  }
-};
-
-export const saveToLocalStorage = (key, value) => {
-  try {
-    if (typeof window === 'undefined') return;
-    console.log(`💾 Keksri saqlayapti: ${key}`, value);
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.error(`💥 Keksri saqlash xatosi (${key}):`, error);
-  }
-};
-
-export const backupAllData = () => {
-  try {
-    console.log("💾 Keksri zaxira nusxasi olinmoqda...");
-    const allData = {};
-    const keys = [
-      'patients', 'appointments', 'medications', 'users', 
-      'billings', 'inventory', 'staff', 'sidebarOpen', 
-      'darkMode', 'fontSize', 'layout'
-    ];
-    
-    keys.forEach(key => {
-      allData[key] = getFromLocalStorage(key);
-    });
-
-    const blob = new Blob([JSON.stringify(allData, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `keksri_dental_zaxira_${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    console.log("✅ Keksri zaxira muvaffaqiyatli yuklab olindi");
-    return true;
-  } catch (e) {
-    console.error("💥 Keksri zaxira xatosi:", e);
-    alert('Keksri zaxirada saqlashda xatolik yuz berdi');
-    return false;
-  }
-};
-
-export const restoreFromBackup = (file, callback) => {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      console.log("🔄 Keksri zaxira tiklanmoqda...");
-      const data = JSON.parse(e.target.result);
-      Object.keys(data).forEach(key => {
-        if (data[key] !== null) {
-          saveToLocalStorage(key, data[key]);
-        }
-      });
-      console.log("✅ Keksri zaxira muvaffaqiyatli tiklandi");
-      callback(true, 'Keksri ma\'lumotlar muvaffaqiyatli tiklandi');
-    } catch (err) {
-      console.error("💥 Keksri tiklash xatosi:", err);
-      callback(false, 'Keksri faylni o\'qishda xatolik yuz berdi');
-    }
-  };
-  reader.readAsText(file);
-};
-
+///////////////////////
+// Validation helpers
 export const validateEmail = (email) => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email);
+  return re.test(String(email || ''));
 };
 
 export const validatePassword = (password) => {
-  return password.length >= 6;
+  return typeof password === 'string' && password.length >= 6;
 };
 
 export const validatePhone = (phone) => {
-  return /^\+998\d{9}$/.test(phone);
+  return /^\+998\d{9}$/.test(String(phone || ''));
 };
 
 export const validateStoredPatients = (patients) => {
@@ -391,10 +427,10 @@ export const validateStoredPatients = (patients) => {
       return [];
     }
     return patients
-      .filter(patient => 
-        patient && 
+      .filter(patient =>
+        patient &&
         typeof patient === "object" &&
-        patient.id && 
+        (patient.id !== undefined && patient.id !== null) &&
         patient.name &&
         typeof patient.name === "string" &&
         validatePhone(patient.phone)
@@ -406,44 +442,28 @@ export const validateStoredPatients = (patients) => {
   }
 };
 
-export const sanitizePatientData = (patient) => {
-  return {
-    ...patient,
-    name: patient.name ? patient.name.trim() : '',
-    phone: patient.phone ? patient.phone.trim() : '',
-    address: patient.address ? patient.address.trim() : '',
-    note: patient.note ? patient.note.trim() : '',
-    gender: patient.gender || '',
-    dob: patient.dob || '',
-    telegram: patient.telegram ? patient.telegram.trim() : '',
-    lastVisit: patient.lastVisit || '',
-    prescriptions: Array.isArray(patient.prescriptions) ? patient.prescriptions : [],
-    toothChart: Array.isArray(patient.toothChart) ? patient.toothChart : [],
-    createdAt: patient.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-};
-
 export const validatePatientData = (patient) => {
   const errors = [];
-  if (!patient.name || patient.name.trim().length < 2) {
+  if (!patient?.name || String(patient.name).trim().length < 2) {
     errors.push('Ism kamida 2 belgidan iborat boʻlishi kerak');
   }
-  if (!patient.phone || !validatePhone(patient.phone)) {
+  if (!patient?.phone || !validatePhone(patient.phone)) {
     errors.push('Telefon raqami +998XXXXXXXXX formatida boʻlishi kerak');
   }
-  if (patient.dob) {
+  if (patient?.dob) {
     const birthDate = new Date(patient.dob);
     if (birthDate > new Date()) {
       errors.push('Tugʻilgan sana kelajakda boʻlishi mumkin emas');
     }
   }
-  if (patient.telegram && !/^\d+$/.test(patient.telegram)) {
+  if (patient?.telegram && !/^\d+$/.test(String(patient.telegram))) {
     errors.push('Telegram Chat ID faqat raqamlardan iborat boʻlishi kerak');
   }
   return errors;
 };
 
+///////////////////////
+// Other utilities
 export const generateToothChart = () => {
   const teeth = [];
   for (let i = 1; i <= 8; i++) teeth.push({ number: i, quadrant: 1 });
@@ -451,19 +471,6 @@ export const generateToothChart = () => {
   for (let i = 17; i <= 24; i++) teeth.push({ number: i, quadrant: 3 });
   for (let i = 25; i <= 32; i++) teeth.push({ number: i, quadrant: 4 });
   return teeth;
-};
-
-export const getToothStatusColor = (status) => {
-  const colors = {
-    'sog': '#4CAF50',
-    'karies': '#FF9800',
-    'plomba': '#2196F3',
-    'koronka': '#9C27B0',
-    'protez': '#607D8B',
-    'yoq': '#F44336',
-    'davl': '#FFC107'
-  };
-  return colors[status] || '#CCCCCC';
 };
 
 export const exportPatientsData = () => {
@@ -607,8 +614,12 @@ export const importAppointmentsData = (file, callback) => {
 };
 
 export const sendTelegramMessage = (chatId, message) => {
-  const botToken = '8446018868:AAGMBw9ZFI2gDP3a_XA7qpVDX4_ar76IxlU';
-  const url = `https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('💥 Keksri Telegram token mavjud emas');
+    return Promise.resolve(false);
+  }
+
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
 
   return fetch(url)
     .then(response => response.json())
@@ -634,11 +645,12 @@ export const addNewPatient = (patientData, callback) => {
       return;
     }
 
+    const newId = Date.now();
     const sanitizedPatient = sanitizePatientData({
       ...patientData,
-      id: Date.now(),
-      prescriptions: [],
-      toothChart: [],
+      id: newId,
+      prescriptions: patientData.prescriptions || [],
+      toothChart: patientData.toothChart || [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
@@ -688,28 +700,37 @@ export const cancelAppointment = (appointmentId, callback) => {
   }
 };
 
+// *** MUHIM O'ZGARTISH: updatePatient endi mavjud bemor bilan merge qilib validatsiya qiladi ***
 export const updatePatient = (patientId, updatedData, callback) => {
   try {
-    const errors = validatePatientData(updatedData);
+    const currentPatients = getFromLocalStorage('patients', []);
+    const existingIndex = currentPatients.findIndex(p => String(p.id) === String(patientId));
+    if (existingIndex === -1) {
+      callback(false, 'Keksri bemor topilmadi');
+      return;
+    }
+
+    const existing = currentPatients[existingIndex];
+    // Merge existing + updated (don't drop fields not provided in updatedData)
+    const merged = {
+      ...existing,
+      ...updatedData,
+      id: existing.id,
+      prescriptions: updatedData.prescriptions !== undefined ? updatedData.prescriptions : existing.prescriptions,
+      toothChart: updatedData.toothChart !== undefined ? updatedData.toothChart : existing.toothChart,
+      updatedAt: new Date().toISOString()
+    };
+
+    const errors = validatePatientData(merged);
     if (errors.length > 0) {
       callback(false, errors.join(', '));
       return;
     }
 
-    const currentPatients = getFromLocalStorage('patients', []);
-    const sanitizedData = sanitizePatientData({
-      ...updatedData,
-      id: patientId,
-      prescriptions: updatedData.prescriptions || [],
-      toothChart: updatedData.toothChart || [],
-      updatedAt: new Date().toISOString()
-    });
+    const sanitizedData = sanitizePatientData(merged);
+    currentPatients[existingIndex] = sanitizedData;
 
-    const updatedPatients = currentPatients.map(patient =>
-      String(patient.id) === String(patientId) ? sanitizedData : patient
-    );
-
-    saveToLocalStorage('patients', updatedPatients);
+    saveToLocalStorage('patients', currentPatients);
     console.log("✅ Keksri bemor yangilandi:", patientId);
     callback(true, 'Keksri bemor ma\'lumotlari yangilandi', sanitizedData);
   } catch (error) {
@@ -719,7 +740,10 @@ export const updatePatient = (patientId, updatedData, callback) => {
 };
 
 export const formatKeksriDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('uz-UZ', {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return dateString;
+  return d.toLocaleDateString('uz-UZ', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -728,25 +752,25 @@ export const formatKeksriDate = (dateString) => {
 };
 
 export const formatKeksriTime = (timeString) => {
-  return timeString;
+  return timeString || '';
 };
 
 export const formatKeksriCurrency = (amount) => {
   return new Intl.NumberFormat('uz-UZ', {
     style: 'currency',
     currency: 'UZS'
-  }).format(amount);
+  }).format(Number(amount) || 0);
 };
 
 export const searchPatients = (query, patients) => {
   if (!query) return patients;
   
-  const lowerQuery = query.toLowerCase();
-  return patients.filter(patient =>
-    patient.name.toLowerCase().includes(lowerQuery) ||
-    patient.phone.includes(query) ||
-    patient.address.toLowerCase().includes(lowerQuery) ||
-    (patient.note && patient.note.toLowerCase().includes(lowerQuery))
+  const lowerQuery = String(query).toLowerCase();
+  return (patients || []).filter(patient =>
+    (patient.name || '').toLowerCase().includes(lowerQuery) ||
+    (patient.phone || '').includes(query) ||
+    (patient.address || '').toLowerCase().includes(lowerQuery) ||
+    ((patient.note || '').toLowerCase().includes(lowerQuery))
   );
 };
 
@@ -756,12 +780,12 @@ export const getKeksriStats = () => {
   const billings = getFromLocalStorage('billings', []);
   
   const today = new Date().toISOString().split('T')[0];
-  const todayAppointments = appointments.filter(app => app.date === today);
-  const pendingAppointments = appointments.filter(app => app.status === 'kutilmoqda');
-  const totalRevenue = billings.reduce((sum, bill) => sum + (bill.total || 0), 0);
+  const todayAppointments = (appointments || []).filter(app => app.date === today);
+  const pendingAppointments = (appointments || []).filter(app => app.status === 'kutilmoqda');
+  const totalRevenue = (billings || []).reduce((sum, bill) => sum + (Number(bill.total) || 0), 0);
   
   return {
-    totalPatients: patients.length,
+    totalPatients: (patients || []).length,
     todayAppointments: todayAppointments.length,
     pendingAppointments: pendingAppointments.length,
     totalRevenue: totalRevenue
@@ -773,10 +797,10 @@ export const logLogin = (user) => {
     const logins = getFromLocalStorage('logins', []);
     logins.push({
       id: Date.now(),
-      userId: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
+      userId: user?.id,
+      name: user?.name,
+      email: user?.email,
+      role: user?.role,
       timestamp: new Date().toISOString()
     });
     saveToLocalStorage('logins', logins);

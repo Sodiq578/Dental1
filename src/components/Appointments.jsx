@@ -1,4 +1,3 @@
-// Appointments.js
 import React, { useState, useEffect } from 'react';
 import { 
   FiEdit, FiTrash2, FiPlus, FiX, FiSearch, 
