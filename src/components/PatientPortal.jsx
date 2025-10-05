@@ -278,7 +278,7 @@ const PatientPortal = () => {
               className="bg-green-500"
               onClick={handleRequestNextSlot}
             >
-              <FiSearch /> Keyingi boʻsh vaqt
+              Keyingi boʻsh vaqt
             </button>
           </form>
         </div>

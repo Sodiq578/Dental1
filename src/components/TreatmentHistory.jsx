@@ -303,7 +303,6 @@ const TreatmentHistory = () => {
               <div className="qidiruv-guruhi">
                 <label htmlFor="search-input">Bemor qidirish</label>
                 <div className="qidiruv-input">
-                  <FiSearch className="search-icon" aria-hidden="true" />
                   <input
                     id="search-input"
                     type="text"

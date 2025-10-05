@@ -1,30 +1,24 @@
+ 
 import React, { useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   FiHome, FiUsers, FiCalendar, FiPackage, FiBarChart2, FiSettings,
-  FiMoon, FiSun, FiType, FiLayout, FiDownload, FiUpload, FiClock,
-  FiDollarSign, FiBox, FiBriefcase, FiGlobe, FiGrid, FiHelpCircle, FiSmile,
-  FiLogOut
+  FiClock, FiDollarSign, FiBox, FiBriefcase, FiGlobe, FiHelpCircle,
+  FiSmile, FiLogOut, FiUser
 } from 'react-icons/fi';
 import { AppContext } from '../App';
-import { backupAllData, restoreFromBackup } from '../utils';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => {
-  const { setDarkMode, setFontSize, setLayout, setIsLoading } = useContext(AppContext);
+const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
+  const { setIsLoading, currentUser } = useContext(AppContext);
   const location = useLocation();
 
   const handleNavClick = () => {
     setIsLoading(true);
-    console.log("Sidebar link bosildi, spinner ko'rsatilmoqda");
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      console.log("Spinner tezroq o'chirildi");
-    }, 300);
-    return () => clearTimeout(timer);
+    setTimeout(() => setIsLoading(false), 300);
   };
 
-  const menuItems = [
+  const baseMenu = [
     { path: '/', icon: <FiHome />, label: 'Bosh sahifa' },
     { path: '/bemorlar', icon: <FiUsers />, label: 'Bemorlar' },
     { path: '/uchrashuvlar', icon: <FiCalendar />, label: 'Uchrashuvlar' },
@@ -37,17 +31,54 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => {
     { path: '/bemor-portali', icon: <FiGlobe />, label: 'Bemor Portali' },
     { path: '/davolashda-yordam', icon: <FiHelpCircle />, label: 'Davolashda Yordam' },
     { path: '/tooth', icon: <FiSmile />, label: 'Tishlar' },
-    { path: '/foydalanuvchi', icon: <FiUsers />, label: 'Foydalanuvchi' },
+    { path: '/foydalanuvchi', icon: <FiUser />, label: 'Foydalanuvchi' },
     { path: '/mijozlar', icon: <FiUsers />, label: 'Mijozlar' },
     { path: '/kirganlar', icon: <FiUsers />, label: 'Kirganlar' },
   ];
 
+  const adminMenu = [
+    { path: '/admin', icon: <FiSettings />, label: 'Admin Panel' },
+    { path: '/admin/filiallar', icon: <FiHome />, label: 'Filiallar' },
+    { path: '/admin/xodimlar', icon: <FiUsers />, label: 'Xodim Ruxsatlari' },
+  ];
+
+  const getMenuItems = () => {
+    if (currentUser?.role === 'admin') {
+      return [...baseMenu, ...adminMenu];
+    }
+    return baseMenu;
+  };
+
+  const menuItems = getMenuItems();
+
+  const isActivePath = (path) => {
+    if (path === '/') return location.pathname === '/';
+    if (path.startsWith('/admin')) return location.pathname === path;
+    return location.pathname.startsWith(path) && path !== '/';
+  };
+
   return (
     <>
-      <div className={`sidebar-overlay ${isOpen ? 'active' : ''}`} onClick={toggleSidebar}></div>
-      <aside className={`sidebar ${isOpen ? 'open' : ''} ${darkMode ? 'dark' : ''}`}>
+      <div 
+        className={`sidebar-overlay ${isOpen ? 'active' : ''}`} 
+        onClick={toggleSidebar}
+        aria-hidden={!isOpen}
+      ></div>
+      
+      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <h2>Tish Shifoxonasi</h2>
+          <div className="user-info">
+            <FiUser className="user-icon" />
+            <div className="user-details">
+              <span className="user-name">{currentUser?.name || 'Foydalanuvchi'}</span>
+              <span className="user-role">
+                {currentUser?.role === 'admin' ? 'Administrator' : 
+                 currentUser?.role === 'doctor' ? 'Shifokor' : 
+                 currentUser?.role === 'nurse' ? 'Hamshira' : 'Xodim'}
+              </span>
+            </div>
+          </div>
         </div>
         
         <nav className="sidebar-nav">
@@ -55,19 +86,23 @@ const Sidebar = ({ isOpen, toggleSidebar, darkMode, onLogout }) => {
             {menuItems.map((item) => (
               <li key={item.path}>
                 <Link 
-                  to={item.path} 
-                  className={location.pathname === item.path ? 'active' : ''}
-                  onClick={(e) => {
+                  to={item.path}
+                  className={isActivePath(item.path) ? 'active' : ''}
+                  onClick={() => {
                     handleNavClick();
-                    toggleSidebar();
+                    if (window.innerWidth <= 768) {
+                      toggleSidebar();
+                    }
                   }}
+                  aria-current={isActivePath(item.path) ? 'page' : undefined}
                 >
                   {item.icon}
                   <span>{item.label}</span>
                 </Link>
               </li>
             ))}
-            <li>
+
+            <li className="logout-item">
               <button 
                 className="sidebar-logout-btn"
                 onClick={onLogout}

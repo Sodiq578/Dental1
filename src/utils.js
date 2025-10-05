@@ -1,8 +1,14 @@
-// utils.js (yangilangan)
-
-///////////////////////
 // Telegram token (zarurat bo'lsa dinamik o'rnatish uchun)
 let TELEGRAM_BOT_TOKEN = '8446018868:AAGMBw9ZFI2gDP3a_XA7qpVDX4_ar76IxlU';
+
+// Sahifada tokenni yuklash
+if (typeof window !== 'undefined') {
+  const savedToken = window.localStorage.getItem('telegramBotToken');
+  if (savedToken) {
+    TELEGRAM_BOT_TOKEN = savedToken;
+  }
+}
+
 export const setTelegramBotToken = (token) => {
   TELEGRAM_BOT_TOKEN = token;
   try {
@@ -14,25 +20,16 @@ export const setTelegramBotToken = (token) => {
   }
 };
 
-///////////////////////
-// Helper: normalize tooth status (yo'q / yoq / yoʻq kabi variantlarni birlashtirish)
+// Helper: normalize tooth status
 export const normalizeToothStatus = (status) => {
   if (!status && status !== 0) return '';
   let s = String(status).toLowerCase().trim();
-
-  // Replace various apostrophe-like characters with a simple apostrophe
   s = s.replace(/[’‘ʼ`ʻ]/g, "'");
-
-  // Normalize common Uzbek variants for "yo'q"
   s = s.replace(/yo['’`ʻ]q/g, 'yoq');
-
-  // Remove extra whitespace
   s = s.replace(/\s+/g, ' ').trim();
-
   return s;
 };
 
-///////////////////////
 // Tooth status -> color mapping
 export const getToothStatusColor = (status) => {
   const s = normalizeToothStatus(status);
@@ -48,8 +45,7 @@ export const getToothStatusColor = (status) => {
   return colors[s] || '#CCCCCC';
 };
 
-///////////////////////
-// Sanitize patient: normalizatsiya qilish (toothChart status ham to'g'rilanadi)
+// Sanitize patient
 export const sanitizePatientData = (patient) => {
   const toothChart = Array.isArray(patient?.toothChart)
     ? patient.toothChart.map(tc => {
@@ -79,13 +75,11 @@ export const sanitizePatientData = (patient) => {
   };
 };
 
-///////////////////////
 // LocalStorage helpers
 export const getFromLocalStorage = (key, defaultValue = null) => {
   try {
     if (typeof window === 'undefined') return defaultValue;
     const item = window.localStorage.getItem(key);
-    // console.log(`📖 Keksri o'qiyapti: ${key}`);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
     console.error(`💥 Keksri o'qish xatosi (${key}):`, error);
@@ -96,15 +90,13 @@ export const getFromLocalStorage = (key, defaultValue = null) => {
 export const saveToLocalStorage = (key, value) => {
   try {
     if (typeof window === 'undefined') return;
-    // console.log(`💾 Keksri saqlayapti: ${key}`, value);
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
     console.error(`💥 Keksri saqlash xatosi (${key}):`, error);
   }
 };
 
-///////////////////////
-// Initialization (o'zgartirmadim, lekin normal ishlashi uchun qoldirdim)
+// Initialization
 export const initializeData = () => {
   console.log("🦷 Keksri Dental - Ma'lumotlarni ishga tushiramiz...");
   
@@ -390,6 +382,52 @@ export const initializeData = () => {
         status: "active"
       }
     ],
+    admins: [
+      {
+        id: 1,
+        name: "Keksri Admin",
+        email: "admin@keksri.uz",
+        password: "keksri123",
+        phone: "+998901112233",
+        token: "ABC1234567",
+        tokenExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        isAdminToken: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    ],
+    logins: [
+      {
+        id: 1,
+        userId: 1,
+        name: "Keksri Admin",
+        email: "admin@keksri.uz",
+        phone: "+998901112233",
+        role: "admin",
+        loginMethod: "email",
+        timestamp: "2025-10-04T10:00:00.000Z"
+      },
+      {
+        id: 2,
+        userId: 2,
+        name: "Dr. Aziza",
+        email: "aziza@keksri.uz",
+        phone: "+998902223344",
+        role: "staff",
+        loginMethod: "email",
+        timestamp: "2025-10-04T14:30:00.000Z"
+      },
+      {
+        id: 3,
+        userId: 3,
+        name: "Dr. Jamshid",
+        email: "jamshid@keksri.uz",
+        phone: "+998903334455",
+        role: "staff",
+        loginMethod: "token",
+        timestamp: "2025-10-05T09:15:00.000Z"
+      }
+    ],
     sidebarOpen: false,
     darkMode: false,
     fontSize: 16,
@@ -405,7 +443,6 @@ export const initializeData = () => {
   });
 };
 
-///////////////////////
 // Validation helpers
 export const validateEmail = (email) => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -462,7 +499,6 @@ export const validatePatientData = (patient) => {
   return errors;
 };
 
-///////////////////////
 // Other utilities
 export const generateToothChart = () => {
   const teeth = [];
@@ -700,7 +736,6 @@ export const cancelAppointment = (appointmentId, callback) => {
   }
 };
 
-// *** MUHIM O'ZGARTISH: updatePatient endi mavjud bemor bilan merge qilib validatsiya qiladi ***
 export const updatePatient = (patientId, updatedData, callback) => {
   try {
     const currentPatients = getFromLocalStorage('patients', []);
@@ -711,7 +746,6 @@ export const updatePatient = (patientId, updatedData, callback) => {
     }
 
     const existing = currentPatients[existingIndex];
-    // Merge existing + updated (don't drop fields not provided in updatedData)
     const merged = {
       ...existing,
       ...updatedData,
@@ -792,7 +826,72 @@ export const getKeksriStats = () => {
   };
 };
 
-export const logLogin = (user) => {
+export const getLogins = () => {
+  return getFromLocalStorage('logins', []);
+};
+
+export const filterLogins = (logins, { roleFilter, methodFilter, dateFilter, searchQuery }) => {
+  let filtered = [...logins];
+
+  if (roleFilter) {
+    filtered = filtered.filter(login => login.role === roleFilter);
+  }
+
+  if (methodFilter) {
+    filtered = filtered.filter(login => {
+      const method = getLoginMethod(login);
+      return method.toLowerCase() === methodFilter.toLowerCase();
+    });
+  }
+
+  if (dateFilter) {
+    const now = new Date();
+    filtered = filtered.filter(login => {
+      const loginDate = new Date(login.timestamp);
+      if (dateFilter === "today") {
+        return loginDate.toDateString() === now.toDateString();
+      } else if (dateFilter === "yesterday") {
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        return loginDate.toDateString() === yesterday.toDateString();
+      } else if (dateFilter === "week") {
+        const oneWeekAgo = new Date(now);
+        oneWeekAgo.setDate(now.getDate() - 7);
+        return loginDate >= oneWeekAgo && loginDate <= now;
+      }
+      return true;
+    });
+  }
+
+  if (searchQuery) {
+    const lowerQuery = searchQuery.toLowerCase();
+    filtered = filtered.filter(login =>
+      (login.name || '').toLowerCase().includes(lowerQuery) ||
+      (login.email || '').toLowerCase().includes(lowerQuery) ||
+      (login.phone || '').toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  return filtered;
+};
+
+export const sortLoginsByTimestamp = (logins, descending = true) => {
+  return [...logins].sort((a, b) => {
+    const dateA = new Date(a.timestamp);
+    const dateB = new Date(b.timestamp);
+    return descending ? dateB - dateA : dateA - dateB;
+  });
+};
+
+export const getLoginMethod = (login) => {
+  if (login.email === "admin@tishclinic.uz") return "Admin";
+  if (login.loginMethod === 'token') return "Token";
+  if (login.phone && !login.email) return "Telefon";
+  if (login.email && !login.phone) return "Email";
+  return "Noma'lum";
+};
+
+export const logLogin = (user, loginMethod = 'email') => {
   try {
     const logins = getFromLocalStorage('logins', []);
     logins.push({
@@ -800,7 +899,9 @@ export const logLogin = (user) => {
       userId: user?.id,
       name: user?.name,
       email: user?.email,
+      phone: user?.phone,
       role: user?.role,
+      loginMethod,
       timestamp: new Date().toISOString()
     });
     saveToLocalStorage('logins', logins);
@@ -808,6 +909,11 @@ export const logLogin = (user) => {
   } catch (error) {
     console.error("💥 Login qayd etish xatosi:", error);
   }
+};
+
+export const clearLogins = () => {
+  saveToLocalStorage('logins', []);
+  console.log("✅ Logins tozalandi");
 };
 
 console.log("🦷 Keksri Utils yuklandi!");

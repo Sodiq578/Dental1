@@ -467,7 +467,6 @@ const Patients = () => {
                 <div className="qidiruv-input">
                   <label>Bemor qidirish</label>
                   <div className="input-wrapper">
-                    <FiSearch className="search-icon" />
                     <input
                       type="text"
                       placeholder="Ism yoki telefon raqami boʻyicha qidirish..."

@@ -1,11 +1,12 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUser, FiLock, FiX, FiMail, FiShield, FiKey, FiPhone, FiEye, FiEyeOff, FiArrowLeft } from "react-icons/fi";
+import { FaCrown } from "react-icons/fa";
 import { AppContext } from "../App";
-import { logLogin } from "../utils";
+import { logLogin, getFromLocalStorage, saveToLocalStorage } from "../utils";
 import "./Login.css";
 
-const Login = ({ onLogin }) => {
+const Login = ({ onLogin, onOpenTokenLogin }) => {
   const [authMethod, setAuthMethod] = useState("email");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -27,12 +28,13 @@ const Login = ({ onLogin }) => {
   const [isFocused, setIsFocused] = useState({});
   const [showTokenLogin, setShowTokenLogin] = useState(false);
   const [autoVerify, setAutoVerify] = useState(true);
-  
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [token, setToken] = useState("");
+
   const navigate = useNavigate();
   const { users, setUsers, setLogins, staff } = useContext(AppContext);
   const otpInputRefs = useRef([]);
 
-  // Timer logic for OTP resend
   useEffect(() => {
     let interval = null;
     if (isOtpMode && timer > 0) {
@@ -46,14 +48,12 @@ const Login = ({ onLogin }) => {
     return () => clearInterval(interval);
   }, [isOtpMode, timer]);
 
-  // OTP inputlari uchun focus boshqaruvi
   useEffect(() => {
     if (isOtpMode && otpInputRefs.current[0]) {
       otpInputRefs.current[0].focus();
     }
   }, [isOtpMode]);
 
-  // OTP mode ga o'tganda reset qilish
   useEffect(() => {
     if (isOtpMode) {
       setOtpDigits(['', '', '', '']);
@@ -74,18 +74,18 @@ const Login = ({ onLogin }) => {
 
   const handleOtpChange = (index, value) => {
     if (value && !/^\d+$/.test(value)) return;
-    
+
     const newOtpDigits = [...otpDigits];
     newOtpDigits[index] = value;
     setOtpDigits(newOtpDigits);
-    
+
     if (value && index < 3) {
-      otpInputRefs.current[index + 1].focus();
+      otpInputRefs.current[index + 1]?.focus();
     }
-    
+
     const fullOtp = newOtpDigits.join('');
     setOtp(fullOtp);
-    
+
     if (fullOtp.length === 4 && autoVerify) {
       setTimeout(() => {
         handleAutoVerify(fullOtp);
@@ -95,16 +95,16 @@ const Login = ({ onLogin }) => {
 
   const handleOtpKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
-      otpInputRefs.current[index - 1].focus();
+      otpInputRefs.current[index - 1]?.focus();
     }
-    
+
     if (e.key === 'ArrowLeft' && index > 0) {
       e.preventDefault();
-      otpInputRefs.current[index - 1].focus();
+      otpInputRefs.current[index - 1]?.focus();
     }
     if (e.key === 'ArrowRight' && index < 3) {
       e.preventDefault();
-      otpInputRefs.current[index + 1].focus();
+      otpInputRefs.current[index + 1]?.focus();
     }
   };
 
@@ -115,21 +115,26 @@ const Login = ({ onLogin }) => {
         if (isRegisterMode) {
           const updatedUsers = [...users, tempUser];
           setUsers(updatedUsers);
+          saveToLocalStorage('users', updatedUsers);
         }
         onLogin(tempUser);
         logLogin(tempUser);
-        setLogins((prevLogins) => [
-          ...prevLogins,
-          {
-            id: Date.now(),
-            userId: tempUser.id,
-            name: tempUser.name,
-            email: tempUser.email,
-            phone: tempUser.phone,
-            role: tempUser.role,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
+        setLogins((prevLogins) => {
+          const newLogins = [
+            ...prevLogins,
+            {
+              id: Date.now(),
+              userId: tempUser.id,
+              name: tempUser.name,
+              email: tempUser.email,
+              phone: tempUser.phone,
+              role: tempUser.role,
+              timestamp: new Date().toISOString(),
+            },
+          ];
+          saveToLocalStorage('logins', newLogins);
+          return newLogins;
+        });
         setModalContent({
           title: isRegisterMode ? "Muvaffaqiyatli ro'yxatdan o'tish" : "Muvaffaqiyatli kirish",
           message: "Tizimga muvaffaqiyatli kirdingiz!",
@@ -151,22 +156,22 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     const pasteData = e.clipboardData.getData('text');
     const numbers = pasteData.replace(/\D/g, '').slice(0, 4);
-    
+
     const newOtpDigits = [...otpDigits];
     numbers.split('').forEach((num, index) => {
       if (index < 4) {
         newOtpDigits[index] = num;
       }
     });
-    
+
     setOtpDigits(newOtpDigits);
     setOtp(numbers);
-    
+
     const lastFilledIndex = Math.min(numbers.length - 1, 3);
     if (otpInputRefs.current[lastFilledIndex]) {
       otpInputRefs.current[lastFilledIndex].focus();
     }
-    
+
     if (numbers.length === 4 && autoVerify) {
       setTimeout(() => {
         handleAutoVerify(numbers);
@@ -174,10 +179,203 @@ const Login = ({ onLogin }) => {
     }
   };
 
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    const admins = getFromLocalStorage('admins', []);
+    const admin = admins.find(a => a.email === email && a.password === password);
+
+    setTimeout(() => {
+      if (admin) {
+        const adminUser = {
+          id: admin.id,
+          name: admin.name,
+          email: admin.email,
+          phone: admin.phone,
+          role: "admin",
+          permissions: {
+            patients: true,
+            appointments: true,
+            medications: true,
+            billing: true,
+            inventory: true,
+            reports: true,
+            admin: true
+          },
+          branchId: null,
+          loginMethod: 'admin'
+        };
+
+        onLogin(adminUser);
+        logLogin(adminUser);
+        setLogins((prevLogins) => {
+          const newLogins = [
+            ...prevLogins,
+            {
+              id: Date.now(),
+              userId: adminUser.id,
+              name: adminUser.name,
+              email: adminUser.email,
+              phone: adminUser.phone,
+              role: adminUser.role,
+              timestamp: new Date().toISOString(),
+            },
+          ];
+          saveToLocalStorage('logins', newLogins);
+          return newLogins;
+        });
+        setModalContent({
+          title: "Admin sifatida kirish",
+          message: "Administrator paneliga xush kelibsiz!",
+        });
+        setShowModal(true);
+        setTimeout(() => {
+          navigate("/admin");
+        }, 1500);
+      } else {
+        setError("Noto'g'ri admin email yoki parol");
+      }
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  const handleTokenLogin = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    if (!token?.trim()) {
+      setError("Token kiritilishi shart");
+      setIsLoading(false);
+      return;
+    }
+
+    const admins = getFromLocalStorage('admins', []);
+    const staffMembers = getFromLocalStorage('staff', []);
+
+    const admin = admins.find(a => 
+      a.token === token && 
+      a.tokenExpiry && 
+      new Date() < new Date(a.tokenExpiry)
+    );
+
+    const staffMember = staffMembers.find(s => 
+      s.token === token && 
+      s.tokenExpiry && 
+      new Date() < new Date(s.tokenExpiry)
+    );
+
+    if (admin) {
+      const adminUser = {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        phone: admin.phone,
+        role: "admin",
+        permissions: {
+          patients: true,
+          appointments: true,
+          medications: true,
+          billing: true,
+          inventory: true,
+          reports: true,
+          admin: true
+        },
+        loginMethod: 'token'
+      };
+
+      onLogin(adminUser);
+      logLogin(adminUser, 'token');
+      setLogins((prevLogins) => {
+        const newLogins = [
+          ...prevLogins,
+          {
+            id: Date.now(),
+            userId: adminUser.id,
+            name: adminUser.name,
+            email: adminUser.email,
+            phone: adminUser.phone,
+            role: adminUser.role,
+            timestamp: new Date().toISOString(),
+            loginMethod: 'token'
+          },
+        ];
+        saveToLocalStorage('logins', newLogins);
+        return newLogins;
+      });
+      setModalContent({
+        title: "Admin sifatida kirish",
+        message: "Administrator paneliga xush kelibsiz!",
+      });
+      setShowModal(true);
+      setTimeout(() => {
+        navigate("/admin");
+        setIsLoading(false);
+      }, 1500);
+    } else if (staffMember) {
+      const staffUser = {
+        id: staffMember.id,
+        name: staffMember.name,
+        email: staffMember.email || "",
+        role: "staff",
+        permissions: {
+          patients: true,
+          appointments: true,
+          medications: true,
+          billing: false,
+          inventory: true,
+          reports: false,
+          admin: false
+        },
+        staffData: staffMember,
+        loginMethod: 'token'
+      };
+
+      onLogin(staffUser);
+      logLogin(staffUser, 'token');
+      setLogins((prevLogins) => {
+        const newLogins = [
+          ...prevLogins,
+          {
+            id: Date.now(),
+            userId: staffUser.id,
+            name: staffUser.name,
+            email: staffUser.email,
+            role: staffUser.role,
+            timestamp: new Date().toISOString(),
+            loginMethod: 'token'
+          },
+        ];
+        saveToLocalStorage('logins', newLogins);
+        return newLogins;
+      });
+      setModalContent({
+        title: "Xodim sifatida kirish",
+        message: "Xodim sifatida tizimga kirdingiz!",
+      });
+      setShowModal(true);
+      setTimeout(() => {
+        navigate("/");
+        setIsLoading(false);
+      }, 1500);
+    } else {
+      setError("Noto'g'ri yoki muddati o'tgan token");
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    const admins = getFromLocalStorage('admins', []);
+    if (admins.find(a => a.email === email && a.password === password)) {
+      handleAdminLogin(e);
+      return;
+    }
 
     if (authMethod === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Noto'g'ri email formati");
@@ -209,13 +407,15 @@ const Login = ({ onLogin }) => {
         }
 
         const newUser = {
-          id: users.length + 1,
+          id: Date.now(),
           name,
           email: authMethod === "email" ? email : "",
           phone: authMethod === "phone" ? phone : "",
           password: authMethod === "email" ? password : "",
           role,
-          patientId: role === "patient" ? users.length + 1 : null,
+          patientId: role === "patient" ? Date.now() : null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         };
         setTempUser(newUser);
         setIsOtpMode(true);
@@ -255,21 +455,26 @@ const Login = ({ onLogin }) => {
         if (isRegisterMode) {
           const updatedUsers = [...users, tempUser];
           setUsers(updatedUsers);
+          saveToLocalStorage('users', updatedUsers);
         }
         onLogin(tempUser);
         logLogin(tempUser);
-        setLogins((prevLogins) => [
-          ...prevLogins,
-          {
-            id: Date.now(),
-            userId: tempUser.id,
-            name: tempUser.name,
-            email: tempUser.email,
-            phone: tempUser.phone,
-            role: tempUser.role,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
+        setLogins((prevLogins) => {
+          const newLogins = [
+            ...prevLogins,
+            {
+              id: Date.now(),
+              userId: tempUser.id,
+              name: tempUser.name,
+              email: tempUser.email,
+              phone: tempUser.phone,
+              role: tempUser.role,
+              timestamp: new Date().toISOString(),
+            },
+          ];
+          saveToLocalStorage('logins', newLogins);
+          return newLogins;
+        });
         setModalContent({
           title: isRegisterMode ? "Muvaffaqiyatli ro'yxatdan o'tish" : "Muvaffaqiyatli kirish",
           message: "Tizimga muvaffaqiyatli kirdingiz!",
@@ -289,58 +494,6 @@ const Login = ({ onLogin }) => {
     }, 1000);
   };
 
-  const handleTokenLogin = (e) => {
-    e.preventDefault();
-    setError("");
-
-    const token = e.target.token?.value;
-    if (!token?.trim()) {
-      setError("Token kiritilishi shart");
-      return;
-    }
-
-    const staffMember = staff.find(s => 
-      s.token === token && 
-      s.tokenExpiry && 
-      new Date() < new Date(s.tokenExpiry)
-    );
-
-    if (staffMember) {
-      const tempUser = {
-        id: staffMember.id,
-        name: staffMember.name,
-        email: staffMember.email,
-        role: 'staff',
-        staffData: staffMember,
-        loginMethod: 'token'
-      };
-      
-      onLogin(tempUser);
-      logLogin(tempUser);
-      setLogins((prevLogins) => [
-        ...prevLogins,
-        {
-          id: Date.now(),
-          userId: tempUser.id,
-          name: tempUser.name,
-          email: tempUser.email,
-          role: tempUser.role,
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-      setModalContent({
-        title: "Muvaffaqiyatli kirish",
-        message: "Xodim sifatida tizimga kirdingiz!",
-      });
-      setShowModal(true);
-      setTimeout(() => {
-        navigate("/");
-      }, 1500);
-    } else {
-      setError("Noto'g'ri yoki muddati o'tgan token");
-    }
-  };
-
   const toggleMode = () => {
     setIsRegisterMode(!isRegisterMode);
     setError("");
@@ -356,6 +509,8 @@ const Login = ({ onLogin }) => {
     setCanResend(false);
     setShowPassword(false);
     setShowTokenLogin(false);
+    setShowAdminLogin(false);
+    setToken("");
   };
 
   const closeModal = () => {
@@ -373,7 +528,7 @@ const Login = ({ onLogin }) => {
   return (
     <div className="login-page">
       <div className="dental-bg-pattern"></div>
-      
+
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
@@ -383,10 +538,12 @@ const Login = ({ onLogin }) => {
             </div>
             <h2 className="login-title">
               {showTokenLogin ? "Token orqali kirish" : 
+               showAdminLogin ? "Admin kirishi" :
                isRegisterMode ? "Ro'yxatdan o'tish" : "Tizimga kirish"}
             </h2>
             <p className="login-subtitle">
-              {showTokenLogin ? "Xodim sifatida tizimga kirish" :
+              {showTokenLogin ? "Xodim yoki admin sifatida tizimga kirish" :
+               showAdminLogin ? "Administrator paneliga kirish" :
                isRegisterMode ? "Yangi hisob yarating" : "Hisobingizga kiring"}
             </p>
           </div>
@@ -398,11 +555,83 @@ const Login = ({ onLogin }) => {
             </div>
           )}
 
-          {showTokenLogin ? (
+          {showAdminLogin ? (
+            <div className="admin-login-section">
+              <div className="admin-info-card">
+                <FaCrown className="admin-icon" />
+                <h3>Admin Panel</h3>
+                <p>Administrator sifatida tizimga kirish</p>
+              </div>
+
+              <form onSubmit={handleAdminLogin} className="login-form">
+                <div className={`input-group ${isFocused.adminEmail ? 'focused' : ''}`}>
+                  <FiMail className="input-icon" />
+                  <input
+                    type="email"
+                    placeholder="Admin email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => handleFocus('adminEmail')}
+                    onBlur={() => handleBlur('adminEmail')}
+                    className="input-field"
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+
+                <div className={`input-group ${isFocused.adminPassword ? 'focused' : ''}`}>
+                  <FiLock className="input-icon" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Admin parol"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => handleFocus('adminPassword')}
+                    onBlur={() => handleBlur('adminPassword')}
+                    className="input-field"
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className={`submit-button admin-submit ${isLoading ? 'loading' : ''}`}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="button-spinner"></div>
+                      Kirilmoqda...
+                    </>
+                  ) : (
+                    <>
+                      <FaCrown /> Admin sifatida kirish
+                    </>
+                  )}
+                </button>
+
+                <button 
+                  type="button" 
+                  className="back-to-login"
+                  onClick={() => setShowAdminLogin(false)}
+                >
+                  <FiArrowLeft /> Oddiy kirishga qaytish
+                </button>
+              </form>
+            </div>
+          ) : showTokenLogin ? (
             <div className="token-login-section">
               <div className="token-info-card">
                 <FiKey className="token-icon" />
-                <h3>Xodim kirishi</h3>
+                <h3>Xodim yoki Admin kirishi</h3>
                 <p>Token orqali tizimga kirish uchun quyidagi formani to'ldiring</p>
               </div>
 
@@ -413,16 +642,32 @@ const Login = ({ onLogin }) => {
                     type="text"
                     name="token"
                     placeholder="Token kodini kiriting"
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
                     onFocus={() => handleFocus('token')}
                     onBlur={() => handleBlur('token')}
                     className="input-field token-input"
                     maxLength="10"
                     autoFocus
+                    autoComplete="one-time-code"
                   />
                 </div>
 
-                <button type="submit" className="submit-button token-submit">
-                  <FiKey /> Token orqali kirish
+                <button 
+                  type="submit" 
+                  className={`submit-button token-submit ${isLoading ? 'loading' : ''}`}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="button-spinner"></div>
+                      Kirilmoqda...
+                    </>
+                  ) : (
+                    <>
+                      <FiKey /> Token orqali kirish
+                    </>
+                  )}
                 </button>
 
                 <button 
@@ -448,6 +693,7 @@ const Login = ({ onLogin }) => {
                     onBlur={() => handleBlur('name')}
                     className="input-field"
                     required
+                    autoComplete="name"
                   />
                 </div>
               )}
@@ -520,6 +766,7 @@ const Login = ({ onLogin }) => {
                     onBlur={() => handleBlur('email')}
                     className="input-field"
                     required
+                    autoComplete="email"
                   />
                 </div>
               ) : (
@@ -534,6 +781,7 @@ const Login = ({ onLogin }) => {
                     onBlur={() => handleBlur('phone')}
                     className="input-field"
                     required
+                    autoComplete="tel"
                   />
                 </div>
               )}
@@ -550,6 +798,7 @@ const Login = ({ onLogin }) => {
                     onBlur={() => handleBlur('password')}
                     className="input-field"
                     required
+                    autoComplete={isRegisterMode ? "new-password" : "current-password"}
                   />
                   <button
                     type="button"
@@ -587,7 +836,7 @@ const Login = ({ onLogin }) => {
                     : "Telefon raqamingizga SMS orqali yuborilgan 4 xonali kodni kiriting"}
                 </p>
                 <p className="otp-hint">(Test rejimida: <strong>1234</strong>)</p>
-                
+
                 <div className="auto-verify-option">
                   <label className="auto-verify-label">
                     <input
@@ -686,7 +935,7 @@ const Login = ({ onLogin }) => {
                   Orqaga
                 </button>
               </div>
-              
+
               <div className="otp-help">
                 <p>
                   <strong>Qo'llanma:</strong> Kodni bitta inputga yozishingiz yoki har bir raqamni alohida kiriting.
@@ -696,27 +945,38 @@ const Login = ({ onLogin }) => {
             </form>
           )}
 
-          {!isOtpMode && !showTokenLogin && (
+          {!isOtpMode && !showTokenLogin && !showAdminLogin && (
             <div className="login-footer">
               <p className="toggle-text">
                 {isRegisterMode ? "Hisobingiz bormi?" : "Hisobingiz yo'qmi?"}
-                <button onClick={toggleMode} className="toggle-button">
+                <button type="button" onClick={toggleMode} className="toggle-button">
                   {isRegisterMode ? "Kirish" : "Ro'yxatdan o'tish"}
                 </button>
               </p>
 
               {!isRegisterMode && (
-                <div className="token-login-option">
+                <div className="special-login-options">
                   <div className="separator">
                     <span>Yoki</span>
                   </div>
-                  <button 
-                    onClick={() => setShowTokenLogin(true)} 
-                    className="btn-token-login"
-                  >
-                    <FiKey className="btn-icon" />
-                    Token orqali kirish (Xodimlar uchun)
-                  </button>
+                  <div className="special-buttons">
+                    <button 
+                      type="button"
+                      onClick={() => setShowTokenLogin(true)} 
+                      className="btn-token-login"
+                    >
+                      <FiKey className="btn-icon" />
+                      Token orqali kirish (Xodimlar yoki Admin)
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setShowAdminLogin(true)} 
+                      className="btn-admin-login"
+                    >
+                      <FaCrown className="btn-icon" />
+                      Admin kirishi
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -755,5 +1015,3 @@ const Login = ({ onLogin }) => {
 };
 
 export default Login;
-
-

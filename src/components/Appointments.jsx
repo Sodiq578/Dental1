@@ -416,7 +416,6 @@ const Appointments = () => {
 
       <div className="app-controls">
         <div className="search-bar">
-          <FiSearch className="search-icon" />
           <input
             id="search-input"
             type="text"

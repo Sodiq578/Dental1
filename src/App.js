@@ -22,16 +22,18 @@ import UserDashboard from "./components/UserDashboard";
 import Spinner from "./adds/Spinner";
 import LoggedInUsers from "./components/LoggedInUsers";
 import TokenLogin from "./components/TokenLogin";
+import AdminDashboard from "./components/Admin/AdminDashboard";
+import BranchManagement from "./components/Admin/BranchManagement";
+import StaffPermissions from "./components/Admin/StaffPermissions";
+import AdminFor from "./components/Admin/AdminFor";
 
 // Utils
-import { getFromLocalStorage, saveToLocalStorage, initializeData, logLogin } from "./utils";
+import { getFromLocalStorage, saveToLocalStorage, initializeData, logLogin } from "./utils"; // Bu to'g'ri — utils.js src da
 import "./App.css";
 
-// Context
 export const AppContext = createContext();
 
 const App = () => {
-  // State for UI and authentication
   const [sidebarOpen, setSidebarOpen] = useState(getFromLocalStorage("sidebarOpen", false));
   const [fontSize, setFontSize] = useState(getFromLocalStorage("fontSize", 16));
   const [layout, setLayout] = useState(getFromLocalStorage("layout", "normal"));
@@ -42,7 +44,6 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [tokenLoginOpen, setTokenLoginOpen] = useState(false);
 
-  // Data state
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [medications, setMedications] = useState([]);
@@ -52,12 +53,10 @@ const App = () => {
   const [users, setUsers] = useState([]);
   const [logins, setLogins] = useState(getFromLocalStorage("logins", []));
 
-  // Initialize data on mount
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         initializeData();
-
         setSidebarOpen(getFromLocalStorage("sidebarOpen", false));
         setFontSize(getFromLocalStorage("fontSize", 16));
         setLayout(getFromLocalStorage("layout", "normal"));
@@ -77,13 +76,14 @@ const App = () => {
         }
 
         const testKey = "storage_test";
-        localStorage.setItem(testKey, "test");
-        if (localStorage.getItem(testKey) !== "test") {
+        try {
+          localStorage.setItem(testKey, "test");
+          const value = localStorage.getItem(testKey);
+          localStorage.removeItem(testKey);
+          setStorageStatus(value === "test" ? "available" : "unavailable");
+        } catch (error) {
           setStorageStatus("unavailable");
-        } else {
-          setStorageStatus("available");
         }
-        localStorage.removeItem(testKey);
 
         setDataLoaded(true);
       } catch (error) {
@@ -96,7 +96,6 @@ const App = () => {
     loadInitialData();
   }, []);
 
-  // Save state changes to localStorage
   useEffect(() => {
     if (!dataLoaded) return;
 
@@ -159,6 +158,7 @@ const App = () => {
     return (
       <div className="loading-screen">
         <Spinner />
+        <p>Ma'lumotlar yuklanmoqda...</p>
       </div>
     );
   }
@@ -201,8 +201,10 @@ const App = () => {
           {isLoading && (
             <div className="loading-overlay">
               <Spinner />
+              <p>Yuklanmoqda...</p>
             </div>
           )}
+
           {!isLoggedIn ? (
             <Routes>
               <Route path="/login" element={<Login onLogin={handleLogin} onOpenTokenLogin={() => setTokenLoginOpen(true)} />} />
@@ -210,7 +212,7 @@ const App = () => {
               <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
           ) : currentUser.role === "patient" ? (
-            <main className="">
+            <main className="patient-main">
               <Routes>
                 <Route path="/foydalanuvchi" element={<UserDashboard />} />
                 <Route path="*" element={<Navigate to="/foydalanuvchi" />} />
@@ -221,16 +223,18 @@ const App = () => {
               <button
                 className="menu-btn"
                 onClick={toggleSidebar}
-                aria-label="Yon panelni ochish"
+                aria-label="Yon panelni ochish/yopish"
               >
                 <FiMenu />
               </button>
+
               <Sidebar
                 isOpen={sidebarOpen}
                 toggleSidebar={toggleSidebar}
                 currentUser={currentUser}
                 onLogout={handleLogout}
               />
+
               <main className={`main-content ${sidebarOpen ? "sidebar-open" : ""}`}>
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
@@ -249,13 +253,17 @@ const App = () => {
                   <Route path="/foydalanuvchi" element={<UserDashboard />} />
                   <Route path="/kirganlar" element={<LoggedInUsers />} />
                   <Route path="/mijozlar" element={<Patients />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/filiallar" element={<BranchManagement />} />
+                  <Route path="/admin/xodimlar" element={<StaffPermissions />} />
+                  <Route path="/branch/:branchId" element={<AdminFor />} />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </main>
             </>
           )}
-          {/* Token Login Modal */}
-          <TokenLogin 
+
+          <TokenLogin
             isOpen={tokenLoginOpen}
             onClose={() => setTokenLoginOpen(false)}
             onLogin={handleLogin}
@@ -267,3 +275,4 @@ const App = () => {
 };
 
 export default App;
+
