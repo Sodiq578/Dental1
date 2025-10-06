@@ -1,7 +1,7 @@
-// Telegram token (zarurat bo'lsa dinamik o'rnatish uchun)
+// Telegram bot tokenini sozlash
 let TELEGRAM_BOT_TOKEN = '8446018868:AAGMBw9ZFI2gDP3a_XA7qpVDX4_ar76IxlU';
 
-// Sahifada tokenni yuklash
+// Brauzer muhitida tokenni localStorage'dan olish
 if (typeof window !== 'undefined') {
   const savedToken = window.localStorage.getItem('telegramBotToken');
   if (savedToken) {
@@ -10,17 +10,140 @@ if (typeof window !== 'undefined') {
 }
 
 export const setTelegramBotToken = (token) => {
+  if (!token) {
+    console.warn('Telegram tokeni bo‘sh bo‘lishi mumkin emas');
+    return;
+  }
   TELEGRAM_BOT_TOKEN = token;
   try {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem('telegramBotToken', token);
+      console.log('Telegram tokeni saqlandi');
     }
   } catch (e) {
-    console.warn('Telegram token saqlanmadi:', e);
+    console.warn('Telegram tokenini saqlashda xato:', e);
   }
 };
 
-// Helper: normalize tooth status
+// Telegram orqali xabar yuborish
+export const sendTelegramMessage = async (chatId, message) => {
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('Telegram bot tokeni topilmadi');
+    return false;
+  }
+  if (!chatId || !message) {
+    console.error('Chat ID yoki xabar bo‘sh bo‘lishi mumkin emas');
+    return false;
+  }
+
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    if (!data.ok) {
+      console.error('Telegram API xatosi:', data.description);
+      return false;
+    }
+    console.log('Telegram xabari muvaffaqiyatli yuborildi:', chatId);
+    return true;
+  } catch (error) {
+    console.error('Telegram xabarini yuborishda xato:', error);
+    return false;
+  }
+};
+
+// OTP yuborish funksiyasi
+export const sendOtpToTelegram = async (phone, chatId, isAdmin = false) => {
+  try {
+    // 4 raqamli OTP generatsiyasi
+    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    const otpData = {
+      phone,
+      otp: generatedOtp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 daqiqa muddat
+      createdAt: new Date().toISOString(),
+      isAdmin
+    };
+
+    // Eski OTP'larni filtrlab, yangisini qo‘shish
+    const currentOtps = getFromLocalStorage('otpCodes', []);
+    const filteredOtps = currentOtps.filter(o => o.phone !== phone);
+    filteredOtps.push(otpData);
+    saveToLocalStorage('otpCodes', filteredOtps);
+
+    // Xabar matnini tayyorlash
+    const message = isAdmin 
+      ? `🦷 KEKSRI Admin Login OTP\n\nSizning tasdiqlash kodingiz: ${generatedOtp}\nBu kod 10 daqiqa amal qiladi.\nIltimos, bu kodni hech kimga bermang.`
+      : `🦷 KEKSRI Tizimiga kirish kodi\n\nSizning tasdiqlash kodingiz: ${generatedOtp}\nBu kod 10 daqiqa amal qiladi.\nIltimos, bu kodni hech kimga bermang.`;
+
+    const success = await sendTelegramMessage(chatId, message);
+    if (success) {
+      console.log(`OTP ${generatedOtp} ${phone} raqamiga yuborildi`);
+      return true;
+    }
+    console.error('Telegram orqali OTP yuborish muvaffaqiyatsiz');
+    return false;
+  } catch (error) {
+    console.error('OTP yuborishda xato:', error);
+    return false;
+  }
+};
+
+// OTP tekshirish funksiyasi
+export const verifyOtpCode = (phone, enteredOtp) => {
+  try {
+    const currentOtps = getFromLocalStorage('otpCodes', []);
+    const otpData = currentOtps.find(o => o.phone === phone && o.otp === enteredOtp);
+    
+    if (!otpData) {
+      console.log('OTP topilmadi yoki noto‘g‘ri:', phone);
+      return false;
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(otpData.expiresAt);
+    
+    if (now > expiresAt) {
+      console.log('OTP muddati tugagan:', phone);
+      const filteredOtps = currentOtps.filter(o => o.phone !== phone);
+      saveToLocalStorage('otpCodes', filteredOtps);
+      return false;
+    }
+
+    // OTP to‘g‘ri bo‘lsa, uni o‘chirish
+    const filteredOtps = currentOtps.filter(o => o.phone !== phone);
+    saveToLocalStorage('otpCodes', filteredOtps);
+    
+    console.log('OTP muvaffaqiyatli tasdiqlandi:', phone);
+    return true;
+  } catch (error) {
+    console.error('OTP tasdiqlashda xato:', error);
+    return false;
+  }
+};
+
+// Muddat o‘tgan OTP'larni tozalash
+export const cleanupExpiredOtps = () => {
+  try {
+    const currentOtps = getFromLocalStorage('otpCodes', []);
+    const now = new Date();
+    const validOtps = currentOtps.filter(otpData => new Date(otpData.expiresAt) >= now);
+    
+    if (validOtps.length !== currentOtps.length) {
+      saveToLocalStorage('otpCodes', validOtps);
+      console.log(`Tozalandi: ${currentOtps.length - validOtps.length} ta muddati o‘tgan OTP`);
+    }
+    
+    return validOtps;
+  } catch (error) {
+    console.error('Muddat o‘tgan OTP’larni tozalashda xato:', error);
+    return [];
+  }
+};
+
+// Tish holatini normallashtirish
 export const normalizeToothStatus = (status) => {
   if (!status && status !== 0) return '';
   let s = String(status).toLowerCase().trim();
@@ -30,7 +153,7 @@ export const normalizeToothStatus = (status) => {
   return s;
 };
 
-// Tooth status -> color mapping
+// Tish holatiga rang moslash
 export const getToothStatusColor = (status) => {
   const s = normalizeToothStatus(status);
   const colors = {
@@ -45,7 +168,7 @@ export const getToothStatusColor = (status) => {
   return colors[s] || '#CCCCCC';
 };
 
-// Sanitize patient
+// Bemor ma’lumotlarini tozalash
 export const sanitizePatientData = (patient) => {
   const toothChart = Array.isArray(patient?.toothChart)
     ? patient.toothChart.map(tc => {
@@ -75,14 +198,14 @@ export const sanitizePatientData = (patient) => {
   };
 };
 
-// LocalStorage helpers
+// LocalStorage yordamchi funksiyalari
 export const getFromLocalStorage = (key, defaultValue = null) => {
   try {
     if (typeof window === 'undefined') return defaultValue;
     const item = window.localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
-    console.error(`💥 Keksri o'qish xatosi (${key}):`, error);
+    console.error(`localStorage'dan o‘qishda xato (${key}):`, error);
     return defaultValue;
   }
 };
@@ -92,82 +215,183 @@ export const saveToLocalStorage = (key, value) => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error(`💥 Keksri saqlash xatosi (${key}):`, error);
+    console.error(`localStorage'ga saqlashda xato (${key}):`, error);
   }
 };
 
-// Initialization
+// Admin so‘rovlarini saqlash
+export const savePendingAdminRequest = (requestData, callback) => {
+  try {
+    const errors = validateAdminRequestData(requestData);
+    if (errors.length > 0) {
+      if (typeof callback === 'function') {
+        callback(false, errors.join(', '));
+      }
+      return;
+    }
+
+    const newId = Date.now();
+    const sanitizedRequest = {
+      ...requestData,
+      id: newId,
+      status: requestData.status || 'pending',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const currentRequests = getFromLocalStorage('pendingAdminRequests', []);
+    currentRequests.push(sanitizedRequest);
+    saveToLocalStorage('pendingAdminRequests', currentRequests);
+
+    console.log('Yangi admin so‘rovi saqlandi:', sanitizedRequest.email);
+    if (typeof callback === 'function') {
+      callback(true, 'Admin so‘rovi muvaffaqiyatli saqlandi', sanitizedRequest);
+    }
+  } catch (error) {
+    console.error('Admin so‘rovini saqlashda xato:', error);
+    if (typeof callback === 'function') {
+      callback(false, 'Admin so‘rovini saqlashda xato');
+    }
+  }
+};
+
+// Kutayotgan admin so‘rovlarini olish
+export const getPendingAdminRequests = () => {
+  return getFromLocalStorage('pendingAdminRequests', []).filter(req => req.status === 'pending');
+};
+
+// Admin so‘rovini yangilash
+export const updatePendingAdminRequest = (requestId, updatedData, callback) => {
+  try {
+    const currentRequests = getFromLocalStorage('pendingAdminRequests', []);
+    const existingIndex = currentRequests.findIndex(req => String(req.id) === String(requestId));
+    if (existingIndex === -1) {
+      if (typeof callback === 'function') {
+        callback(false, 'Admin so‘rovi topilmadi');
+      }
+      return;
+    }
+
+    const existing = currentRequests[existingIndex];
+    const merged = {
+      ...existing,
+      ...updatedData,
+      id: existing.id,
+      updatedAt: new Date().toISOString()
+    };
+
+    const errors = validateAdminRequestData(merged);
+    if (errors.length > 0) {
+      if (typeof callback === 'function') {
+        callback(false, errors.join(', '));
+      }
+      return;
+    }
+
+    currentRequests[existingIndex] = merged;
+    saveToLocalStorage('pendingAdminRequests', currentRequests);
+    console.log('Admin so‘rovi yangilandi:', requestId);
+    if (typeof callback === 'function') {
+      callback(true, 'Admin so‘rovi muvaffaqiyatli yangilandi', merged);
+    }
+  } catch (error) {
+    console.error('Admin so‘rovini yangilashda xato:', error);
+    if (typeof callback === 'function') {
+      callback(false, 'Admin so‘rovini yangilashda xato');
+    }
+  }
+};
+
+// Admin so‘rov ma’lumotlarini tekshirish
+export const validateAdminRequestData = (request) => {
+  const errors = [];
+  if (!request?.email || !validateEmail(request.email)) {
+    errors.push('Haqiqiy email talab qilinadi');
+  }
+  if (!request?.name || String(request.name).trim().length < 2) {
+    errors.push('Ism kamida 2 harfdan iborat bo‘lishi kerak');
+  }
+  if (!request?.phone || !validatePhone(request.phone)) {
+    errors.push('Telefon raqami +998XXXXXXXXX formatida bo‘lishi kerak');
+  }
+  if (!request?.telegram || !/^\d+$/.test(String(request.telegram))) {
+    errors.push('Telegram Chat ID faqat raqamlardan iborat bo‘lishi kerak');
+  }
+  return errors;
+};
+
+// Ma'lumotlarni boshlang'ich holatga keltirish
 export const initializeData = () => {
-  console.log("🦷 Keksri Dental - Ma'lumotlarni ishga tushiramiz...");
-  
+  console.log('🦷 Keksri Dental - Ma\'lumotlarni boshlash...');
+
   const keksriInitialData = {
     patients: [
       {
         id: 1,
-        name: "Ali Valiev",
-        phone: "+998901234567",
-        gender: "Erkak",
-        address: "Toshkent shahar, Yunusobod tumani",
-        dob: "1990-05-15",
-        telegram: "123456789",
-        note: "Qandli diabet bor, lokal anesteziyaga sezgir",
+        name: 'Ali Valiev',
+        phone: '+998901234567',
+        gender: 'Erkak',
+        address: 'Tashkent city, Yunusabad district',
+        dob: '1990-05-15',
+        telegram: '123456789',
+        note: 'Has diabetes, sensitive to local anesthesia',
         prescriptions: [
           {
             id: 1,
-            date: "2024-01-15",
-            medication: "Amoxicillin 500mg",
-            dosage: "1 tabletka, kuniga 3 marta, 7 kun",
-            notes: "Infeksiyadan qo'rqish"
+            date: '2024-01-15',
+            medication: 'Amoxicillin 500mg',
+            dosage: '1 tablet, 3 times a day, 7 days',
+            notes: 'Infection prevention'
           }
         ],
-        lastVisit: "2024-01-15",
+        lastVisit: '2024-01-15',
         toothChart: [
-          { tooth: 16, status: "plomba", color: "#4CAF50" },
-          { tooth: 36, status: "karies", color: "#FF9800" }
+          { tooth: 16, status: 'plomba', color: '#4CAF50' },
+          { tooth: 36, status: 'karies', color: '#FF9800' }
         ],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       },
       {
         id: 2,
-        name: "Zilola Karimova",
-        phone: "+998912345678",
-        gender: "Ayol",
-        address: "Samarqand shahar, Registon ko'chasi",
-        dob: "1985-08-22",
-        telegram: "987654321",
-        note: "Homiladorlikning 6-oyi, maxsus ehtiyot kerak",
+        name: 'Zilola Karimova',
+        phone: '+998912345678',
+        gender: 'Ayol',
+        address: 'Samarkand city, Registan street',
+        dob: '1985-08-22',
+        telegram: '987654321',
+        note: '6th month of pregnancy, requires special care',
         prescriptions: [
           {
             id: 1,
-            date: "2024-01-10",
-            medication: "Paracetamol 500mg",
-            dosage: "Zarurat bo'lganda, kuniga 2 marta",
-            notes: "Og'riq qoldirish uchun"
+            date: '2024-01-10',
+            medication: 'Paracetamol 500mg',
+            dosage: 'As needed, 2 times a day',
+            notes: 'For pain relief'
           }
         ],
-        lastVisit: "2024-01-10",
+        lastVisit: '2024-01-10',
         toothChart: [
-          { tooth: 11, status: "koronka", color: "#9C27B0" },
-          { tooth: 46, status: "plomba", color: "#4CAF50" }
+          { tooth: 11, status: 'koronka', color: '#9C27B0' },
+          { tooth: 46, status: 'plomba', color: '#4CAF50' }
         ],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       },
       {
         id: 3,
-        name: "Sherzod Qodirov",
-        phone: "+998934567890",
-        gender: "Erkak",
-        address: "Buxoro viloyati, Kogon shahri",
-        dob: "1978-12-03",
-        telegram: "555666777",
-        note: "Protez tishlar, muntazam tekshiruv talab qiladi",
+        name: 'Sherzod Qodirov',
+        phone: '+998934567890',
+        gender: 'Erkak',
+        address: 'Bukhara region, Kogon city',
+        dob: '1978-12-03',
+        telegram: '555666777',
+        note: 'Prosthetic teeth, requires regular checkups',
         prescriptions: [],
-        lastVisit: "2023-12-20",
+        lastVisit: '2023-12-20',
         toothChart: [
-          { tooth: 47, status: "protez", color: "#607D8B" },
-          { tooth: 36, status: "yo'q", color: "#F44336" }
+          { tooth: 47, status: 'protez', color: '#607D8B' },
+          { tooth: 36, status: 'yoq', color: '#F44336' }
         ],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -177,68 +401,68 @@ export const initializeData = () => {
       {
         id: 1,
         patientId: 1,
-        patientName: "Ali Valiev",
-        date: "2024-09-01",
-        time: "10:00",
-        procedure: "Tish tozalash",
-        status: "amalga oshirildi",
-        notes: "Yaxshi holatda, keyingi tekshiruv 6 oydan keyin",
-        prescription: "Tish pastasi va ipi tavsiya etildi",
-        duration: "45",
-        doctor: "Dr. Aziza",
-        cost: "150000",
-        nextVisit: "2025-03-01",
+        patientName: 'Ali Valiev',
+        date: '2024-09-01',
+        time: '10:00',
+        procedure: 'Teeth cleaning',
+        status: 'completed',
+        notes: 'Good condition, next checkup in 6 months',
+        prescription: 'Recommended toothpaste and floss',
+        duration: '45',
+        doctor: 'Dr. Aziza',
+        cost: '150000',
+        nextVisit: '2025-03-01',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       },
       {
         id: 2,
         patientId: 1,
-        patientName: "Ali Valiev",
-        date: "2024-09-10",
-        time: "14:00",
-        procedure: "Plomba qo'yish",
-        status: "amalga oshirildi",
-        notes: "36-sonli tish, kompozit plomba",
-        prescription: "Issiq-sovuqdan saqlash",
-        duration: "30",
-        doctor: "Dr. Jamshid",
-        cost: "200000",
-        nextVisit: "",
+        patientName: 'Ali Valiev',
+        date: '2024-09-10',
+        time: '14:00',
+        procedure: 'Filling',
+        status: 'completed',
+        notes: 'Tooth #36, composite filling',
+        prescription: 'Avoid hot/cold',
+        duration: '30',
+        doctor: 'Dr. Jamshid',
+        cost: '200000',
+        nextVisit: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       },
       {
         id: 3,
         patientId: 2,
-        patientName: "Zilola Karimova",
-        date: "2024-09-15",
-        time: "11:30",
-        procedure: "Tish tekshiruvi",
-        status: "kutilmoqda",
-        notes: "Homiladorlik tekshiruvi",
-        prescription: "",
-        duration: "60",
-        doctor: "Dr. Aziza",
-        cost: "80000",
-        nextVisit: "",
+        patientName: 'Zilola Karimova',
+        date: '2024-09-15',
+        time: '11:30',
+        procedure: 'Dental checkup',
+        status: 'pending',
+        notes: 'Pregnancy checkup',
+        prescription: '',
+        duration: '60',
+        doctor: 'Dr. Aziza',
+        cost: '80000',
+        nextVisit: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       },
       {
         id: 4,
         patientId: 3,
-        patientName: "Sherzod Qodirov",
-        date: "2024-09-20",
-        time: "09:00",
-        procedure: "Protez tekshiruvi",
-        status: "reja qilindi",
-        notes: "Protezni sozlash talab qilinadi",
-        prescription: "",
-        duration: "90",
-        doctor: "Dr. Jamshid",
-        cost: "120000",
-        nextVisit: "",
+        patientName: 'Sherzod Qodirov',
+        date: '2024-09-20',
+        time: '09:00',
+        procedure: 'Prosthesis checkup',
+        status: 'scheduled',
+        notes: 'Prosthesis adjustment needed',
+        prescription: '',
+        duration: '90',
+        doctor: 'Dr. Jamshid',
+        cost: '120000',
+        nextVisit: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -246,73 +470,73 @@ export const initializeData = () => {
     medications: [
       {
         id: 1,
-        name: "Amoxicillin 500mg",
-        type: "antibiotik",
-        dosage: "500mg",
-        form: "tabletka",
+        name: 'Amoxicillin 500mg',
+        type: 'antibiotic',
+        dosage: '500mg',
+        form: 'tablet',
         stock: 150,
         price: 2500,
-        description: "Keng spektrli antibiotik",
-        sideEffects: "Ko'ngil aynishi, allergiya",
-        contraindications: "Penitsillinga allergiya"
+        description: 'Broad-spectrum antibiotic',
+        sideEffects: 'Nausea, allergy',
+        contraindications: 'Penicillin allergy'
       },
       {
         id: 2,
-        name: "Paracetamol 500mg",
-        type: "og'riq qoldiruvchi",
-        dosage: "500mg",
-        form: "tabletka",
+        name: 'Paracetamol 500mg',
+        type: 'painkiller',
+        dosage: '500mg',
+        form: 'tablet',
         stock: 300,
         price: 800,
-        description: "Og'riq va isitma qoldiruvchi",
-        sideEffects: "Jigar shikastlanishi (yuqori dozalarda)",
-        contraindications: "Jigar kasalliklari"
+        description: 'Pain and fever relief',
+        sideEffects: 'Liver damage (high doses)',
+        contraindications: 'Liver diseases'
       },
       {
         id: 3,
-        name: "Lidocaine 2%",
-        type: "anestetik",
-        dosage: "2%",
-        form: "in'ektsiya",
+        name: 'Lidocaine 2%',
+        type: 'anesthetic',
+        dosage: '2%',
+        form: 'injection',
         stock: 50,
         price: 15000,
-        description: "Lokal anestetik",
-        sideEffects: "Yurak urishi tezlashishi",
-        contraindications: "Yurak kasalliklari"
+        description: 'Local anesthetic',
+        sideEffects: 'Increased heart rate',
+        contraindications: 'Heart conditions'
       }
     ],
     users: [
       {
         id: 1,
-        name: "Keksri Admin",
-        email: "admin@keksri.uz",
-        password: "keksri123",
-        role: "admin",
-        phone: "+998901112233",
-        specialty: "Bosh stomatolog",
-        bio: "15 yillik tajriba, implantologiya mutaxassisi",
+        name: 'Keksri Admin',
+        email: 'admin@keksri.uz',
+        password: 'keksri123',
+        role: 'admin',
+        phone: '+998901112233',
+        specialty: 'Chief Dentist',
+        bio: '15 years of experience, implantology specialist',
         createdAt: new Date().toISOString()
       },
       {
         id: 2,
-        name: "Dr. Aziza",
-        email: "aziza@keksri.uz",
-        password: "aziza123",
-        role: "staff",
-        phone: "+998902223344",
-        specialty: "Ortodont",
-        bio: "Bolalar va kattalar ortodontiyasi",
+        name: 'Dr. Aziza',
+        email: 'aziza@keksri.uz',
+        password: 'aziza123',
+        role: 'staff',
+        phone: '+998902223344',
+        specialty: 'Orthodontist',
+        bio: 'Pediatric and adult orthodontics',
         createdAt: new Date().toISOString()
       },
       {
         id: 3,
-        name: "Dr. Jamshid",
-        email: "jamshid@keksri.uz",
-        password: "jamshid123",
-        role: "staff",
-        phone: "+998903334455",
-        specialty: "Xirurg",
-        bio: "Tish xirurgiyasi va implantologiya",
+        name: 'Dr. Jamshid',
+        email: 'jamshid@keksri.uz',
+        password: 'jamshid123',
+        role: 'staff',
+        phone: '+998903334455',
+        specialty: 'Surgeon',
+        bio: 'Dental surgery and implantology',
         createdAt: new Date().toISOString()
       }
     ],
@@ -320,130 +544,144 @@ export const initializeData = () => {
       {
         id: 1,
         patientId: 1,
-        patientName: "Ali Valiev",
-        date: "2024-09-01",
+        patientName: 'Ali Valiev',
+        date: '2024-09-01',
         services: [
-          { name: "Tish tozalash", cost: 150000 },
-          { name: "Konsultatsiya", cost: 50000 }
+          { name: 'Teeth cleaning', cost: 150000 },
+          { name: 'Consultation', cost: 50000 }
         ],
         total: 200000,
         paid: 200000,
-        status: "to'langan",
-        paymentMethod: "naqd",
-        notes: "To'liq to'lov qilindi"
+        status: 'paid',
+        paymentMethod: 'cash',
+        notes: 'Fully paid'
       }
     ],
     inventory: [
       {
         id: 1,
-        name: "Tish pastasi Colgate",
-        category: "gigiena",
+        name: 'Colgate Toothpaste',
+        category: 'hygiene',
         stock: 45,
         minStock: 10,
         price: 15000,
-        supplier: "Medtex Group"
+        supplier: 'Medtex Group'
       },
       {
         id: 2,
-        name: "Tish ipi Oral-B",
-        category: "gigiena",
+        name: 'Oral-B Floss',
+        category: 'hygiene',
         stock: 30,
         minStock: 5,
         price: 8000,
-        supplier: "Dental Market"
+        supplier: 'Dental Market'
       },
       {
         id: 3,
-        name: "Kompozit plomba materiali",
-        category: "material",
+        name: 'Composite Filling Material',
+        category: 'material',
         stock: 25,
         minStock: 3,
         price: 85000,
-        supplier: "3M Dental"
+        supplier: '3M Dental'
       }
     ],
     staff: [
       {
         id: 1,
-        name: "Dilobar",
-        position: "Hamshira",
-        phone: "+998904445566",
-        salary: "4000000",
-        joinDate: "2023-01-15",
-        status: "active"
+        name: 'Dilobar',
+        position: 'Nurse',
+        phone: '+998904445566',
+        salary: '4000000',
+        joinDate: '2023-01-15',
+        status: 'active'
       },
       {
         id: 2,
-        name: "Farid",
-        position: "Administrator",
-        phone: "+998905556677",
-        salary: "3500000",
-        joinDate: "2023-03-20",
-        status: "active"
+        name: 'Farid',
+        position: 'Administrator',
+        phone: '+998905556677',
+        salary: '3500000',
+        joinDate: '2023-03-20',
+        status: 'active'
       }
     ],
     admins: [
       {
         id: 1,
-        name: "Keksri Admin",
-        email: "admin@keksri.uz",
-        password: "keksri123",
-        phone: "+998901112233",
-        token: "ABC1234567",
+        name: 'Keksri Admin',
+        email: 'admin@keksri.uz',
+        password: 'keksri123',
+        phone: '+998901112233',
+        token: 'ABC1234567',
         tokenExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         isAdminToken: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        telegram: '123456789'
+      }
+    ],
+    pendingAdminRequests: [
+      {
+        id: 1,
+        name: 'John Doe',
+        email: 'john@keksri.uz',
+        phone: '+998901234568',
+        role: 'staff',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        telegram: '987654321'
       }
     ],
     logins: [
       {
         id: 1,
         userId: 1,
-        name: "Keksri Admin",
-        email: "admin@keksri.uz",
-        phone: "+998901112233",
-        role: "admin",
-        loginMethod: "email",
-        timestamp: "2025-10-04T10:00:00.000Z"
+        name: 'Keksri Admin',
+        email: 'admin@keksri.uz',
+        phone: '+998901112233',
+        role: 'admin',
+        loginMethod: 'email',
+        timestamp: '2025-10-04T10:00:00.000Z'
       },
       {
         id: 2,
         userId: 2,
-        name: "Dr. Aziza",
-        email: "aziza@keksri.uz",
-        phone: "+998902223344",
-        role: "staff",
-        loginMethod: "email",
-        timestamp: "2025-10-04T14:30:00.000Z"
+        name: 'Dr. Aziza',
+        email: 'aziza@keksri.uz',
+        phone: '+998902223344',
+        role: 'staff',
+        loginMethod: 'email',
+        timestamp: '2025-10-04T14:30:00.000Z'
       },
       {
         id: 3,
         userId: 3,
-        name: "Dr. Jamshid",
-        email: "jamshid@keksri.uz",
-        phone: "+998903334455",
-        role: "staff",
-        loginMethod: "token",
-        timestamp: "2025-10-05T09:15:00.000Z"
+        name: 'Dr. Jamshid',
+        email: 'jamshid@keksri.uz',
+        phone: '+998903334455',
+        role: 'staff',
+        loginMethod: 'token',
+        timestamp: '2025-10-05T09:15:00.000Z'
       }
     ],
     sidebarOpen: false,
     darkMode: false,
     fontSize: 16,
-    layout: "normal",
+    layout: 'normal',
     keksri_initialized: true
   };
 
   Object.keys(keksriInitialData).forEach(key => {
     if (!localStorage.getItem(key)) {
       localStorage.setItem(key, JSON.stringify(keksriInitialData[key]));
-      console.log(`✅ Keksri ${key} ma'lumotlari saqlandi`);
+      console.log(`✅ ${key} ma'lumotlari boshlandi`);
     }
   });
 };
 
-// Validation helpers
+// Validatsiya yordamchilari
 export const validateEmail = (email) => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(String(email || ''));
@@ -460,21 +698,21 @@ export const validatePhone = (phone) => {
 export const validateStoredPatients = (patients) => {
   try {
     if (!Array.isArray(patients)) {
-      console.error("Bemorlar ma'lumotlari massiv emas!");
+      console.error('Bemorlar ma\'lumotlari massiv emas!');
       return [];
     }
     return patients
       .filter(patient =>
         patient &&
-        typeof patient === "object" &&
+        typeof patient === 'object' &&
         (patient.id !== undefined && patient.id !== null) &&
         patient.name &&
-        typeof patient.name === "string" &&
+        typeof patient.name === 'string' &&
         validatePhone(patient.phone)
       )
       .map(patient => sanitizePatientData(patient));
   } catch (error) {
-    console.error("Bemorlar ma'lumotlarini tekshirishda xato:", error);
+    console.error('Bemorlar ma\'lumotlarini tekshirishda xato:', error);
     return [];
   }
 };
@@ -482,24 +720,24 @@ export const validateStoredPatients = (patients) => {
 export const validatePatientData = (patient) => {
   const errors = [];
   if (!patient?.name || String(patient.name).trim().length < 2) {
-    errors.push('Ism kamida 2 belgidan iborat boʻlishi kerak');
+    errors.push('Ism kamida 2 harfdan iborat bo‘lishi kerak');
   }
   if (!patient?.phone || !validatePhone(patient.phone)) {
-    errors.push('Telefon raqami +998XXXXXXXXX formatida boʻlishi kerak');
+    errors.push('Telefon raqami +998XXXXXXXXX formatida bo‘lishi kerak');
   }
   if (patient?.dob) {
     const birthDate = new Date(patient.dob);
     if (birthDate > new Date()) {
-      errors.push('Tugʻilgan sana kelajakda boʻlishi mumkin emas');
+      errors.push('Tug‘ilgan sana kelajakda bo‘lishi mumkin emas');
     }
   }
   if (patient?.telegram && !/^\d+$/.test(String(patient.telegram))) {
-    errors.push('Telegram Chat ID faqat raqamlardan iborat boʻlishi kerak');
+    errors.push('Telegram Chat ID faqat raqamlardan iborat bo‘lishi kerak');
   }
   return errors;
 };
 
-// Other utilities
+// Boshqa yordamchi funksiyalar
 export const generateToothChart = () => {
   const teeth = [];
   for (let i = 1; i <= 8; i++) teeth.push({ number: i, quadrant: 1 });
@@ -512,18 +750,18 @@ export const generateToothChart = () => {
 export const exportPatientsData = () => {
   try {
     const patients = getFromLocalStorage('patients', []);
-    const blob = new Blob([JSON.stringify(patients, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(patients, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `keksri_bemorlar_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `keksri_patients_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    console.log("✅ Keksri bemorlar eksport qilindi");
+    console.log('✅ Bemorlar ma\'lumotlari eksport qilindi');
     return true;
   } catch (e) {
-    console.error("💥 Keksri eksport xatosi:", e);
-    alert('Keksri eksport qilishda xatolik yuz berdi');
+    console.error('Bemorlar ma\'lumotlarini eksport qilishda xato:', e);
+    alert('Bemorlar ma\'lumotlarini eksport qilishda xato');
     return false;
   }
 };
@@ -534,12 +772,14 @@ export const importPatientsData = (file, callback) => {
     try {
       const importedPatients = JSON.parse(e.target.result);
       if (!Array.isArray(importedPatients)) {
-        callback(false, "Keksri import fayli formati noto'g'ri");
+        if (typeof callback === 'function') {
+          callback(false, 'Noto‘g‘ri import fayl formati');
+        }
         return;
       }
-      
+
       const validatedPatients = importedPatients
-        .filter(patient => 
+        .filter(patient =>
           patient &&
           patient.id &&
           patient.name &&
@@ -547,15 +787,17 @@ export const importPatientsData = (file, callback) => {
           validatePhone(patient.phone)
         )
         .map(patient => sanitizePatientData(patient));
-      
+
       if (validatedPatients.length === 0) {
-        callback(false, "Keksri faylda yaroqli bemor ma'lumoti topilmadi");
+        if (typeof callback === 'function') {
+          callback(false, 'Faylda haqiqiy bemor ma\'lumotlari topilmadi');
+        }
         return;
       }
-      
+
       const currentPatients = getFromLocalStorage('patients', []);
       const mergedPatients = [...currentPatients];
-      
+
       validatedPatients.forEach(newPatient => {
         const existingIndex = mergedPatients.findIndex(p => String(p.id) === String(newPatient.id));
         if (existingIndex >= 0) {
@@ -564,13 +806,17 @@ export const importPatientsData = (file, callback) => {
           mergedPatients.push(newPatient);
         }
       });
-      
+
       saveToLocalStorage('patients', mergedPatients);
-      console.log(`✅ Keksri ${validatedPatients.length} bemor import qilindi`);
-      callback(true, `${validatedPatients.length} ta Keksri bemor muvaffaqiyatli import qilindi`);
+      console.log(`✅ ${validatedPatients.length} bemor import qilindi`);
+      if (typeof callback === 'function') {
+        callback(true, `${validatedPatients.length} bemor muvaffaqiyatli import qilindi`);
+      }
     } catch (err) {
-      console.error("💥 Keksri import xatosi:", err);
-      callback(false, "Keksri faylni o'qishda xatolik. JSON formatini tekshiring.");
+      console.error('Bemorlar ma\'lumotlarini import qilishda xato:', err);
+      if (typeof callback === 'function') {
+        callback(false, 'Faylni o‘qishda xato. JSON formatini tekshiring.');
+      }
     }
   };
   reader.readAsText(file);
@@ -579,18 +825,18 @@ export const importPatientsData = (file, callback) => {
 export const exportAppointmentsData = () => {
   try {
     const appointments = getFromLocalStorage('appointments', []);
-    const blob = new Blob([JSON.stringify(appointments, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(appointments, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `keksri_uchrashuvlar_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `keksri_appointments_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    console.log("✅ Keksri uchrashuvlar eksport qilindi");
+    console.log('✅ Uchrashuvlar ma\'lumotlari eksport qilindi');
     return true;
   } catch (e) {
-    console.error("💥 Keksri uchrashuvlar eksport xatosi:", e);
-    alert('Keksri uchrashuvlarni eksport qilishda xatolik yuz berdi');
+    console.error('Uchrashuvlar ma\'lumotlarini eksport qilishda xato:', e);
+    alert('Uchrashuvlar ma\'lumotlarini eksport qilishda xato');
     return false;
   }
 };
@@ -601,12 +847,14 @@ export const importAppointmentsData = (file, callback) => {
     try {
       const importedAppointments = JSON.parse(e.target.result);
       if (!Array.isArray(importedAppointments)) {
-        callback(false, "Keksri import fayli formati noto'g'ri");
+        if (typeof callback === 'function') {
+          callback(false, 'Noto‘g‘ri import fayl formati');
+        }
         return;
       }
 
       const validatedAppointments = importedAppointments
-        .filter(app => 
+        .filter(app =>
           app &&
           app.id &&
           app.patientId &&
@@ -622,7 +870,9 @@ export const importAppointmentsData = (file, callback) => {
         }));
 
       if (validatedAppointments.length === 0) {
-        callback(false, "Keksri faylda yaroqli uchrashuv ma'lumoti topilmadi");
+        if (typeof callback === 'function') {
+          callback(false, 'Faylda haqiqiy uchrashuv ma\'lumotlari topilmadi');
+        }
         return;
       }
 
@@ -639,45 +889,27 @@ export const importAppointmentsData = (file, callback) => {
       });
 
       saveToLocalStorage('appointments', mergedAppointments);
-      console.log(`✅ Keksri ${validatedAppointments.length} uchrashuv import qilindi`);
-      callback(true, `${validatedAppointments.length} ta Keksri uchrashuv muvaffaqiyatli import qilindi`);
+      console.log(`✅ ${validatedAppointments.length} uchrashuv import qilindi`);
+      if (typeof callback === 'function') {
+        callback(true, `${validatedAppointments.length} uchrashuv muvaffaqiyatli import qilindi`);
+      }
     } catch (err) {
-      console.error("💥 Keksri uchrashuv import xatosi:", err);
-      callback(false, "Keksri faylni o'qishda xatolik. JSON formatini tekshiring.");
+      console.error('Uchrashuvlar ma\'lumotlarini import qilishda xato:', err);
+      if (typeof callback === 'function') {
+        callback(false, 'Faylni o‘qishda xato. JSON formatini tekshiring.');
+      }
     }
   };
   reader.readAsText(file);
-};
-
-export const sendTelegramMessage = (chatId, message) => {
-  if (!TELEGRAM_BOT_TOKEN) {
-    console.error('💥 Keksri Telegram token mavjud emas');
-    return Promise.resolve(false);
-  }
-
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
-
-  return fetch(url)
-    .then(response => response.json())
-    .then(data => {
-      if (!data.ok) {
-        console.error('💥 Keksri Telegram xatosi:', data.description);
-        throw new Error(data.description);
-      }
-      console.log('✅ Keksri Telegram xabar yuborildi');
-      return true;
-    })
-    .catch(error => {
-      console.error('💥 Keksri Telegram API xatosi:', error);
-      return false;
-    });
 };
 
 export const addNewPatient = (patientData, callback) => {
   try {
     const errors = validatePatientData(patientData);
     if (errors.length > 0) {
-      callback(false, errors.join(', '));
+      if (typeof callback === 'function') {
+        callback(false, errors.join(', '));
+      }
       return;
     }
 
@@ -695,11 +927,15 @@ export const addNewPatient = (patientData, callback) => {
     currentPatients.push(sanitizedPatient);
     saveToLocalStorage('patients', currentPatients);
 
-    console.log("✅ Keksri yangi bemor qo'shildi:", sanitizedPatient.name);
-    callback(true, 'Keksri bemor muvaffaqiyatli qo\'shildi', sanitizedPatient);
+    console.log('Yangi bemor qo‘shildi:', sanitizedPatient.name);
+    if (typeof callback === 'function') {
+      callback(true, 'Bemor muvaffaqiyatli qo‘shildi', sanitizedPatient);
+    }
   } catch (error) {
-    console.error('💥 Keksri bemor qo\'shish xatosi:', error);
-    callback(false, 'Keksri bemor qo\'shishda xatolik yuz berdi');
+    console.error('Bemor qo‘shishda xato:', error);
+    if (typeof callback === 'function') {
+      callback(false, 'Bemor qo‘shishda xato');
+    }
   }
 };
 
@@ -707,20 +943,22 @@ export const cancelAppointment = (appointmentId, callback) => {
   try {
     const appointments = getFromLocalStorage('appointments', []);
     const appointment = appointments.find(app => String(app.id) === String(appointmentId));
-    
+
     if (!appointment) {
-      callback(false, 'Keksri uchrashuv topilmadi');
+      if (typeof callback === 'function') {
+        callback(false, 'Uchrashuv topilmadi');
+      }
       return;
     }
 
     const updatedAppointments = appointments.map(app =>
       String(app.id) === String(appointmentId)
-        ? { ...app, status: 'bekor qilindi', updatedAt: new Date().toISOString() }
+        ? { ...app, status: 'cancelled', updatedAt: new Date().toISOString() }
         : app
     );
 
     saveToLocalStorage('appointments', updatedAppointments);
-    
+
     const patients = getFromLocalStorage('patients', []);
     const patient = patients.find(p => String(p.id) === String(appointment.patientId));
     if (patient && patient.telegram) {
@@ -728,11 +966,15 @@ export const cancelAppointment = (appointmentId, callback) => {
       sendTelegramMessage(patient.telegram, message);
     }
 
-    console.log("✅ Keksri uchrashuv bekor qilindi:", appointmentId);
-    callback(true, 'Keksri uchrashuv bekor qilindi');
+    console.log('Uchrashuv bekor qilindi:', appointmentId);
+    if (typeof callback === 'function') {
+      callback(true, 'Uchrashuv muvaffaqiyatli bekor qilindi');
+    }
   } catch (error) {
-    console.error('💥 Keksri uchrashuv bekor qilish xatosi:', error);
-    callback(false, 'Keksri uchrashuvni bekor qilishda xatolik yuz berdi');
+    console.error('Uchrashuvni bekor qilishda xato:', error);
+    if (typeof callback === 'function') {
+      callback(false, 'Uchrashuvni bekor qilishda xato');
+    }
   }
 };
 
@@ -741,7 +983,9 @@ export const updatePatient = (patientId, updatedData, callback) => {
     const currentPatients = getFromLocalStorage('patients', []);
     const existingIndex = currentPatients.findIndex(p => String(p.id) === String(patientId));
     if (existingIndex === -1) {
-      callback(false, 'Keksri bemor topilmadi');
+      if (typeof callback === 'function') {
+        callback(false, 'Bemor topilmadi');
+      }
       return;
     }
 
@@ -757,7 +1001,9 @@ export const updatePatient = (patientId, updatedData, callback) => {
 
     const errors = validatePatientData(merged);
     if (errors.length > 0) {
-      callback(false, errors.join(', '));
+      if (typeof callback === 'function') {
+        callback(false, errors.join(', '));
+      }
       return;
     }
 
@@ -765,11 +1011,15 @@ export const updatePatient = (patientId, updatedData, callback) => {
     currentPatients[existingIndex] = sanitizedData;
 
     saveToLocalStorage('patients', currentPatients);
-    console.log("✅ Keksri bemor yangilandi:", patientId);
-    callback(true, 'Keksri bemor ma\'lumotlari yangilandi', sanitizedData);
+    console.log('Bemor ma\'lumotlari yangilandi:', patientId);
+    if (typeof callback === 'function') {
+      callback(true, 'Bemor ma\'lumotlari muvaffaqiyatli yangilandi', sanitizedData);
+    }
   } catch (error) {
-    console.error('💥 Keksri bemor yangilash xatosi:', error);
-    callback(false, 'Keksri ma\'lumotlarni yangilashda xatolik yuz berdi');
+    console.error('Bemor ma\'lumotlarini yangilashda xato:', error);
+    if (typeof callback === 'function') {
+      callback(false, 'Bemor ma\'lumotlarini yangilashda xato');
+    }
   }
 };
 
@@ -798,7 +1048,7 @@ export const formatKeksriCurrency = (amount) => {
 
 export const searchPatients = (query, patients) => {
   if (!query) return patients;
-  
+
   const lowerQuery = String(query).toLowerCase();
   return (patients || []).filter(patient =>
     (patient.name || '').toLowerCase().includes(lowerQuery) ||
@@ -812,17 +1062,17 @@ export const getKeksriStats = () => {
   const patients = getFromLocalStorage('patients', []);
   const appointments = getFromLocalStorage('appointments', []);
   const billings = getFromLocalStorage('billings', []);
-  
+
   const today = new Date().toISOString().split('T')[0];
   const todayAppointments = (appointments || []).filter(app => app.date === today);
-  const pendingAppointments = (appointments || []).filter(app => app.status === 'kutilmoqda');
+  const pendingAppointments = (appointments || []).filter(app => app.status === 'pending');
   const totalRevenue = (billings || []).reduce((sum, bill) => sum + (Number(bill.total) || 0), 0);
-  
+
   return {
     totalPatients: (patients || []).length,
     todayAppointments: todayAppointments.length,
     pendingAppointments: pendingAppointments.length,
-    totalRevenue: totalRevenue
+    totalRevenue
   };
 };
 
@@ -848,13 +1098,13 @@ export const filterLogins = (logins, { roleFilter, methodFilter, dateFilter, sea
     const now = new Date();
     filtered = filtered.filter(login => {
       const loginDate = new Date(login.timestamp);
-      if (dateFilter === "today") {
+      if (dateFilter === 'today') {
         return loginDate.toDateString() === now.toDateString();
-      } else if (dateFilter === "yesterday") {
+      } else if (dateFilter === 'yesterday') {
         const yesterday = new Date(now);
         yesterday.setDate(now.getDate() - 1);
         return loginDate.toDateString() === yesterday.toDateString();
-      } else if (dateFilter === "week") {
+      } else if (dateFilter === 'week') {
         const oneWeekAgo = new Date(now);
         oneWeekAgo.setDate(now.getDate() - 7);
         return loginDate >= oneWeekAgo && loginDate <= now;
@@ -884,11 +1134,11 @@ export const sortLoginsByTimestamp = (logins, descending = true) => {
 };
 
 export const getLoginMethod = (login) => {
-  if (login.email === "admin@tishclinic.uz") return "Admin";
-  if (login.loginMethod === 'token') return "Token";
-  if (login.phone && !login.email) return "Telefon";
-  if (login.email && !login.phone) return "Email";
-  return "Noma'lum";
+  if (login.email === 'admin@keksri.uz') return 'Admin';
+  if (login.loginMethod === 'token') return 'Token';
+  if (login.phone && !login.email) return 'Phone';
+  if (login.email && !login.phone) return 'Email';
+  return 'Unknown';
 };
 
 export const logLogin = (user, loginMethod = 'email') => {
@@ -905,15 +1155,15 @@ export const logLogin = (user, loginMethod = 'email') => {
       timestamp: new Date().toISOString()
     });
     saveToLocalStorage('logins', logins);
-    console.log("✅ Login qayd etildi");
+    console.log('Kirish qayd etildi');
   } catch (error) {
-    console.error("💥 Login qayd etish xatosi:", error);
+    console.error('Kirishni qayd etishda xato:', error);
   }
 };
 
 export const clearLogins = () => {
   saveToLocalStorage('logins', []);
-  console.log("✅ Logins tozalandi");
+  console.log('Kirishlar tozalandi');
 };
 
-console.log("🦷 Keksri Utils yuklandi!");
+console.log('🦷 Keksri Utils yuklandi!');

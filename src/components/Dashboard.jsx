@@ -59,56 +59,57 @@ const Dashboard = () => {
       </div>
 
       {/* Statistikalar */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon-container">
-            <FiUsers className="stat-icon" />
-          </div>
-          <div className="stat-content">
-            <h3>Bemorlar</h3>
-            <p>{patients.length} ta</p>
-          </div>
-          <Link to="/bemorlar" className="stat-link">
-            <FiPlusCircle />
-          </Link>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon-container">
-            <FiCalendar className="stat-icon" />
-          </div>
-          <div className="stat-content">
-            <h3>Uchrashuvlar</h3>
-            <p>{appointments.length} ta</p>
-          </div>
-          <Link to="/uchrashuvlar" className="stat-link">
-            <FiPlusCircle />
-          </Link>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon-container">
-            <FiPackage className="stat-icon" />
-          </div>
-          <div className="stat-content">
-            <h3>Dorilar</h3>
-            <p>{medications.length} ta</p>
-          </div>
-          <Link to="/dorilar" className="stat-link">
-            <FiPlusCircle />
-          </Link>
-        </div>
-        
-        <div className="stat-card">
-          <div className="stat-icon-container">
-            <FiCalendar className="stat-icon" />
-          </div>
-          <div className="stat-content">
-            <h3>Bugungi Uchrashuvlar</h3>
-            <p>{todayAppointments.length} ta</p>
-          </div>
-        </div>
-      </div>
+   <div className="dashboard-stats">
+  <div className="dashboard-card">
+    <div className="dashboard-icon-box">
+      <FiUsers className="dashboard-icon" />
+    </div>
+    <div className="dashboard-info">
+      <h3>Bemorlar</h3>
+      <p>{patients.length} ta</p>
+    </div>
+    <Link to="/bemorlar" className="dashboard-link">
+      <FiPlusCircle />
+    </Link>
+  </div>
+
+  <div className="dashboard-card">
+    <div className="dashboard-icon-box">
+      <FiCalendar className="dashboard-icon" />
+    </div>
+    <div className="dashboard-info">
+      <h3>Uchrashuvlar</h3>
+      <p>{appointments.length} ta</p>
+    </div>
+    <Link to="/uchrashuvlar" className="dashboard-link">
+      <FiPlusCircle />
+    </Link>
+  </div>
+
+  <div className="dashboard-card">
+    <div className="dashboard-icon-box">
+      <FiPackage className="dashboard-icon" />
+    </div>
+    <div className="dashboard-info">
+      <h3>Dorilar</h3>
+      <p>{medications.length} ta</p>
+    </div>
+    <Link to="/dorilar" className="dashboard-link">
+      <FiPlusCircle />
+    </Link>
+  </div>
+
+  <div className="dashboard-card">
+    <div className="dashboard-icon-box">
+      <FiCalendar className="dashboard-icon" />
+    </div>
+    <div className="dashboard-info">
+      <h3>Bugungi Uchrashuvlar</h3>
+      <p>{todayAppointments.length} ta</p>
+    </div>
+  </div>
+</div>
+
 
       {/* Ikki ustunli tarkib */}
       <div className="dashboard-content">

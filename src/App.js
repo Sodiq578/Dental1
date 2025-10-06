@@ -28,13 +28,20 @@ import StaffPermissions from "./components/Admin/StaffPermissions";
 import AdminFor from "./components/Admin/AdminFor";
 
 // Utils
-import { getFromLocalStorage, saveToLocalStorage, initializeData, logLogin } from "./utils"; // Bu to'g'ri — utils.js src da
+import {
+  getFromLocalStorage,
+  saveToLocalStorage,
+  initializeData,
+  logLogin,
+} from "./utils";
 import "./App.css";
 
 export const AppContext = createContext();
 
 const App = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(getFromLocalStorage("sidebarOpen", false));
+  const [sidebarOpen, setSidebarOpen] = useState(
+    getFromLocalStorage("sidebarOpen", false)
+  );
   const [fontSize, setFontSize] = useState(getFromLocalStorage("fontSize", 16));
   const [layout, setLayout] = useState(getFromLocalStorage("layout", "normal"));
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -52,6 +59,9 @@ const App = () => {
   const [staff, setStaff] = useState([]);
   const [users, setUsers] = useState([]);
   const [logins, setLogins] = useState(getFromLocalStorage("logins", []));
+  const [pendingAdmins, setPendingAdmins] = useState(
+    getFromLocalStorage("pendingAdmins", [])
+  );
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -68,6 +78,7 @@ const App = () => {
         setStaff(getFromLocalStorage("staff", []));
         setUsers(getFromLocalStorage("users", []));
         setLogins(getFromLocalStorage("logins", []));
+        setPendingAdmins(getFromLocalStorage("pendingAdmins", []));
 
         const savedUser = getFromLocalStorage("currentUser", null);
         if (savedUser) {
@@ -111,6 +122,7 @@ const App = () => {
     saveToLocalStorage("users", users);
     saveToLocalStorage("currentUser", currentUser);
     saveToLocalStorage("logins", logins);
+    saveToLocalStorage("pendingAdmins", pendingAdmins);
   }, [
     sidebarOpen,
     fontSize,
@@ -125,6 +137,7 @@ const App = () => {
     users,
     currentUser,
     logins,
+    pendingAdmins,
   ]);
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -194,6 +207,8 @@ const App = () => {
         saveToLocalStorage,
         logins,
         setLogins,
+        pendingAdmins,
+        setPendingAdmins,
       }}
     >
       <Router>
@@ -207,7 +222,15 @@ const App = () => {
 
           {!isLoggedIn ? (
             <Routes>
-              <Route path="/login" element={<Login onLogin={handleLogin} onOpenTokenLogin={() => setTokenLoginOpen(true)} />} />
+              <Route
+                path="/login"
+                element={
+                  <Login
+                    onLogin={handleLogin}
+                    onOpenTokenLogin={() => setTokenLoginOpen(true)}
+                  />
+                }
+              />
               <Route path="/bemor-portali" element={<PatientPortal />} />
               <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
@@ -275,4 +298,3 @@ const App = () => {
 };
 
 export default App;
-

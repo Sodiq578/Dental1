@@ -3,7 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { FiUser, FiLock, FiX, FiMail, FiShield, FiKey, FiPhone, FiEye, FiEyeOff, FiArrowLeft } from "react-icons/fi";
 import { FaCrown } from "react-icons/fa";
 import { AppContext } from "../App";
-import { logLogin, getFromLocalStorage, saveToLocalStorage } from "../utils";
+import { 
+  logLogin, 
+  getFromLocalStorage, 
+  saveToLocalStorage, 
+  savePendingAdminRequest, 
+  sendTelegramMessage 
+} from "../utils";
 import "./Login.css";
 
 const Login = ({ onLogin, onOpenTokenLogin }) => {
@@ -16,6 +22,7 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [isAdminRequestMode, setIsAdminRequestMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: "", message: "" });
   const [isOtpMode, setIsOtpMode] = useState(false);
@@ -27,9 +34,11 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState({});
   const [showTokenLogin, setShowTokenLogin] = useState(false);
-  const [autoVerify, setAutoVerify] = useState(true);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showAdminPhoneLogin, setShowAdminPhoneLogin] = useState(false);
+  const [autoVerify, setAutoVerify] = useState(true);
   const [token, setToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
 
   const navigate = useNavigate();
   const { users, setUsers, setLogins, staff } = useContext(AppContext);
@@ -61,14 +70,112 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
     }
   }, [isOtpMode]);
 
-  const handleResendOtp = () => {
+  // OTP yuborish funksiyasi
+  const sendOtp = async (phoneNumber, chatId, isAdmin = false) => {
+    try {
+      // 4 xonali OTP yaratish
+      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // OTP ni saqlash
+      const otpData = {
+        phone: phoneNumber,
+        otp: generatedOtp,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 daqiqa
+        createdAt: new Date().toISOString()
+      };
+
+      const currentOtps = getFromLocalStorage('otpCodes', []);
+      const filteredOtps = currentOtps.filter(o => o.phone !== phoneNumber);
+      filteredOtps.push(otpData);
+      saveToLocalStorage('otpCodes', filteredOtps);
+
+      // Telegramga xabar yuborish
+      const message = isAdmin 
+        ? `🦷 KEKSRI Admin Login OTP\n\nYour verification code is: ${generatedOtp}\nThis code will expire in 10 minutes.\n\nDo not share this code with anyone.`
+        : `🦷 KEKSRI Tizimiga kirish kodi\n\nSizning tasdiqlash kodingiz: ${generatedOtp}\nBu kod 10 daqiqa amal qiladi.\n\nHech kimga bu kodni bermang.`;
+
+      const success = await sendTelegramMessage(chatId, message);
+      
+      if (success) {
+        console.log(`OTP ${generatedOtp} sent to ${phoneNumber}`);
+        return true;
+      } else {
+        console.error('Failed to send OTP via Telegram');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      return false;
+    }
+  };
+
+  // OTP tekshirish funksiyasi
+  const verifyOtp = (phoneNumber, enteredOtp) => {
+    try {
+      const currentOtps = getFromLocalStorage('otpCodes', []);
+      const otpData = currentOtps.find(o => o.phone === phoneNumber && o.otp === enteredOtp);
+      
+      if (!otpData) {
+        return false;
+      }
+
+      // Muddati tekshirish
+      const now = new Date();
+      const expiresAt = new Date(otpData.expiresAt);
+      
+      if (now > expiresAt) {
+        // Muddati o'tgan OTP ni o'chirish
+        const filteredOtps = currentOtps.filter(o => o.phone !== phoneNumber);
+        saveToLocalStorage('otpCodes', filteredOtps);
+        return false;
+      }
+
+      // OTP to'g'ri, uni o'chirish
+      const filteredOtps = currentOtps.filter(o => o.phone !== phoneNumber);
+      saveToLocalStorage('otpCodes', filteredOtps);
+      
+      return true;
+    } catch (error) {
+      console.error('Error verifying OTP:', error);
+      return false;
+    }
+  };
+
+  const handleResendOtp = async () => {
     if (canResend) {
+      setIsLoading(true);
       setTimer(120);
       setCanResend(false);
       setError("");
       setOtp("");
       setOtpDigits(['', '', '', '']);
-      setTimeout(() => {}, 1000);
+      
+      try {
+        let success = false;
+        
+        if (showAdminPhoneLogin) {
+          // Admin uchun OTP qayta yuborish
+          success = await sendOtp(phone, telegramChatId, true);
+        } else if (authMethod === "phone") {
+          // Oddiy foydalanuvchi uchun OTP qayta yuborish
+          const user = users.find(u => u.phone === phone);
+          if (user && user.telegram) {
+            success = await sendOtp(phone, user.telegram);
+          } else {
+            setError("Foydalanuvchi uchun Telegram chat ID topilmadi");
+          }
+        }
+
+        if (success) {
+          setError("");
+        } else {
+          setError("OTP yuborishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+        }
+      } catch (error) {
+        setError("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -88,7 +195,11 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
 
     if (fullOtp.length === 4 && autoVerify) {
       setTimeout(() => {
-        handleAutoVerify(fullOtp);
+        if (showAdminPhoneLogin) {
+          handleAdminPhoneOtpVerify(fullOtp);
+        } else {
+          handleAutoVerify(fullOtp);
+        }
       }, 500);
     }
   };
@@ -105,50 +216,6 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
     if (e.key === 'ArrowRight' && index < 3) {
       e.preventDefault();
       otpInputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleAutoVerify = (otpCode) => {
-    if (otpCode === "1234") {
-      setIsLoading(true);
-      setTimeout(() => {
-        if (isRegisterMode) {
-          const updatedUsers = [...users, tempUser];
-          setUsers(updatedUsers);
-          saveToLocalStorage('users', updatedUsers);
-        }
-        onLogin(tempUser);
-        logLogin(tempUser);
-        setLogins((prevLogins) => {
-          const newLogins = [
-            ...prevLogins,
-            {
-              id: Date.now(),
-              userId: tempUser.id,
-              name: tempUser.name,
-              email: tempUser.email,
-              phone: tempUser.phone,
-              role: tempUser.role,
-              timestamp: new Date().toISOString(),
-            },
-          ];
-          saveToLocalStorage('logins', newLogins);
-          return newLogins;
-        });
-        setModalContent({
-          title: isRegisterMode ? "Muvaffaqiyatli ro'yxatdan o'tish" : "Muvaffaqiyatli kirish",
-          message: "Tizimga muvaffaqiyatli kirdingiz!",
-        });
-        setShowModal(true);
-        setTimeout(() => {
-          if (tempUser.role === "patient") {
-            navigate("/foydalanuvchi");
-          } else {
-            navigate("/");
-          }
-        }, 1500);
-        setIsLoading(false);
-      }, 1000);
     }
   };
 
@@ -174,8 +241,76 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
 
     if (numbers.length === 4 && autoVerify) {
       setTimeout(() => {
-        handleAutoVerify(numbers);
+        if (showAdminPhoneLogin) {
+          handleAdminPhoneOtpVerify(numbers);
+        } else {
+          handleAutoVerify(numbers);
+        }
       }, 500);
+    }
+  };
+
+  const handleAutoVerify = async (otpCode) => {
+    setIsLoading(true);
+    
+    try {
+      let isValid = false;
+      
+      if (authMethod === "phone") {
+        // Telefon orqali kirishda OTP ni tekshirish
+        isValid = verifyOtp(phone, otpCode);
+      } else {
+        // Test rejimi - har qanday 4 raqamli kod qabul qilinadi
+        isValid = /^\d{4}$/.test(otpCode);
+      }
+
+      if (isValid) {
+        if (isRegisterMode) {
+          const updatedUsers = [...users, tempUser];
+          setUsers(updatedUsers);
+          saveToLocalStorage('users', updatedUsers);
+        }
+        
+        onLogin(tempUser);
+        logLogin(tempUser);
+        
+        setLogins((prevLogins) => {
+          const newLogins = [
+            ...prevLogins,
+            {
+              id: Date.now(),
+              userId: tempUser.id,
+              name: tempUser.name,
+              email: tempUser.email,
+              phone: tempUser.phone,
+              role: tempUser.role,
+              timestamp: new Date().toISOString(),
+            },
+          ];
+          saveToLocalStorage('logins', newLogins);
+          return newLogins;
+        });
+        
+        setModalContent({
+          title: isRegisterMode ? "Muvaffaqiyatli ro'yxatdan o'tish" : "Muvaffaqiyatli kirish",
+          message: "Tizimga muvaffaqiyatli kirdingiz!",
+        });
+        setShowModal(true);
+        
+        setTimeout(() => {
+          if (tempUser.role === "patient") {
+            navigate("/foydalanuvchi");
+          } else {
+            navigate("/");
+          }
+        }, 1500);
+      } else {
+        setError("Noto'g'ri OTP kodi. Iltimos, qayta urinib ko'ring.");
+      }
+    } catch (error) {
+      setError("Tekshirishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -204,7 +339,7 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
             reports: true,
             admin: true
           },
-          branchId: null,
+          branchId: admin.branchId || null,
           loginMethod: 'admin'
         };
 
@@ -239,6 +374,119 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
       }
       setIsLoading(false);
     }, 1000);
+  };
+
+  const handleAdminPhoneLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    if (!phone || !/^\+998\d{9}$/.test(phone)) {
+      setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!telegramChatId || !/^\d+$/.test(telegramChatId)) {
+      setError("Telegram Chat ID faqat raqamlardan iborat bo'lishi kerak");
+      setIsLoading(false);
+      return;
+    }
+
+    const admins = getFromLocalStorage('admins', []);
+    const admin = admins.find(a => a.phone === phone);
+
+    if (!admin) {
+      setError("Bu telefon raqami bilan admin topilmadi");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // OTP yuborish
+      const success = await sendOtp(phone, telegramChatId, true);
+      
+      if (success) {
+        // Vaqtinchalik admin ma'lumotlarini saqlash
+        setTempUser({
+          id: admin.id,
+          name: admin.name,
+          email: admin.email,
+          phone: admin.phone,
+          role: "admin",
+          permissions: {
+            patients: true,
+            appointments: true,
+            medications: true,
+            billing: true,
+            inventory: true,
+            reports: true,
+            admin: true
+          },
+          branchId: admin.branchId || null,
+          loginMethod: 'phone_otp'
+        });
+
+        setIsOtpMode(true);
+        setTimer(120);
+        setCanResend(false);
+        setError("");
+      } else {
+        setError("OTP yuborishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+      }
+    } catch (error) {
+      setError("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAdminPhoneOtpVerify = async (otpCode) => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const isValid = verifyOtp(phone, otpCode);
+      
+      if (isValid) {
+        onLogin(tempUser);
+        logLogin(tempUser, 'phone_otp');
+        
+        setLogins((prevLogins) => {
+          const newLogins = [
+            ...prevLogins,
+            {
+              id: Date.now(),
+              userId: tempUser.id,
+              name: tempUser.name,
+              email: tempUser.email,
+              phone: tempUser.phone,
+              role: tempUser.role,
+              timestamp: new Date().toISOString(),
+              loginMethod: 'phone_otp'
+            },
+          ];
+          saveToLocalStorage('logins', newLogins);
+          return newLogins;
+        });
+        
+        setModalContent({
+          title: "Admin sifatida kirish",
+          message: "Administrator paneliga xush kelibsiz!",
+        });
+        setShowModal(true);
+        
+        setTimeout(() => {
+          navigate("/admin");
+        }, 1500);
+      } else {
+        setError("Noto'g'ri OTP kodi. Iltimos, qayta urinib ko'ring.");
+      }
+    } catch (error) {
+      setError("Tekshirishda xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTokenLogin = (e) => {
@@ -366,7 +614,7 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
@@ -393,7 +641,7 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
       return;
     }
 
-    setTimeout(() => {
+    try {
       if (isRegisterMode) {
         if (authMethod === "email" && users.find((u) => u.email === email)) {
           setError("Bu email allaqachon ro'yxatdan o'tgan");
@@ -418,80 +666,63 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
           updatedAt: new Date().toISOString()
         };
         setTempUser(newUser);
-        setIsOtpMode(true);
-        setTimer(120);
-        setCanResend(false);
+        
+        // Agar telefon orqali ro'yxatdan o'tayotgan bo'lsa, OTP yuborish
+        if (authMethod === "phone") {
+          // Test uchun - agar telegram chat ID bo'lmasa, OTP rejimiga o'tkazmaymiz
+          setIsOtpMode(true);
+          setTimer(120);
+          setCanResend(false);
+        } else {
+          // Email orqali ro'yxatdan o'tish
+          setIsOtpMode(true);
+          setTimer(120);
+          setCanResend(false);
+        }
       } else {
         const user = users.find((u) =>
           (authMethod === "email"
             ? u.email === email && u.password === password
             : u.phone === phone) && u.role === role
         );
+        
         if (user) {
           setTempUser(user);
-          setIsOtpMode(true);
-          setTimer(120);
-          setCanResend(false);
+          
+          // Agar telefon orqali kirish bo'lsa, OTP yuborish
+          if (authMethod === "phone" && user.telegram) {
+            const success = await sendOtp(phone, user.telegram);
+            if (success) {
+              setIsOtpMode(true);
+              setTimer(120);
+              setCanResend(false);
+            } else {
+              setError("OTP yuborishda xatolik. Iltimos, qayta urinib ko'ring.");
+            }
+          } else {
+            // Email orqali kirish yoki telegram chat ID bo'lmaganda
+            setIsOtpMode(true);
+            setTimer(120);
+            setCanResend(false);
+          }
         } else {
           setError(
             authMethod === "email"
               ? "Noto'g'ri email yoki parol."
               : "Bu telefon raqami ro'yxatdan o'tmagan."
           );
-          setIsLoading(false);
         }
       }
+    } catch (error) {
+      setError("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleOtpVerify = (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    setTimeout(() => {
-      if (otp === "1234") {
-        if (isRegisterMode) {
-          const updatedUsers = [...users, tempUser];
-          setUsers(updatedUsers);
-          saveToLocalStorage('users', updatedUsers);
-        }
-        onLogin(tempUser);
-        logLogin(tempUser);
-        setLogins((prevLogins) => {
-          const newLogins = [
-            ...prevLogins,
-            {
-              id: Date.now(),
-              userId: tempUser.id,
-              name: tempUser.name,
-              email: tempUser.email,
-              phone: tempUser.phone,
-              role: tempUser.role,
-              timestamp: new Date().toISOString(),
-            },
-          ];
-          saveToLocalStorage('logins', newLogins);
-          return newLogins;
-        });
-        setModalContent({
-          title: isRegisterMode ? "Muvaffaqiyatli ro'yxatdan o'tish" : "Muvaffaqiyatli kirish",
-          message: "Tizimga muvaffaqiyatli kirdingiz!",
-        });
-        setShowModal(true);
-        setTimeout(() => {
-          if (tempUser.role === "patient") {
-            navigate("/foydalanuvchi");
-          } else {
-            navigate("/");
-          }
-        }, 1500);
-      } else {
-        setError("Noto'g'ri OTP kodi. (Test uchun: 1234)");
-      }
-      setIsLoading(false);
-    }, 1000);
+    handleAutoVerify(otp);
   };
 
   const toggleMode = () => {
@@ -510,7 +741,9 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
     setShowPassword(false);
     setShowTokenLogin(false);
     setShowAdminLogin(false);
+    setShowAdminPhoneLogin(false);
     setToken("");
+    setTelegramChatId("");
   };
 
   const closeModal = () => {
@@ -523,6 +756,59 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
 
   const handleBlur = (field) => {
     setIsFocused(prev => ({ ...prev, [field]: false }));
+  };
+
+  const handleAdminRequest = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    if (!name || !email || !phone || !password) {
+      setError("Barcha maydonlar to'ldirilishi kerak");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Noto'g'ri email formati");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!/^\+998\d{9}$/.test(phone)) {
+      setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
+      setIsLoading(false);
+      return;
+    }
+
+    const adminRequest = {
+      id: Date.now(),
+      name,
+      email,
+      phone,
+      password,
+      role: "admin",
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      telegram: telegramChatId,
+    };
+
+    savePendingAdminRequest(adminRequest);
+    setModalContent({
+      title: "Admin so'rovi yuborildi",
+      message: "Sizning admin sifatida ro'yxatdan o'tish so'rovingiz super admin tomonidan ko'rib chiqiladi.",
+    });
+    setShowModal(true);
+    setIsLoading(false);
+    setTimeout(() => {
+      setIsAdminRequestMode(false);
+      setName("");
+      setEmail("");
+      setPhone("");
+      setPassword("");
+      setTelegramChatId("");
+      setShowModal(false);
+    }, 2000);
   };
 
   return (
@@ -539,11 +825,15 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
             <h2 className="login-title">
               {showTokenLogin ? "Token orqali kirish" : 
                showAdminLogin ? "Admin kirishi" :
+               showAdminPhoneLogin ? "Admin telefon orqali kirish" :
+               isAdminRequestMode ? "Admin sifatida ro'yxatdan o'tish" :
                isRegisterMode ? "Ro'yxatdan o'tish" : "Tizimga kirish"}
             </h2>
             <p className="login-subtitle">
               {showTokenLogin ? "Xodim yoki admin sifatida tizimga kirish" :
                showAdminLogin ? "Administrator paneliga kirish" :
+               showAdminPhoneLogin ? "Telefon orqali admin sifatida kirish" :
+               isAdminRequestMode ? "Admin sifatida ro'yxatdan o'ting" :
                isRegisterMode ? "Yangi hisob yarating" : "Hisobingizga kiring"}
             </p>
           </div>
@@ -627,6 +917,71 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
                 </button>
               </form>
             </div>
+          ) : showAdminPhoneLogin ? (
+            <div className="admin-phone-login-section">
+              <div className="admin-info-card">
+                <FaCrown className="admin-icon" />
+                <h3>Admin Telefon Kirishi</h3>
+                <p>Telefon raqamingiz orqali OTP bilan tizimga kiring</p>
+              </div>
+
+              <form onSubmit={handleAdminPhoneLogin} className="login-form">
+                <div className={`input-group ${isFocused.phone ? 'focused' : ''}`}>
+                  <FiPhone className="input-icon" />
+                  <input
+                    type="tel"
+                    placeholder="+998 XX XXX XX XX"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onFocus={() => handleFocus('phone')}
+                    onBlur={() => handleBlur('phone')}
+                    className="input-field"
+                    required
+                    autoComplete="tel"
+                  />
+                </div>
+
+                <div className={`input-group ${isFocused.telegram ? 'focused' : ''}`}>
+                  <FiMail className="input-icon" />
+                  <input
+                    type="text"
+                    placeholder="Telegram Chat ID"
+                    value={telegramChatId}
+                    onChange={(e) => setTelegramChatId(e.target.value)}
+                    onFocus={() => handleFocus('telegram')}
+                    onBlur={() => handleBlur('telegram')}
+                    className="input-field"
+                    required
+                    autoComplete="off"
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  className={`submit-button admin-submit ${isLoading ? 'loading' : ''}`}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="button-spinner"></div>
+                      OTP yuborilmoqda...
+                    </>
+                  ) : (
+                    <>
+                      <FaCrown /> OTP yuborish
+                    </>
+                  )}
+                </button>
+
+                <button 
+                  type="button" 
+                  className="back-to-login"
+                  onClick={() => setShowAdminPhoneLogin(false)}
+                >
+                  <FiArrowLeft /> Oddiy kirishga qaytish
+                </button>
+              </form>
+            </div>
           ) : showTokenLogin ? (
             <div className="token-login-section">
               <div className="token-info-card">
@@ -679,6 +1034,113 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
                 </button>
               </form>
             </div>
+          ) : isAdminRequestMode ? (
+            <form onSubmit={handleAdminRequest} className="login-form">
+              <div className={`input-group ${isFocused.name ? 'focused' : ''}`}>
+                <FiUser className="input-icon" />
+                <input
+                  type="text"
+                  placeholder="To'liq ism"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onFocus={() => handleFocus('name')}
+                  onBlur={() => handleBlur('name')}
+                  className="input-field"
+                  required
+                  autoComplete="name"
+                />
+              </div>
+
+              <div className={`input-group ${isFocused.email ? 'focused' : ''}`}>
+                <FiMail className="input-icon" />
+                <input
+                  type="email"
+                  placeholder="Elektron pochta"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => handleFocus('email')}
+                  onBlur={() => handleBlur('email')}
+                  className="input-field"
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className={`input-group ${isFocused.phone ? 'focused' : ''}`}>
+                <FiPhone className="input-icon" />
+                <input
+                  type="tel"
+                  placeholder="+998 XX XXX XX XX"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  onFocus={() => handleFocus('phone')}
+                  onBlur={() => handleBlur('phone')}
+                  className="input-field"
+                  required
+                  autoComplete="tel"
+                />
+              </div>
+
+              <div className={`input-group ${isFocused.telegram ? 'focused' : ''}`}>
+                <FiMail className="input-icon" />
+                <input
+                  type="text"
+                  placeholder="Telegram Chat ID"
+                  value={telegramChatId}
+                  onChange={(e) => setTelegramChatId(e.target.value)}
+                  onFocus={() => handleFocus('telegram')}
+                  onBlur={() => handleBlur('telegram')}
+                  className="input-field"
+                  required
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className={`input-group ${isFocused.password ? 'focused' : ''}`}>
+                <FiLock className="input-icon" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Parol"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => handleFocus('password')}
+                  onBlur={() => handleBlur('password')}
+                  className="input-field"
+                  required
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+
+              <button 
+                type="submit" 
+                className={`submit-button ${isLoading ? 'loading' : ''}`}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="button-spinner"></div>
+                    Yuborilmoqda...
+                  </>
+                  ) : (
+                    "Admin so'rovini yuborish"
+                  )}
+              </button>
+
+              <button 
+                type="button" 
+                className="back-to-login"
+                onClick={() => setIsAdminRequestMode(false)}
+              >
+                <FiArrowLeft /> Oddiy kirishga qaytish
+              </button>
+            </form>
           ) : !isOtpMode ? (
             <form onSubmit={handleSubmit} className="login-form">
               {isRegisterMode && (
@@ -828,14 +1290,20 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
               </button>
             </form>
           ) : (
-            <form onSubmit={handleOtpVerify} className="login-form">
+            <form onSubmit={showAdminPhoneLogin ? handleAdminPhoneOtpVerify : handleOtpVerify} className="login-form">
               <div className="otp-info">
                 <p className="otp-message">
-                  {authMethod === "email"
-                    ? "Elektron pochtangizga yuborilgan 4 xonali kodni kiriting"
-                    : "Telefon raqamingizga SMS orqali yuborilgan 4 xonali kodni kiriting"}
+                  {showAdminPhoneLogin
+                    ? "Telegram orqali yuborilgan 4 xonali kodni kiriting"
+                    : authMethod === "email"
+                      ? "Elektron pochtangizga yuborilgan 4 xonali kodni kiriting"
+                      : "Telefon raqamingizga SMS orqali yuborilgan 4 xonali kodni kiriting"}
                 </p>
-                <p className="otp-hint">(Test rejimida: <strong>1234</strong>)</p>
+                <p className="otp-hint" dangerouslySetInnerHTML={{ 
+                  __html: showAdminPhoneLogin 
+                    ? "(Test rejimida: har qanday 4 raqamli kod)" 
+                    : "(Test rejimida: <strong>1234</strong>)" 
+                }} />
 
                 <div className="auto-verify-option">
                   <label className="auto-verify-label">
@@ -945,7 +1413,7 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
             </form>
           )}
 
-          {!isOtpMode && !showTokenLogin && !showAdminLogin && (
+          {!isOtpMode && !showTokenLogin && !showAdminLogin && !showAdminPhoneLogin && !isAdminRequestMode && (
             <div className="login-footer">
               <p className="toggle-text">
                 {isRegisterMode ? "Hisobingiz bormi?" : "Hisobingiz yo'qmi?"}
@@ -975,6 +1443,22 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
                     >
                       <FaCrown className="btn-icon" />
                       Admin kirishi
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setShowAdminPhoneLogin(true)} 
+                      className="btn-admin-phone-login"
+                    >
+                      <FiPhone className="btn-icon" />
+                      Admin telefon orqali kirish
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setIsAdminRequestMode(true)} 
+                      className="btn-admin-request"
+                    >
+                      <FaCrown className="btn-icon" />
+                      Admin sifatida ro'yxatdan o'tish
                     </button>
                   </div>
                 </div>
