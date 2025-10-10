@@ -527,12 +527,7 @@
   font-weight: 500;
 }
 
-/* Charts Section */
-.charts-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
-}
+ 
 
 .chart-card {
   background: white;

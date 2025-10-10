@@ -1,14 +1,15 @@
 import React, { useState, useContext } from 'react';
-import { FiEdit, FiTrash2, FiPlus, FiSearch, FiInfo } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiSearch, FiInfo, FiX } from 'react-icons/fi';
 import { AppContext } from '../App';
 import './Medications.css';
 
-// Dorilar komponenti
 const Medications = () => {
-  const { medications, setMedications } = useContext(AppContext); // Global state
+  const { medications, setMedications } = useContext(AppContext);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [currentMed, setCurrentMed] = useState(null);
+  const [selectedDetailsMed, setSelectedDetailsMed] = useState(null);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -33,6 +34,16 @@ const Medications = () => {
     setSuccessMessage('');
   };
 
+  const openDetailsModal = (med) => {
+    setSelectedDetailsMed(med);
+    setDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setDetailsModalOpen(false);
+    setSelectedDetailsMed(null);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!currentMed.name.trim()) {
@@ -51,7 +62,7 @@ const Medications = () => {
       updated = [...medications, { ...currentMed, id: Date.now() }];
       setSuccessMessage('Yangi dori muvaffaqiyatli qo‘shildi');
     }
-    setMedications(updated); // Global state yangilash
+    setMedications(updated);
     setTimeout(() => {
       setSuccessMessage('');
       closeModal();
@@ -68,29 +79,27 @@ const Medications = () => {
   };
 
   return (
-    <div className="medications">
-      <div className="page-header">
+    <div className="med-container">
+      <div className="med-header">
         <h1>Dorilar</h1>
-        <span className="badge">{medications.length} ta</span>
+        <span className="med-count">{medications.length} ta</span>
       </div>
 
-      {successMessage && (
-        <div className="success-message">
-          {successMessage}
-        </div>
-      )}
+      {successMessage && <div className="success-alert">{successMessage}</div>}
+      {error && <div className="error-alert">{error}</div>}
 
-      <div className="actions">
-        <div className="search-box">
+      <div className="med-controls">
+        <div className="search-bar">
+          <FiSearch className="search-icon" />
           <input
             type="text"
             placeholder="Dori nomi boʻyicha qidirish..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
+            className="search-field"
           />
         </div>
-        <button onClick={() => openModal()} className="btn-primary">
+        <button onClick={() => openModal()} className="primary-button">
           <FiPlus /> Yangi dori
         </button>
       </div>
@@ -101,7 +110,7 @@ const Medications = () => {
             <>
               <h3>Hech narsa topilmadi</h3>
               <p>"{search}" boʻyicha hech qanday dori topilmadi</p>
-              <button onClick={() => setSearch('')} className="btn-secondary">
+              <button onClick={() => setSearch('')} className="action-button">
                 Filterni tozalash
               </button>
             </>
@@ -109,14 +118,14 @@ const Medications = () => {
             <>
               <h3>Hali dorilar mavjud emas</h3>
               <p>Birinchi doringizni qoʻshing</p>
-              <button onClick={() => openModal()} className="btn-primary">
+              <button onClick={() => openModal()} className="primary-button">
                 <FiPlus /> Yangi dori qo'shish
               </button>
             </>
           )}
         </div>
       ) : (
-        <div className="table-container">
+        <div className="medications-table">
           <table>
             <thead>
               <tr>
@@ -130,18 +139,22 @@ const Medications = () => {
             </thead>
             <tbody>
               {filteredMeds.map((m) => (
-                <tr key={m.id} className={m.quantity < 20 ? 'low-stock' : ''}>
+                <tr
+                  key={m.id}
+                  className={m.quantity < 20 ? 'low-stock' : ''}
+                  onClick={() => openDetailsModal(m)}
+                >
                   <td>{m.name || '-'}</td>
                   <td>{m.type || '-'}</td>
                   <td>{m.dosage || '-'}</td>
                   <td>{m.quantity}</td>
                   <td>{m.usage || '-'}</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button onClick={() => openModal(m)} className="btn-edit" title="Tahrirlash">
+                  <td onClick={(e) => e.stopPropagation()}>
+                    <div className="table-actions">
+                      <button onClick={() => openModal(m)} className="edit-button" title="Tahrirlash">
                         <FiEdit />
                       </button>
-                      <button onClick={() => deleteMed(m.id)} className="btn-delete" title="Oʻchirish">
+                      <button onClick={() => deleteMed(m.id)} className="delete-button" title="Oʻchirish">
                         <FiTrash2 />
                       </button>
                     </div>
@@ -159,16 +172,16 @@ const Medications = () => {
             <form onSubmit={handleSubmit}>
               <div className="modal-header">
                 <h2>{currentMed.id ? 'Dorini tahrirlash' : 'Yangi dori qoʻshish'}</h2>
-                <button type="button" onClick={closeModal} className="close-button">
-                  &times;
+                <button type="button" onClick={closeModal} className="modal-close-button">
+                  <FiX />
                 </button>
               </div>
 
-              {error && <div className="error-message">{error}</div>}
-              {successMessage && <div className="success-message">{successMessage}</div>}
+              {error && <div className="error-alert">{error}</div>}
+              {successMessage && <div className="success-alert">{successMessage}</div>}
 
               <div className="form-group">
-                <label>
+                <label className="input-label">
                   <FiInfo className="input-icon" /> Dori nomi *
                 </label>
                 <input
@@ -181,7 +194,7 @@ const Medications = () => {
               </div>
 
               <div className="form-group">
-                <label>
+                <label className="input-label">
                   <FiInfo className="input-icon" /> Turi
                 </label>
                 <input
@@ -193,7 +206,7 @@ const Medications = () => {
               </div>
 
               <div className="form-group">
-                <label>
+                <label className="input-label">
                   <FiInfo className="input-icon" /> Dozasi
                 </label>
                 <input
@@ -205,7 +218,7 @@ const Medications = () => {
               </div>
 
               <div className="form-group">
-                <label>
+                <label className="input-label">
                   <FiInfo className="input-icon" /> Miqdori *
                 </label>
                 <input
@@ -222,7 +235,7 @@ const Medications = () => {
               </div>
 
               <div className="form-group">
-                <label>
+                <label className="input-label">
                   <FiInfo className="input-icon" /> Foydalanish
                 </label>
                 <textarea
@@ -234,14 +247,42 @@ const Medications = () => {
               </div>
 
               <div className="modal-actions">
-                <button type="submit" className="btn-primary">
+                <button type="submit" className="primary-button">
                   {currentMed.id ? 'Saqlash' : 'Qoʻshish'}
                 </button>
-                <button type="button" onClick={closeModal} className="btn-secondary">
+                <button type="button" onClick={closeModal} className="action-button">
                   Bekor qilish
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {detailsModalOpen && selectedDetailsMed && (
+        <div className="modal-overlay" onClick={closeDetailsModal}>
+          <div className="details-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="details-modal-header">
+              <h2>Dori tafsilotlari</h2>
+              <button type="button" onClick={closeDetailsModal} className="details-close-button">
+                <FiX />
+              </button>
+            </div>
+            <div className="details-modal-content">
+              <p><strong>Nomi:</strong> {selectedDetailsMed.name || '-'}</p>
+              <p><strong>Turi:</strong> {selectedDetailsMed.type || '-'}</p>
+              <p><strong>Dozasi:</strong> {selectedDetailsMed.dosage || '-'}</p>
+              <p><strong>Miqdori:</strong> {selectedDetailsMed.quantity}</p>
+              <p><strong>Foydalanish:</strong> {selectedDetailsMed.usage || '-'}</p>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => { closeDetailsModal(); openModal(selectedDetailsMed); }} className="primary-button">
+                Tahrirlash
+              </button>
+              <button onClick={closeDetailsModal} className="action-button">
+                Yopish
+              </button>
+            </div>
           </div>
         </div>
       )}

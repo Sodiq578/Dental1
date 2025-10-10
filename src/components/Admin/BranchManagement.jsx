@@ -691,7 +691,7 @@ const BranchManagement = () => {
               <div className="appointment-header">
                 <h3>{appointment.patientName || "Noma'lum"}</h3>
                 <span className={`status-badge ${appointment.status}`}>
-                  {appointment.status === "scheduled" ? "Rejalashtirilgan" : appointment.status === "completed" ? "Yakunlangan" : "Bekor qilingan"}
+                  {appointment.status === "rejalashtirilgan" ? "Rejalashtirilgan" : appointment.status === "completed" ? "Yakunlangan" : "Bekor qilingan"}
                 </span>
               </div>
               <div className="appointment-info">

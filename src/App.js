@@ -161,7 +161,7 @@ const App = () => {
       <div className="storage-error">
         <FiDatabase size={48} />
         <h2>LocalStorage mavjud emas</h2>
-        <p>Brauzeringizda LocalStorage qo'llab-quvvatlanmaydi yoki bloklangan.</p>
+        <p>Brauzeringizda LocalStorage qollab-quvvatlanmaydi yoki bloklangan.</p>
         <p>Iltimos, brauzer sozlamalarini tekshiring yoki boshqa brauzerdan foydalaning.</p>
       </div>
     );

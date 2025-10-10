@@ -1,11 +1,9 @@
-// src/TreatmentHistory.js
 import React, { useContext, useState, useMemo } from "react";
 import { AppContext } from "../App";
 import { FiSearch, FiUser, FiCalendar, FiX, FiDownload, FiFileText } from "react-icons/fi";
-import * as XLSX from "xlsx"; // Excel uchun
-import { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType } from "docx"; // Word uchun
-import { saveAs } from "file-saver"; // Faylni saqlash uchun
-
+import * as XLSX from "xlsx";
+import { Document, Packer, Paragraph, Table, TableCell, TableRow, WidthType } from "docx";
+import { saveAs } from "file-saver";
 import "./TreatmentHistory.css";
 
 const TreatmentHistory = () => {
@@ -13,12 +11,13 @@ const TreatmentHistory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false); // Format tanlash modali
-  const [exportFormat, setExportFormat] = useState("excel"); // Tanlangan format (default: excel)
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState("excel");
   const [isExporting, setIsExporting] = useState(false);
-  const [exportType, setExportType] = useState(""); // "all" yoki "selected" eksport turi
+  const [exportType, setExportType] = useState("");
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // Memoize filtered patients
   const filteredPatients = useMemo(() => {
     return patients.filter(
       (patient) =>
@@ -27,19 +26,16 @@ const TreatmentHistory = () => {
     );
   }, [patients, searchTerm]);
 
-  // Memoize patient appointments
   const patientAppointments = useMemo(() => {
     return selectedPatient
       ? appointments.filter((app) => String(app.patientId) === String(selectedPatient.id))
       : [];
   }, [appointments, selectedPatient]);
 
-  // Clear search term
   const handleClearSearch = () => {
     setSearchTerm("");
   };
 
-  // Format tanlash modalini ochish
   const openExportModal = (type) => {
     if (type === "selected" && !selectedPatient) {
       alert("Iltimos, avval bemor tanlang!");
@@ -49,7 +45,16 @@ const TreatmentHistory = () => {
     setIsExportModalOpen(true);
   };
 
-  // Excel faylini yaratish (tanlangan bemor uchun)
+  const openDetailsModal = (app) => {
+    setSelectedAppointment(app);
+    setIsDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedAppointment(null);
+  };
+
   const exportToExcel = async (patientData) => {
     const worksheetData = patientAppointments.map((app) => ({
       Sana: new Date(app.date).toLocaleDateString("uz-UZ"),
@@ -65,7 +70,7 @@ const TreatmentHistory = () => {
 
     const worksheet = XLSX.utils.json_to_sheet([
       { Bemor: patientData.name, Telefon: patientData.phone, "Tug'ilgan sana": patientData.dob || "-" },
-      {}, // Bo'sh qator
+      {},
       ...worksheetData,
     ]);
 
@@ -74,7 +79,6 @@ const TreatmentHistory = () => {
     XLSX.writeFile(workbook, `patient_${patientData.name}_${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
-  // Word faylini yaratish (tanlangan bemor uchun)
   const exportToWord = async (patientData) => {
     const doc = new Document({
       sections: [
@@ -142,7 +146,6 @@ const TreatmentHistory = () => {
     saveAs(blob, `patient_${patientData.name}_${new Date().toISOString().split("T")[0]}.docx`);
   };
 
-  // Barcha bemorlar ro'yxatini Excel formatida eksport qilish
   const exportAllPatientsToExcel = async () => {
     const worksheetData = patients.map((patient) => {
       const patientApps = appointments.filter((app) => String(app.patientId) === String(patient.id));
@@ -164,7 +167,6 @@ const TreatmentHistory = () => {
     XLSX.writeFile(workbook, `all_patients_${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
-  // Barcha bemorlar ro'yxatini Word formatida eksport qilish
   const exportAllPatientsToWord = async () => {
     const doc = new Document({
       sections: [
@@ -232,9 +234,8 @@ const TreatmentHistory = () => {
     saveAs(blob, `all_patients_${new Date().toISOString().split("T")[0]}.docx`);
   };
 
-  // Handle export of patient history or all patients
   const handleExport = async () => {
-    setIsExportModalOpen(false); // Modalni yopamiz
+    setIsExportModalOpen(false);
     setIsExporting(true);
 
     try {
@@ -265,7 +266,6 @@ const TreatmentHistory = () => {
     }
   };
 
-  // Format status for display
   const getStatusLabel = (status) => {
     switch (status) {
       case "kutilmoqda":
@@ -279,194 +279,177 @@ const TreatmentHistory = () => {
     }
   };
 
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return "-";
+    if (phone.startsWith("+998") && phone.length === 13) {
+      return phone.replace(/(\+998)(\d{2})(\d{3})(\d{2})(\d{2})/, "$1 $2 $3 $4 $5");
+    }
+    return phone;
+  };
+
   return (
-    <div className={`davolash-tarixi ${darkMode ? "dark-mode" : ""}`}>
-      {/* Header */}
-      <header className="header">
-        <div className="header-inner">
-          <div className="sarlavha-ichki">
-            <h1>
-              <FiCalendar aria-hidden="true" /> Davolash Tarixi
-            </h1>
-            <p>Bemorlarning davolash jarayonlari va uchrashuvlari tarixi</p>
-            <span className="badge">{patients.length} ta bemor</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <div className="container">
-        <main className="asosiy-kontent">
-          {/* Filter panel */}
-          <div className="filtr-paneli">
-            <div className="filtr-ichki">
-              <div className="qidiruv-guruhi">
-                <label htmlFor="search-input">Bemor qidirish</label>
-                <div className="qidiruv-input">
-                  <input
-                    id="search-input"
-                    type="text"
-                    placeholder="Ism yoki telefon raqami bo'yicha qidirish..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    aria-label="Bemorlarni ism yoki telefon raqami bo'yicha qidirish"
-                  />
-                  {searchTerm && (
-                    <button
-                      className="tugma clear-search"
-                      onClick={handleClearSearch}
-                      aria-label="Qidiruvni tozalash"
-                    >
-                      <FiX />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="amal-tugmalari">
-                <button
-                  className="tugma tugma-birlamchi"
-                  onClick={() => openExportModal("all")}
-                  disabled={isExporting}
-                  aria-label="Barcha bemorlar ro'yxatini eksport qilish"
-                >
-                  <FiDownload /> {isExporting ? "Eksport qilinmoqda..." : "Bemorlar ro'yxatini eksport qilish"}
-                </button>
-                {selectedPatient && (
-                  <button
-                    className="tugma tugma-birlamchi"
-                    onClick={() => openExportModal("selected")}
-                    disabled={isExporting}
-                    aria-label="Tanlangan bemor tarixini eksport qilish"
-                  >
-                    <FiFileText /> {isExporting ? "Eksport qilinmoqda..." : "Tanlangan bemor tarixini eksport qilish"}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Patients list */}
-          <section className="bemorlar-royxati">
-            <div className="royxat-sarlavha">
-              <h2>Bemorlar Ro'yxati</h2>
-              <span>{filteredPatients.length} ta topildi</span>
-            </div>
-
-            <div className="bemorlar-grid">
-              {filteredPatients.length === 0 ? (
-                <div className="bosh-holat">
-                  <FiUser className="bosh-ikon" aria-hidden="true" />
-                  <h3>Bemorlar topilmadi</h3>
-                  <p>Qidiruv shartlariga mos bemorlar mavjud emas</p>
-                </div>
-              ) : (
-                filteredPatients.map((patient) => {
-                  const patientApps = appointments.filter(
-                    (app) => String(app.patientId) === String(patient.id)
-                  );
-                  const completedApps = patientApps.filter(
-                    (app) => app.status === "amalga oshirildi"
-                  ).length;
-
-                  return (
-                    <div
-                      key={patient.id}
-                      className={`bemor-karta ${selectedPatient?.id === patient.id ? "tanlangan" : ""}`}
-                      onClick={() => {
-                        setSelectedPatient(patient);
-                        setIsModalOpen(true);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          setSelectedPatient(patient);
-                          setIsModalOpen(true);
-                        }
-                      }}
-                      aria-label={`Bemor ${patient.name} tarixini ko'rish`}
-                    >
-                      <div className="bemor-sarlavha">
-                        <div className="bemor-ikon-tarix">
-                          <FiUser aria-hidden="true" />
-                        </div>
-                        <div className="bemor-malumot">
-                          <h3>{patient.name}</h3>
-                          {patient.dob && (
-                            <p>Tug'ilgan sana: {new Date(patient.dob).toLocaleDateString("uz-UZ")}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="bemor-statistika">
-                        <div className="stat-element">
-                          <span className="stat-raqam">{patientApps.length}</span>
-                          <span className="stat-label">Jami uchrashuv</span>
-                        </div>
-                        <div className="stat-element">
-                          <span className="stat-raqam">{completedApps}</span>
-                          <span className="stat-label">Yakunlangan</span>
-                        </div>
-                        <div className="stat-element">
-                          <span className="stat-raqam">
-                            {patientApps.length > 0
-                              ? new Date(patientApps[patientApps.length - 1].date).toLocaleDateString(
-                                  "uz-UZ"
-                                )
-                              : "Yoʻq"}
-                          </span>
-                          <span className="stat-label">Oxirgi uchrashuv</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </section>
-        </main>
+    <div className={`treatment-container ${darkMode ? "dark-mode" : ""}`}>
+      <div className="treatment-header">
+        <h1>
+          <FiCalendar aria-hidden="true" /> Davolash Tarixi
+        </h1>
+        <span className="treatment-count">{patients.length} ta bemor</span>
       </div>
 
-      {/* Export format selection modal */}
+      <div className="treatment-controls">
+        <div className="search-bar">
+          <FiSearch className="search-icon" />
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Ism yoki telefon raqami bo'yicha qidirish..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-field"
+            aria-label="Bemorlarni ism yoki telefon raqami bo'yicha qidirish"
+          />
+          {searchTerm && (
+            <button
+              className="action-button clear-search"
+              onClick={handleClearSearch}
+              aria-label="Qidiruvni tozalash"
+            >
+              <FiX />
+            </button>
+          )}
+        </div>
+        <div className="action-buttons">
+          <button
+            className="primary-button"
+            onClick={() => openExportModal("all")}
+            disabled={isExporting}
+            aria-label="Barcha bemorlar ro'yxatini eksport qilish"
+          >
+            <FiDownload /> {isExporting ? "Eksport qilinmoqda..." : "Bemorlar ro'yxatini eksport qilish"}
+          </button>
+          {selectedPatient && (
+            <button
+              className="primary-button"
+              onClick={() => openExportModal("selected")}
+              disabled={isExporting}
+              aria-label="Tanlangan bemor tarixini eksport qilish"
+            >
+              <FiFileText /> {isExporting ? "Eksport qilinmoqda..." : "Tanlangan bemor tarixini eksport qilish"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <section className="patients-section">
+        <div className="section-header">
+          <h2>Bemorlar Ro'yxati</h2>
+          <span>{filteredPatients.length} ta topildi</span>
+        </div>
+
+        {filteredPatients.length === 0 ? (
+          <div className="empty-state">
+            <FiUser className="empty-icon" aria-hidden="true" />
+            <h3>Bemorlar topilmadi</h3>
+            <p>Qidiruv shartlariga mos bemorlar mavjud emas</p>
+          </div>
+        ) : (
+          <div className="patients-grid">
+            {filteredPatients.map((patient) => {
+              const patientApps = appointments.filter(
+                (app) => String(app.patientId) === String(patient.id)
+              );
+              const completedApps = patientApps.filter(
+                (app) => app.status === "amalga oshirildi"
+              ).length;
+
+              return (
+                <div
+                  key={patient.id}
+                  className={`patient-card ${selectedPatient?.id === patient.id ? "selected" : ""}`}
+                  onClick={() => {
+                    setSelectedPatient(patient);
+                    setIsModalOpen(true);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setSelectedPatient(patient);
+                      setIsModalOpen(true);
+                    }
+                  }}
+                  aria-label={`Bemor ${patient.name} tarixini ko'rish`}
+                >
+                  <div className="patient-header">
+                    <FiUser className="patient-icon" aria-hidden="true" />
+                    <div className="patient-info">
+                      <h3>{patient.name}</h3>
+                      <p>{formatPhoneNumber(patient.phone)}</p>
+                      {patient.dob && (
+                        <p>Tug'ilgan sana: {new Date(patient.dob).toLocaleDateString("uz-UZ")}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="patient-stats">
+                    <div className="stat-item">
+                      <span className="stat-number">{patientApps.length}</span>
+                      <span className="stat-label">Jami uchrashuv</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-number">{completedApps}</span>
+                      <span className="stat-label">Yakunlangan</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-number">
+                        {patientApps.length > 0
+                          ? new Date(patientApps[patientApps.length - 1].date).toLocaleDateString("uz-UZ")
+                          : "-"}
+                      </span>
+                      <span className="stat-label">Oxirgi uchrashuv</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       {isExportModalOpen && (
-        <div
-          className="modal-overlay"
-          onClick={() => setIsExportModalOpen(false)}
-          role="dialog"
-          aria-labelledby="export-modal-title"
-        >
-          <div className="tarix-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-sarlavha">
-              <h2 id="export-modal-title">Eksport formatini tanlang</h2>
+        <div className="modal-overlay" onClick={() => setIsExportModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Eksport formatini tanlang</h2>
               <button
-                className="yopish-tugmasi"
+                className="modal-close-button"
                 onClick={() => setIsExportModalOpen(false)}
                 aria-label="Modalni yopish"
               >
                 <FiX />
               </button>
             </div>
-            <div className="modal-tanasi">
-              <label htmlFor="export-format">Formatni tanlang:</label>
-              <select
-                id="export-format"
-                value={exportFormat}
-                onChange={(e) => setExportFormat(e.target.value)}
-              >
-                <option value="excel">Excel</option>
-                <option value="word">Word</option>
-              </select>
-              <div className="modal-tugmalar">
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="export-format" className="input-label">Formatni tanlang:</label>
+                <select
+                  id="export-format"
+                  value={exportFormat}
+                  onChange={(e) => setExportFormat(e.target.value)}
+                >
+                  <option value="excel">Excel</option>
+                  <option value="word">Word</option>
+                </select>
+              </div>
+              <div className="modal-actions">
                 <button
-                  className="tugma tugma-birlamchi"
+                  className="primary-button"
                   onClick={handleExport}
                   disabled={isExporting}
                 >
                   Eksport qilish
                 </button>
                 <button
-                  className="tugma tugma-ikkinchi"
+                  className="action-button"
                   onClick={() => setIsExportModalOpen(false)}
                 >
                   Bekor qilish
@@ -477,75 +460,94 @@ const TreatmentHistory = () => {
         </div>
       )}
 
-      {/* Modal for patient history */}
       {isModalOpen && selectedPatient && (
-        <div
-          className="modal-overlay"
-          onClick={() => setIsModalOpen(false)}
-          role="dialog"
-          aria-labelledby="modal-title"
-        >
-          <div className="tarix-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-sarlavha">
-              <h2 id="modal-title">{selectedPatient.name} - Davolash Tarixi</h2>
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{selectedPatient.name} - Davolash Tarixi</h2>
               <button
-                className="yopish-tugmasi"
+                className="modal-close-button"
                 onClick={() => setIsModalOpen(false)}
                 aria-label="Modalni yopish"
               >
                 <FiX />
               </button>
             </div>
-
-            <div className="modal-tanasi">
+            <div className="modal-body">
               {patientAppointments.length > 0 ? (
-                <div className="jadval-konteyner">
-                  <table className="tarix-jadval">
-                    <thead>
-                      <tr>
-                        <th>Sana</th>
-                        <th>Vaqt</th>
-                        <th>Protsedura</th>
-                        <th>Holat</th>
-                        <th>Narx</th>
-                        <th>Retsept</th>
-                        <th>Izoh</th>
-                        <th>Keyingi kelish</th>
-                        <th>Doktor</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {patientAppointments
-                        .sort((a, b) => new Date(b.date) - new Date(a.date))
-                        .map((app) => (
-                          <tr key={app.id}>
-                            <td>{new Date(app.date).toLocaleDateString("uz-UZ")}</td>
-                            <td>{app.time}</td>
-                            <td>{app.procedure}</td>
-                            <td>
-                              <span className={`holat-badge holat-${app.status}`}>
-                                {getStatusLabel(app.status)}
-                              </span>
-                            </td>
-                            <td>{app.cost ? `${app.cost} UZS` : "N/A"}</td>
-                            <td>{app.prescription || "-"}</td>
-                            <td>{app.notes || "-"}</td>
-                            <td>
-                              {app.nextVisit ? new Date(app.nextVisit).toLocaleDateString("uz-UZ") : "-"}
-                            </td>
-                            <td>{app.doctor || "-"}</td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
+                <div className="history-list">
+                  {patientAppointments
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .map((app) => (
+                      <div
+                        key={app.id}
+                        className="history-item"
+                        onClick={() => openDetailsModal(app)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            openDetailsModal(app);
+                          }
+                        }}
+                        aria-label={`Uchrashuv tafsilotlarini ko'rish - ${app.procedure}`}
+                      >
+                        <p><strong>Sana:</strong> {new Date(app.date).toLocaleDateString("uz-UZ")}</p>
+                        <p><strong>Vaqt:</strong> {app.time}</p>
+                        <p><strong>Protsedura:</strong> {app.procedure}</p>
+                        <p>
+                          <strong>Holat:</strong>{" "}
+                          <span className={`status-tag status-${app.status}`}>
+                            {getStatusLabel(app.status)}
+                          </span>
+                        </p>
+                      </div>
+                    ))}
                 </div>
               ) : (
-                <div className="bosh-holat">
-                  <FiCalendar className="bosh-ikon" aria-hidden="true" />
+                <div className="empty-state">
+                  <FiCalendar className="empty-icon" aria-hidden="true" />
                   <h3>Uchrashuvlar mavjud emas</h3>
                   <p>Ushbu bemor uchun hali hech qanday uchrashuv qayd etilmagan</p>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDetailsModalOpen && selectedAppointment && (
+        <div className="modal-overlay" onClick={closeDetailsModal}>
+          <div className="details-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="details-modal-header">
+              <h2>Uchrashuv tafsilotlari</h2>
+              <button
+                className="details-close-button"
+                onClick={closeDetailsModal}
+                aria-label="Modalni yopish"
+              >
+                <FiX />
+              </button>
+            </div>
+            <div className="details-modal-body">
+              <p><strong>Bemor:</strong> {selectedPatient.name}</p>
+              <p><strong>Telefon:</strong> {formatPhoneNumber(selectedPatient.phone)}</p>
+              <p><strong>Sana:</strong> {new Date(selectedAppointment.date).toLocaleDateString("uz-UZ")}</p>
+              <p><strong>Vaqt:</strong> {selectedAppointment.time}</p>
+              <p><strong>Protsedura:</strong> {selectedAppointment.procedure}</p>
+              <p><strong>Holat:</strong> {getStatusLabel(selectedAppointment.status)}</p>
+              <p><strong>Narx:</strong> {selectedAppointment.cost ? `${selectedAppointment.cost} UZS` : "N/A"}</p>
+              <p><strong>Retsept:</strong> {selectedAppointment.prescription || "-"}</p>
+              <p><strong>Izoh:</strong> {selectedAppointment.notes || "-"}</p>
+              <p><strong>Keyingi kelish:</strong> {selectedAppointment.nextVisit ? new Date(selectedAppointment.nextVisit).toLocaleDateString("uz-UZ") : "-"}</p>
+              <p><strong>Doktor:</strong> {selectedAppointment.doctor || "-"}</p>
+              <p><strong>Yaratilgan sana:</strong> {new Date(selectedAppointment.createdAt).toLocaleString()}</p>
+              <p><strong>Yangilangan sana:</strong> {selectedAppointment.updatedAt ? new Date(selectedAppointment.updatedAt).toLocaleString() : "-"}</p>
+            </div>
+            <div className="modal-actions">
+              <button onClick={closeDetailsModal} className="action-button">
+                Yopish
+              </button>
             </div>
           </div>
         </div>

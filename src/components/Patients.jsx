@@ -1,32 +1,20 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { 
-  FiCalendar, 
-  FiClock, 
-  FiUser, 
-  FiPhone, 
-  FiPlus, 
-  FiSearch, 
-  FiEdit, 
-  FiTrash2, 
-  FiMapPin, 
-  FiInfo, 
-  FiDownload, 
-  FiX,
-  FiMail,
-  FiHeart,
-  FiUserCheck,   // 🔹 qo‘shildi
-  FiPhoneCall,   // 🔹 qo‘shildi
-  FiEdit3,       // 🔹 qo‘shildi
-  FiTrash        // 🔹 qo‘shildi
-} from "react-icons/fi";
-
-import { User2, Phone, Pencil, Trash2 } from 'lucide-react'; // Import modern icons from lucide-react
-
+  FiEdit, FiTrash2, FiPlus, FiX, FiSearch, 
+  FiCalendar, FiUser, FiPhone, FiMapPin, 
+  FiInfo, FiDownload, FiMail 
+} from 'react-icons/fi';
 import { AppContext } from '../App';
-import { validateStoredPatients, sanitizePatientData, validatePatientData, addNewPatient, sendTelegramMessage } from '../utils';
+import { 
+  validateStoredPatients, 
+  sanitizePatientData, 
+  validatePatientData, 
+  sendTelegramMessage 
+} from '../utils';
 import * as XLSX from 'xlsx';
 import './Patients.css';
 
+// Region and district data for Uzbekistan
 const regions = {
   "Toshkent shahri": {
     "tumanlar": {
@@ -49,19 +37,17 @@ const regions = {
       "Angren shahri": { "markazi": "Angren" },
       "Bekobod shahri": { "markazi": "Bekobod" },
       "Chirchiq shahri": { "markazi": "Chirchiq" },
-      "Yangiyo'l shahri": { "markazi": "Yangiyo'l" }
+      "Yangiyol shahri": { "markazi": "Yangiyol" }
     }
   }
 };
 
 const Patients = () => {
-  const { patients, setPatients, appointments, setAppointments, darkMode } = useContext(AppContext);
-  
-  // State lar
+  const { patients, setPatients, appointments, darkMode } = useContext(AppContext);
   const [searchTerm, setSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [currentPatient, setCurrentPatient] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [error, setError] = useState('');
@@ -70,29 +56,23 @@ const Patients = () => {
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [additionalAddress, setAdditionalAddress] = useState('');
-  const [viewMode, setViewMode] = useState('bemorlar');
-  
-  // Bemor portali state lari
-  const [showRegistration, setShowRegistration] = useState(true);
-  const [patientId, setPatientId] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedTime, setSelectedTime] = useState('');
-  const [procedure, setProcedure] = useState('');
-  const [newPatientPortal, setNewPatientPortal] = useState({
-    name: '',
-    phone: '',
-    telegram: ''
-  });
-
-  // Yangi retsept state
   const [newPrescription, setNewPrescription] = useState({
     date: new Date().toISOString().slice(0, 10),
     medicine: '',
     dosage: '',
     notes: ''
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [patientsPerPage, setPatientsPerPage] = useState(50); // Increased from 20 to 50
+  const [showAll, setShowAll] = useState(false); // New state for toggling pagination
+  const [isLoading, setIsLoading] = useState(true); // New loading state
 
-  // Manzilni parse qilish
+  // Simulate data loading
+  useEffect(() => {
+    setTimeout(() => setIsLoading(false), 500); // Simulate API delay
+  }, []);
+
+  // Update address fields when editing a patient
   useEffect(() => {
     if (currentPatient && currentPatient.address) {
       const addressParts = currentPatient.address.split(', ');
@@ -106,7 +86,7 @@ const Patients = () => {
     }
   }, [currentPatient]);
 
-  // Xabarlarni tozalash
+  // Clear success/error messages after 3 seconds
   useEffect(() => {
     if (successMessage || error) {
       const timer = setTimeout(() => {
@@ -117,39 +97,12 @@ const Patients = () => {
     }
   }, [successMessage, error]);
 
-  // Vaqt slotalari
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let hour = 9; hour < 18; hour++) {
-      for (let min = 0; min < 60; min += 30) {
-        const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
-        slots.push(time);
-      }
-    }
-    return slots;
-  };
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
-  const getAvailableSlots = (date) => {
-    const timeSlots = generateTimeSlots();
-    const bookedSlots = appointments
-      .filter(app => app.date === date && app.status !== 'bekor qilindi')
-      .map(app => app.time);
-    
-    return timeSlots.map(slot => ({
-      time: slot,
-      isBooked: bookedSlots.includes(slot)
-    }));
-  };
-
-  const slots = getAvailableSlots(selectedDate);
-
-  // Bemorlarni filtrlash
-  const filteredPatients = patients.filter(patient =>
-    patient.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone?.includes(searchTerm)
-  );
-
-  // Formatlash funksiyalari
+  // Utility functions
   const formatPhoneNumber = (phone) => {
     if (!phone) return 'Telefon kiritilmagan';
     if (phone.startsWith('+998') && phone.length === 13) {
@@ -174,12 +127,12 @@ const Patients = () => {
     return date ? new Date(date).toLocaleDateString('uz-UZ') : '-';
   };
 
-  const truncateText = (text, maxLength = 30) => {
+  const truncateText = (text, maxLength = 20) => {
     if (!text) return '-';
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   };
 
-  // Modal funksiyalari
+  // Modal handling
   const openModal = (patient = null) => {
     setCurrentPatient(patient ? { 
       ...patient, 
@@ -191,19 +144,16 @@ const Patients = () => {
       gender: '',
       address: '',
       dob: '',
-      lastVisit: '',
       note: '',
       telegram: '',
       prescriptions: []
     });
-    
     setNewPrescription({
       date: new Date().toISOString().slice(0, 10),
       medicine: '',
       dosage: '',
       notes: ''
     });
-    
     setModalOpen(true);
     setError('');
     setSuccessMessage('');
@@ -216,14 +166,15 @@ const Patients = () => {
 
   const closeModal = () => {
     setModalOpen(false);
-    setExportModalOpen(false);
     setDetailsModalOpen(false);
+    setExportModalOpen(false);
     setError('');
     setSuccessMessage('');
     setCurrentPatient(null);
+    setSelectedPatient(null);
   };
 
-  // Viloyat va tuman funksiyalari
+  // Address handling
   const handleRegionChange = (e) => {
     const region = e.target.value;
     setSelectedRegion(region);
@@ -235,7 +186,7 @@ const Patients = () => {
       Object.keys(regions[selectedRegion].tumanlar) : [];
   };
 
-  // Bemor qo'shish/tahrirlash
+  // Patient form submission
   const handlePatientSubmit = (e) => {
     e.preventDefault();
     setError('');
@@ -262,7 +213,7 @@ const Patients = () => {
       updatedPatients = patients.map(p => 
         p.id === sanitizedPatient.id ? sanitizedPatient : p
       );
-      setSuccessMessage('Bemor ma\'lumotlari yangilandi');
+      setSuccessMessage('Bemor ma\'lumotlari muvaffaqiyatli yangilandi');
     } else {
       const newPatient = {
         ...sanitizedPatient,
@@ -270,7 +221,11 @@ const Patients = () => {
         createdAt: new Date().toISOString()
       };
       updatedPatients = [...patients, newPatient];
-      setSuccessMessage('Yangi bemor qo\'shildi');
+      setSuccessMessage('Yangi bemor muvaffaqiyatli qo\'shildi');
+      
+      const adminChatId = '5838205785';
+      const message = `Yangi bemor qoshildi: ${newPatient.name} - ${formatPhoneNumber(newPatient.phone)}`;
+      sendTelegramMessage(adminChatId, message);
     }
 
     setPatients(validateStoredPatients(updatedPatients));
@@ -280,23 +235,24 @@ const Patients = () => {
     }, 3000);
   };
 
-  // Bemor o'chirish
+  // Delete patient
   const deletePatient = (id) => {
-    if (window.confirm('Bemorni o\'chirishni tasdiqlaysizmi?')) {
-      if (appointments.some(app => app.patientId === id)) {
-        alert('Bu bemorning uchrashuvlari mavjud. Avval uchrashuvlarni o\'chiring.');
+    if (window.confirm('Haqiqatan ham bu bemorni o‘chirmoqchimisiz?')) {
+      if (appointments.some(app => String(app.patientId) === String(id))) {
+        setError('Bu bemorning uchrashuvlari mavjud. Avval uchrashuvlarni o‘chiring.');
+        setTimeout(() => setError(''), 3000);
         return;
       }
       
       const updatedPatients = patients.filter(p => p.id !== id);
       setPatients(updatedPatients);
-      setSuccessMessage('Bemor o\'chirildi');
+      setSuccessMessage('Bemor muvaffaqiyatli o‘chirildi');
       setTimeout(() => setSuccessMessage(''), 3000);
       closeModal();
     }
   };
 
-  // Retsept qo'shish
+  // Prescription handling
   const addPrescription = (e) => {
     e.preventDefault();
     
@@ -320,7 +276,6 @@ const Patients = () => {
     setError('');
   };
 
-  // Retsept o'chirish
   const removePrescription = (index) => {
     const updatedPrescriptions = currentPatient.prescriptions.filter((_, i) => i !== index);
     setCurrentPatient({
@@ -329,21 +284,20 @@ const Patients = () => {
     });
   };
 
-  // Eksport qilish
+  // Export data
   const handleExport = () => {
     if (selectedExportFormat === 'excel') {
       const worksheet = XLSX.utils.json_to_sheet(
         patients.map(patient => ({
           ID: patient.id,
           Ism: patient.name,
-          Telefon: patient.phone,
-          Jins: patient.gender,
-          Manzil: patient.address,
-          "Tug'ilgan sana": patient.dob,
-          "Oxirgi tashrif": patient.lastVisit,
-          Izoh: patient.note,
-          Telegram: patient.telegram,
-          "Qo'shilgan sana": patient.createdAt
+          Telefon: formatPhoneNumber(patient.phone),
+          Jins: patient.gender || '-',
+          Manzil: patient.address || '-',
+          "Tug'ilgan sana": formatDate(patient.dob),
+          Izoh: patient.note || '-',
+          Telegram: patient.telegram || '-',
+          "Qoshilgan sana": formatDate(patient.createdAt)
         }))
       );
       
@@ -352,757 +306,365 @@ const Patients = () => {
       XLSX.writeFile(workbook, 'bemorlar.xlsx');
     }
     
-    setSuccessMessage('Ma\'lumotlar eksport qilindi');
+    setSuccessMessage('Ma\'lumotlar muvaffaqiyatli eksport qilindi');
     setTimeout(() => {
       setExportModalOpen(false);
       setSuccessMessage('');
     }, 3000);
   };
 
-  // Bemor portali funksiyalari
-  const handlePortalRegister = (e) => {
-    e.preventDefault();
-    setError('');
+  // Filter and paginate patients
+  const filteredPatients = patients.filter(patient =>
+    patient.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.phone?.includes(searchTerm)
+  );
 
-    if (!newPatientPortal.name.trim() || !newPatientPortal.phone.trim()) {
-      setError('Ism va telefon raqami kiritilishi shart');
-      return;
-    }
+  const indexOfLastPatient = showAll ? filteredPatients.length : currentPage * patientsPerPage;
+  const indexOfFirstPatient = showAll ? 0 : indexOfLastPatient - patientsPerPage;
+  const currentPatients = filteredPatients.slice(indexOfFirstPatient, indexOfLastPatient);
+  const totalPages = Math.ceil(filteredPatients.length / patientsPerPage);
 
-    const newPatient = {
-      name: newPatientPortal.name,
-      phone: newPatientPortal.phone,
-      telegram: newPatientPortal.telegram,
-      id: Date.now(),
-      createdAt: new Date().toISOString()
-    };
-
-    setPatients([...patients, newPatient]);
-    setPatientId(newPatient.id);
-    setShowRegistration(false);
-    setSuccessMessage('Ro\'yxatdan o\'tdingiz! Endi uchrashuv band qilishingiz mumkin.');
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
-  const handleBookAppointment = (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (!patientId) {
-      setError('Avval ro\'yxatdan o\'ting');
-      return;
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
-
-    if (!selectedTime) {
-      setError('Vaqt tanlang');
-      return;
-    }
-
-    if (!procedure.trim()) {
-      setError('Jarayon nomini kiriting');
-      return;
-    }
-
-    const newAppointment = {
-      id: Date.now(),
-      patientId: patientId,
-      patientName: newPatientPortal.name,
-      date: selectedDate,
-      time: selectedTime,
-      procedure: procedure,
-      status: 'kutilmoqda',
-      createdAt: new Date().toISOString()
-    };
-
-    setAppointments([...appointments, newAppointment]);
-    setSuccessMessage('Uchrashuv band qilindi!');
-    
-    setTimeout(() => {
-      setSelectedTime('');
-      setProcedure('');
-      setSuccessMessage('');
-    }, 3000);
   };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
 
   return (
-    <div className={`bemorlar ${darkMode ? 'dark-mode' : ''}`}>
-      {/* Sarlavha */}
-      <header className="sahifa-sarlavha">
-        <div className="konteyner">
-          <div className="sarlavha-ichki">
-            <h1>
-              <FiUser className="sarlavha-ikona" />
-              {viewMode === 'bemorlar' ? 'Bemorlar Boshqaruvi' : 'Bemor Portali'}
-            </h1>
-            
-            <button 
-              className="rejim-tugmasi"
-              onClick={() => setViewMode(viewMode === 'bemorlar' ? 'portal' : 'bemorlar')}
-            >
-              <FiHeart />
-              {viewMode === 'bemorlar' ? 'Bemor Portali' : 'Bemorlar Ro\'yxati'}
-            </button>
-            
-            {viewMode === 'bemorlar' && (
-              <span className="badge">{patients.length} ta bemor</span>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Xabarlar */}
-      {successMessage && (
-        <div className="xabar-muvaffaqiyatli">{successMessage}</div>
-      )}
-      {error && (
-        <div className="xabar-xato">{error}</div>
-      )}
-
-      <div className="konteyner">
-        {viewMode === 'bemorlar' ? (
-          /* Bemorlar boshqaruvi */
-          <>
-            {/* Qidiruv va amallar paneli */}
-            <div className="amallar-paneli">
-              <div className="qidiruv-guruhi">
-                <div className="qidiruv-input">
-                  <label>Bemor qidirish</label>
-                  <div className="input-wrapper">
-                    <input
-                      type="text"
-                      placeholder="Ism yoki telefon raqami boʻyicha qidirish..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                <div className="amal-tugmalari">
-                  <button 
-                    className="tugma tugma-birlamchi"
-                    onClick={() => openModal()}
-                  >
-                    <FiPlus /> Yangi bemor
-                  </button>
-                  
-                  <button 
-                    className="tugma tugma-ikkilamchi"
-                    onClick={() => setExportModalOpen(true)}
-                  >
-                    <FiDownload /> Eksport
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Bemorlar ro'yxati */}
-            {filteredPatients.length === 0 ? (
-              <div className="bosh-holat">
-                {searchTerm ? (
-                  <>
-                    <h3>Hech narsa topilmadi</h3>
-                    <p>"{searchTerm}" boʻyicha bemor topilmadi</p>
-                    <button 
-                      className="tugma tugma-ikkilamchi"
-                      onClick={() => setSearchTerm('')}
-                    >
-                      Filterni tozalash
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <h3>Hali bemorlar mavjud emas</h3>
-                    <p>Birinchi bemoringizni qoʻshing</p>
-                    <button 
-                      className="tugma tugma-birlamchi"
-                      onClick={() => openModal()}
-                    >
-                      <FiPlus /> Yangi bemor
-                    </button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div className="jadval-konteyner">
-
-           <table className="bemorlar-jadval">
-  <thead>
-    <tr>
-      <th>Bemor</th>
-      <th>Aloqa</th>
-      <th>Yoshi</th>
-      <th>Oxirgi tashrif</th>
-      <th>Izoh</th>
-      <th>Amallar</th>
-    </tr>
-  </thead>
-  <tbody>
-    {filteredPatients.map(patient => (
-      <tr 
-        key={patient.id}
-        onClick={() => openDetailsModal(patient)}
-        className="bemor-qatori"
-      >
-        <td>
-          <div className="bemor-malumot">
-            <User2 className="bemor-ikon" /> {/* Replaced FiUserCheck with User2 */}
-            
-            <span>{patient.name || 'Noma\'lum'}</span>
-          </div>
-        </td>
-        
-        <td>
-          <div className="bemor-malumot">
-            <Phone className="bemor-ikon" /> {/* Replaced FiPhoneCall with Phone */}
-            <span>{formatPhoneNumber(patient.phone)}</span>
-          </div>
-        </td>
-        
-        <td>{calculateAge(patient.dob)}</td>
-        
-        <td>
-          {patient.lastVisit ? formatDate(patient.lastVisit) : 'Tashrif yo\'q'}
-        </td>
-        
-        <td>
-          {patient.note ? (
-            <span className="izoh-korsatgichi">
-              {truncateText(patient.note)}
-            </span>
-          ) : '-'}
-        </td>
-        
-        <td>
-          <div className="amallar-tugmalari">
-            <button
-              className="tugma tugma-tahrir tugma-kichik"
-              onClick={(e) => {
-                e.stopPropagation();
-                openModal(patient);
-              }}
-            >
-              <Pencil /> {/* Replaced FiEdit3 with Pencil */}
-            </button>
-            
-            <button
-              className="tugma tugma-ochirish tugma-kichik"
-              onClick={(e) => {
-                e.stopPropagation();
-                deletePatient(patient.id);
-              }}
-            >
-              <Trash2 /> {/* Replaced FiTrash with Trash2 */}
-            </button>
-          </div>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-              </div>
-            )}
-          </>
-        ) : (
-          /* Bemor portali */
-          <div className="bemor-portali">
-            <h2>Bemor Portali</h2>
-            
-            {showRegistration ? (
-              /* Ro'yxatdan o'tish */
-              <div className="ro'yxatdan-o'tish">
-                <h3>Yangi ro'yxatdan o'tish</h3>
-                
-                <form onSubmit={handlePortalRegister}>
-                  <div className="form-guruhi">
-                    <label>
-                      <FiUser className="input-ikon" />
-                      Ism va familiya *
-                    </label>
-                    <input
-                      type="text"
-                      value={newPatientPortal.name}
-                      onChange={(e) => setNewPatientPortal({
-                        ...newPatientPortal,
-                        name: e.target.value
-                      })}
-                      placeholder="To'liq ism va familiya"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-guruhi">
-                    <label>
-                      <FiPhone className="input-ikon" />
-                      Telefon raqami *
-                    </label>
-                    <input
-                      type="tel"
-                      value={newPatientPortal.phone}
-                      onChange={(e) => setNewPatientPortal({
-                        ...newPatientPortal,
-                        phone: e.target.value
-                      })}
-                      placeholder="+998 90 123 45 67"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-guruhi">
-                    <label>
-                      <FiMail className="input-ikon" />
-                      Telegram ID (ixtiyoriy)
-                    </label>
-                    <input
-                      type="text"
-                      value={newPatientPortal.telegram}
-                      onChange={(e) => setNewPatientPortal({
-                        ...newPatientPortal,
-                        telegram: e.target.value
-                      })}
-                      placeholder="Telegram chat ID"
-                    />
-                    <div className="input-hint">
-                      Xabarnomalar uchun. Agar kiritilmasa, SMS orqali yuboriladi.
-                    </div>
-                  </div>
-                  
-                  <button type="submit" className="tugma tugma-birlamchi">
-                    <FiPlus /> Ro'yxatdan o'tish
-                  </button>
-                </form>
-              </div>
-            ) : (
-              /* Uchrashuv band qilish */
-              <div className="uchrashuv-band-qilish">
-                <h3>Uchrashuv band qilish</h3>
-                
-                <div className="form-guruhi">
-                  <label>
-                    <FiCalendar className="input-ikon" />
-                    Sana tanlang
-                  </label>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                
-                <div className="form-guruhi">
-                  <label>Mavjud vaqtlar</label>
-                  <div className="vaqt-slotlari">
-                    {slots.map(slot => (
-                      <button
-                        key={slot.time}
-                        type="button"
-                        className={`vaqt-sloti ${slot.isBooked ? 'band' : ''} ${
-                          selectedTime === slot.time ? 'tanlangan' : ''
-                        }`}
-                        onClick={() => !slot.isBooked && setSelectedTime(slot.time)}
-                        disabled={slot.isBooked}
-                      >
-                        {slot.time}
-                        {slot.isBooked && ' (Band)'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                <form onSubmit={handleBookAppointment}>
-                  <div className="form-guruhi">
-                    <label>
-                      <FiClock className="input-ikon" />
-                      Tanlangan vaqt
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedTime || 'Vaqt tanlanmagan'}
-                      readOnly
-                    />
-                  </div>
-                  
-                  <div className="form-guruhi">
-                    <label>Jarayon tavsifi *</label>
-                    <input
-                      type="text"
-                      value={procedure}
-                      onChange={(e) => setProcedure(e.target.value)}
-                      placeholder="Masalan: Tish tekshiruvi, Plomba qo'yish"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="amal-tugmalari">
-                    <button type="submit" className="tugma tugma-birlamchi">
-                      <FiCalendar /> Uchrashuvni band qilish
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </div>
-        )}
+    <div className={`app-container ${darkMode ? 'dark-mode' : ''}`}>
+      <div className="app-header">
+        <h1>
+          <FiUser className="input-icon" /> Bemorlar
+        </h1>
+        <span className="app-count">{filteredPatients.length} ta</span>
       </div>
 
-      {/* Modal oynalar */}
-      
-      {/* Bemor qo'shish/tahrirlash modali */}
-      {modalOpen && currentPatient && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-sarlavha">
-              <h2>{currentPatient.id ? 'Bemorni tahrirlash' : 'Yangi bemor'}</h2>
-              <button className="yopish-tugmasi" onClick={closeModal}>
-                <FiX />
+      {successMessage && <div className="success-alert">{successMessage}</div>}
+      {error && <div className="error-alert">{error}</div>}
+
+      <div className="app-controls">
+        <div className="search-bar">
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Ism yoki telefon boʻyicha qidirish..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-field"
+            aria-label="Bemorlarni qidirish"
+          />
+        </div>
+        <div className="action-buttons">
+          <button className="primary-button" onClick={() => openModal()}>
+            <FiPlus /> Yangi bemor
+          </button>
+          <button className="action-button" onClick={() => setExportModalOpen(true)}>
+            <FiDownload /> Eksport
+          </button>
+          <button 
+            className="action-button" 
+            onClick={() => setShowAll(!showAll)}
+            aria-label={showAll ? "Paginatsiyani yoqish" : "Hammasini ko'rsatish"}
+          >
+            {showAll ? 'Paginatsiyani yoqish' : 'Hammasini ko‘rsatish'}
+          </button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="loading">Yuklanmoqda...</div>
+      ) : filteredPatients.length === 0 ? (
+        <div className="empty-state">
+          {searchTerm ? (
+            <>
+              <h3>Hech narsa topilmadi</h3>
+              <p>"{searchTerm}" boʻyicha bemor topilmadi</p>
+              <button onClick={() => setSearchTerm('')} className="action-button">
+                Qidiruvni tozalash
+              </button>
+            </>
+          ) : (
+            <>
+              <h3>Hali bemorlar mavjud emas</h3>
+              <p>Birinchi bemoringizni qoʻshing</p>
+              <button onClick={() => openModal()} className="primary-button">
+                <FiPlus /> Yangi bemor
+              </button>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="appointments-table">
+          <table aria-label="Bemorlar ro'yxati">
+            <thead>
+              <tr>
+                <th>Bemor</th>
+                <th>Telefon</th>
+                <th>Yoshi</th>
+                <th>Manzil</th>
+                <th>Izoh</th>
+                <th>Retseptlar</th>
+                <th>Amallar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentPatients.map(patient => (
+                <tr key={patient.id} onClick={() => openDetailsModal(patient)} className="bemor-qatori">
+                  <td>{patient.name || 'Noma’lum'}</td>
+                  <td>{formatPhoneNumber(patient.phone)}</td>
+                  <td>{calculateAge(patient.dob)}</td>
+                  <td>{truncateText(patient.address)}</td>
+                  <td>{truncateText(patient.note)}</td>
+                  <td>{patient.prescriptions?.length || 0} ta</td>
+                  <td>
+                    <div className="table-actions">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openModal(patient);
+                        }} 
+                        className="edit-button" 
+                        title="Tahrirlash"
+                        aria-label={`Tahrirlash ${patient.name}`}
+                      >
+                        <FiEdit />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deletePatient(patient.id);
+                        }} 
+                        className="delete-button" 
+                        title="Oʻchirish"
+                        aria-label={`O'chirish ${patient.name}`}
+                      >
+                        <FiTrash2 />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {!showAll && totalPages > 1 && (
+            <div className="pagination">
+              <button
+                className="pagination-button"
+                onClick={handlePrevious}
+                disabled={currentPage === 1}
+                aria-label="Oldingi sahifa"
+              >
+                Oldingi
+              </button>
+              
+              {pageNumbers.map(number => (
+                <button
+                  key={number}
+                  className={`pagination-button ${currentPage === number ? 'active' : ''}`}
+                  onClick={() => paginate(number)}
+                  aria-label={`Sahifa ${number}`}
+                >
+                  {number}
+                </button>
+              ))}
+              
+              <button
+                className="pagination-button"
+                onClick={handleNext}
+                disabled={currentPage === totalPages}
+                aria-label="Keyingi sahifa"
+              >
+                Keyingi
               </button>
             </div>
-            
-            <div className="modal-tanasi">
-              <form onSubmit={handlePatientSubmit}>
-                <div className="form-guruhi">
-                  <label>
-                    <FiUser className="input-ikon" />
-                    Ism va familiya *
+          )}
+        </div>
+      )}
+
+      {modalOpen && currentPatient && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <form onSubmit={handlePatientSubmit}>
+              <div className="modal-header">
+                <h2>{currentPatient.id ? 'Bemorni tahrirlash' : 'Yangi bemor'}</h2>
+                <button type="button" onClick={closeModal} className="modal-close-button" aria-label="Modalni yopish">
+                  <FiX />
+                </button>
+              </div>
+
+              {error && <div className="error-alert">{error}</div>}
+              {successMessage && <div className="success-alert">{successMessage}</div>}
+
+              <div className="form-group">
+                <label htmlFor="name-input" className="input-label">
+                  <FiUser className="input-icon" /> Ism va familiya *
+                </label>
+                <input
+                  id="name-input"
+                  type="text"
+                  placeholder="Bemor ismi"
+                  value={currentPatient.name}
+                  onChange={(e) => setCurrentPatient({ ...currentPatient, name: e.target.value })}
+                  required
+                  aria-required="true"
+                />
+                <div className="input-hint">To‘liq ism va familiyani kiriting</div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="phone-input" className="input-label">
+                  <FiPhone className="input-icon" /> Telefon raqami *
+                </label>
+                <input
+                  id="phone-input"
+                  type="tel"
+                  placeholder="+998 90 123 45 67"
+                  value={currentPatient.phone}
+                  onChange={(e) => setCurrentPatient({ ...currentPatient, phone: e.target.value })}
+                  required
+                  aria-required="true"
+                />
+                <div className="input-hint">Xalqaro formatda kiriting</div>
+              </div>
+
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="gender-input" className="input-label">Jins</label>
+                  <select
+                    id="gender-input"
+                    value={currentPatient.gender}
+                    onChange={(e) => setCurrentPatient({ ...currentPatient, gender: e.target.value })}
+                    aria-label="Jinsni tanlang"
+                  >
+                    <option value="">Jinsni tanlang</option>
+                    <option value="Erkak">Erkak</option>
+                    <option value="Ayol">Ayol</option>
+                  </select>
+                  <div className="input-hint">Bemor jinsini tanlang</div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="dob-input" className="input-label">
+                    <FiCalendar className="input-icon" /> Tug'ilgan sana
                   </label>
                   <input
-                    type="text"
-                    value={currentPatient.name}
-                    onChange={e => setCurrentPatient({
-                      ...currentPatient,
-                      name: e.target.value
-                    })}
-                    required
+                    id="dob-input"
+                    type="date"
+                    value={currentPatient.dob}
+                    onChange={(e) => setCurrentPatient({ ...currentPatient, dob: e.target.value })}
+                    aria-label="Tug'ilgan sana"
                   />
+                  <div className="input-hint">Tug‘ilgan sanani kiriting</div>
                 </div>
-                
-                <div className="form-guruhi">
-                  <label>
-                    <FiPhone className="input-ikon" />
-                    Telefon raqami *
-                  </label>
-                  <input
-                    type="tel"
-                    value={currentPatient.phone}
-                    onChange={e => setCurrentPatient({
-                      ...currentPatient,
-                      phone: e.target.value
-                    })}
-                    required
-                  />
-                </div>
-                
-                <div className="form-qatorlari">
-                  <div className="form-guruhi">
-                    <label>Jins</label>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="address-input" className="input-label">
+                  <FiMapPin className="input-icon" /> Manzil
+                </label>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="region-input" className="input-label">Viloyat</label>
                     <select
-                      value={currentPatient.gender}
-                      onChange={e => setCurrentPatient({
-                        ...currentPatient,
-                        gender: e.target.value
-                      })}
+                      id="region-input"
+                      value={selectedRegion}
+                      onChange={handleRegionChange}
+                      aria-label="Viloyat tanlang"
                     >
-                      <option value="">Tanlanmagan</option>
-                      <option value="Erkak">Erkak</option>
-                      <option value="Ayol">Ayol</option>
+                      <option value="">Viloyat tanlang</option>
+                      {Object.keys(regions).map(region => (
+                        <option key={region} value={region}>{region}</option>
+                      ))}
                     </select>
                   </div>
-                  
-                  <div className="form-guruhi">
-                    <label>
-                      <FiCalendar className="input-ikon" />
-                      Tug'ilgan sana
-                    </label>
-                    <input
-                      type="date"
-                      value={currentPatient.dob}
-                      onChange={e => setCurrentPatient({
-                        ...currentPatient,
-                        dob: e.target.value
-                      })}
-                    />
+                  <div className="form-group">
+                    <label htmlFor="district-input" className="input-label">Tuman</label>
+                    <select
+                      id="district-input"
+                      value={selectedDistrict}
+                      onChange={(e) => setSelectedDistrict(e.target.value)}
+                      disabled={!selectedRegion}
+                      aria-label="Tuman tanlang"
+                    >
+                      <option value="">Tuman tanlang</option>
+                      {getDistricts().map(district => (
+                        <option key={district} value={district}>{district}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-                
-                <div className="form-guruhi">
-                  <label>
-                    <FiMapPin className="input-ikon" />
-                    Manzil
-                  </label>
-                  
-                  <div className="form-qatorlari">
-                    <div className="form-guruhi">
-                      <label>Viloyat</label>
-                      <select value={selectedRegion} onChange={handleRegionChange}>
-                        <option value="">Viloyat tanlang</option>
-                        {Object.keys(regions).map(region => (
-                          <option key={region} value={region}>{region}</option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div className="form-guruhi">
-                      <label>Tuman</label>
-                      <select 
-                        value={selectedDistrict}
-                        onChange={e => setSelectedDistrict(e.target.value)}
-                        disabled={!selectedRegion}
-                      >
-                        <option value="">Tuman tanlang</option>
-                        {getDistricts().map(district => (
-                          <option key={district} value={district}>{district}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <textarea
-                    value={additionalAddress}
-                    onChange={e => setAdditionalAddress(e.target.value)}
-                    placeholder="Ko'cha, uy, xonadon ma'lumotlari"
-                    rows={2}
-                  />
-                </div>
-                
-                <div className="form-guruhi">
-                  <label>
-                    <FiMail className="input-ikon" />
-                    Telegram ID
-                  </label>
-                  <input
-                    type="text"
-                    value={currentPatient.telegram}
-                    onChange={e => setCurrentPatient({
-                      ...currentPatient,
-                      telegram: e.target.value
-                    })}
-                    placeholder="Telegram chat ID"
-                  />
-                </div>
-                
-                <div className="form-guruhi">
-                  <label>
-                    <FiInfo className="input-ikon" />
-                    Qo'shimcha ma'lumot
-                  </label>
-                  <textarea
-                    value={currentPatient.note}
-                    onChange={e => setCurrentPatient({
-                      ...currentPatient,
-                      note: e.target.value
-                    })}
-                    placeholder="Allergiyalar, kasalliklar tarixi, qo'shimcha eslatmalar"
-                    rows={4}
-                  />
-                </div>
-                
-                {/* Retseptlar qismi */}
-                <div className="form-guruhi">
-                  <label>Retseptlar</label>
-                  
-                  <div className="retseptlar-royxati">
-                    {currentPatient.prescriptions?.map((prescription, index) => (
-                      <div key={index} className="retsept-elementi">
-                        <div className="retsept-sarlavha">
-                          <span className="retsept-sana">
-                            {formatDate(prescription.date)}
-                          </span>
-                          <button
-                            type="button"
-                            className="tugma tugma-ochirish tugma-kichik"
+                <textarea
+                  id="address-input"
+                  placeholder="Ko‘cha, uy, xonadon ma‘lumotlari"
+                  value={additionalAddress}
+                  onChange={(e) => setAdditionalAddress(e.target.value)}
+                  rows="2"
+                  aria-label="Qo‘shimcha manzil ma‘lumotlari"
+                />
+                <div className="input-hint">To‘liq manzilni kiriting</div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="telegram-input" className="input-label">
+                  <FiMail className="input-icon" /> Telegram Chat ID
+                </label>
+                <input
+                  id="telegram-input"
+                  type="text"
+                  placeholder="Telegram Chat ID (masalan: 5838205785)"
+                  value={currentPatient.telegram}
+                  onChange={(e) => setCurrentPatient({ ...currentPatient, telegram: e.target.value })}
+                  aria-label="Telegram Chat ID"
+                />
+                <div className="input-hint">Bemor botga start bosgandan keyin olingan Chat ID ni kiriting</div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="note-input" className="input-label">
+                  <FiInfo className="input-icon" /> Izohlar
+                </label>
+                <textarea
+                  id="note-input"
+                  placeholder="Allergiyalar, kasalliklar tarixi, qo‘shimcha eslatmalar"
+                  value={currentPatient.note}
+                  onChange={(e) => setCurrentPatient({ ...currentPatient, note: e.target.value })}
+                  rows="4"
+                  aria-label="Qo‘shimcha izohlar"
+                />
+                <div className="input-hint">Bemor haqida qo‘shimcha ma‘lumotlarni kiriting</div>
+              </div>
+
+              <div className="form-group">
+                <label className="input-label">Retseptlar ({currentPatient.prescriptions?.length || 0})</label>
+                <div className="previous-prescriptions">
+                  {currentPatient.prescriptions?.length > 0 ? (
+                    <ul aria-label="Retseptlar ro'yxati">
+                      {currentPatient.prescriptions.sort((a, b) => new Date(b.date) - new Date(a.date)).map((pres, index) => (
+                        <li key={index}>
+                          {formatDate(pres.date)} - {pres.medicine}: {pres.dosage} {pres.notes && `(${pres.notes})`}
+                          <button 
+                            type="button" 
+                            className="delete-button" 
                             onClick={() => removePrescription(index)}
+                            aria-label={`Retseptni o'chirish ${pres.medicine}`}
                           >
                             <FiTrash2 />
                           </button>
-                        </div>
-                        <div className="retsept-malumot">
-                          <strong>{prescription.medicine}</strong> - {prescription.dosage}
-                          {prescription.notes && ` (${prescription.notes})`}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="yangi-retsept">
-                    <div className="form-qatorlari">
-                      <div className="form-guruhi">
-                        <label>Dori nomi</label>
-                        <input
-                          type="text"
-                          value={newPrescription.medicine}
-                          onChange={e => setNewPrescription({
-                            ...newPrescription,
-                            medicine: e.target.value
-                          })}
-                          placeholder="Dori nomi"
-                        />
-                      </div>
-                      
-                      <div className="form-guruhi">
-                        <label>Doza</label>
-                        <input
-                          type="text"
-                          value={newPrescription.dosage}
-                          onChange={e => setNewPrescription({
-                            ...newPrescription,
-                            dosage: e.target.value
-                          })}
-                          placeholder="Doza va muddat"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="form-guruhi">
-                      <label>Izoh</label>
-                      <input
-                        type="text"
-                        value={newPrescription.notes}
-                        onChange={e => setNewPrescription({
-                          ...newPrescription,
-                          notes: e.target.value
-                        })}
-                        placeholder="Qo'shimcha izoh"
-                      />
-                    </div>
-                    
-                    <button
-                      type="button"
-                      className="tugma tugma-ikkilamchi"
-                      onClick={addPrescription}
-                    >
-                      <FiPlus /> Retsept qo'shish
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="modal-amallar">
-                  <button type="submit" className="tugma tugma-birlamchi">
-                    {currentPatient.id ? 'Saqlash' : 'Qo\'shish'}
-                  </button>
-                  <button 
-                    type="button" 
-                    className="tugma tugma-ikkilamchi"
-                    onClick={closeModal}
-                  >
-                    Bekor qilish
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Eksport modali */}
-      {exportModalOpen && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-sarlavha">
-              <h2>Ma'lumotlarni eksport qilish</h2>
-              <button className="yopish-tugmasi" onClick={closeModal}>
-                <FiX />
-              </button>
-            </div>
-            
-            <div className="modal-tanasi">
-              <div className="form-guruhi">
-                <label>Format tanlang</label>
-                <select
-                  value={selectedExportFormat}
-                  onChange={e => setSelectedExportFormat(e.target.value)}
-                >
-                  <option value="excel">Excel (.xlsx)</option>
-                </select>
-              </div>
-              
-              <div className="modal-amallar">
-                <button 
-                  className="tugma tugma-birlamchi"
-                  onClick={handleExport}
-                >
-                  <FiDownload /> Eksport qilish
-                </button>
-                <button 
-                  className="tugma tugma-ikkilamchi"
-                  onClick={closeModal}
-                >
-                  Bekor qilish
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bemor tafsilotlari modali */}
-      {detailsModalOpen && selectedPatient && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-sarlavha">
-              <h2>Bemor ma'lumotlari</h2>
-              <button className="yopish-tugmasi" onClick={closeModal}>
-                <FiX />
-              </button>
-            </div>
-            
-            <div className="modal-tanasi">
-              <div className="bemor-tafsilotlari">
-                <div className="tafsilot-bolimi">
-                  <h3>
-                    <FiUser />
-                    Asosiy ma'lumotlar
-                  </h3>
-                  
-                  <ul className="tafsilot-royxati">
-                    <li>
-                      <span className="tafsilot-yorligi">Ism:</span>
-                      <span className="tafsilot-qiymati">{selectedPatient.name}</span>
-                    </li>
-                    <li>
-                      <span className="tafsilot-yorligi">Telefon:</span>
-                      <span className="tafsilot-qiymati">{formatPhoneNumber(selectedPatient.phone)}</span>
-                    </li>
-                    <li>
-                      <span className="tafsilot-yorligi">Jins:</span>
-                      <span className="tafsilot-qiymati">{selectedPatient.gender || '-'}</span>
-                    </li>
-                    <li>
-                      <span className="tafsilot-yorligi">Yoshi:</span>
-                      <span className="tafsilot-qiymati">{calculateAge(selectedPatient.dob)}</span>
-                    </li>
-                    <li>
-                      <span className="tafsilot-yorligi">Manzil:</span>
-                      <span className="tafsilot-qiymati">{selectedPatient.address || '-'}</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                {selectedPatient.note && (
-                  <div className="tafsilot-bolimi">
-                    <h3>
-                      <FiInfo />
-                      Qo'shimcha ma'lumot
-                    </h3>
-                    <p>{selectedPatient.note}</p>
-                  </div>
-                )}
-                
-                <div className="tafsilot-bolimi">
-                  <h3>
-                    <FiCalendar />
-                    Retseptlar ({selectedPatient.prescriptions?.length || 0})
-                  </h3>
-                  
-                  {selectedPatient.prescriptions?.length > 0 ? (
-                    <ul className="tafsilot-royxati">
-                      {selectedPatient.prescriptions.map((prescription, index) => (
-                        <li key={index}>
-                          <span className="tafsilot-yorligi">
-                            {formatDate(prescription.date)}:
-                          </span>
-                          <span className="tafsilot-qiymati">
-                            {prescription.medicine} ({prescription.dosage})
-                            {prescription.notes && ` - ${prescription.notes}`}
-                          </span>
                         </li>
                       ))}
                     </ul>
@@ -1110,23 +672,173 @@ const Patients = () => {
                     <p>Hali retseptlar mavjud emas</p>
                   )}
                 </div>
-              </div>
-              
-              <div className="modal-amallar">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="prescription-medicine" className="input-label">Dori nomi</label>
+                    <input
+                      id="prescription-medicine"
+                      type="text"
+                      placeholder="Dori nomi"
+                      value={newPrescription.medicine}
+                      onChange={(e) => setNewPrescription({ ...newPrescription, medicine: e.target.value })}
+                      aria-label="Dori nomi"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="prescription-dosage" className="input-label">Doza</label>
+                    <input
+                      id="prescription-dosage"
+                      type="text"
+                      placeholder="Doza va muddat"
+                      value={newPrescription.dosage}
+                      onChange={(e) => setNewPrescription({ ...newPrescription, dosage: e.target.value })}
+                      aria-label="Doza va muddat"
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="prescription-notes" className="input-label">Izoh</label>
+                  <input
+                    id="prescription-notes"
+                    type="text"
+                    placeholder="Qo‘shimcha izoh"
+                    value={newPrescription.notes}
+                    onChange={(e) => setNewPrescription({ ...newPrescription, notes: e.target.value })}
+                    aria-label="Retsept izohi"
+                  />
+                </div>
                 <button 
-                  className="tugma tugma-birlamchi"
+                  type="button" 
+                  className="action-button" 
+                  onClick={addPrescription}
+                  aria-label="Retsept qo‘shish"
+                >
+                  <FiPlus /> Retsept qo‘shish
+                </button>
+              </div>
+
+              <div className="modal-actions">
+                <button type="submit" className="primary-button">
+                  {currentPatient.id ? 'Saqlash' : 'Qo‘shish'}
+                </button>
+                <button type="button" onClick={closeModal} className="action-button">
+                  Bekor qilish
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {detailsModalOpen && selectedPatient && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Bemor ma'lumotlari</h2>
+              <button type="button" onClick={closeModal} className="modal-close-button" aria-label="Modalni yopish">
+                <FiX />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="details-section">
+                <h3 className="details-title">
+                  <FiUser className="input-icon" /> Asosiy ma'lumotlar
+                </h3>
+                <div className="details-content">
+                  <p><strong>Ism:</strong> {selectedPatient.name || 'Noma’lum'}</p>
+                  <p><strong>Telefon:</strong> {formatPhoneNumber(selectedPatient.phone)}</p>
+                  <p><strong>Jins:</strong> {selectedPatient.gender || '-'}</p>
+                  <p><strong>Yoshi:</strong> {calculateAge(selectedPatient.dob)}</p>
+                  <p><strong>Manzil:</strong> {selectedPatient.address || '-'}</p>
+                  <p><strong>Telegram:</strong> {selectedPatient.telegram || '-'}</p>
+                </div>
+              </div>
+
+              {selectedPatient.note && (
+                <div className="details-section">
+                  <h3 className="details-title">
+                    <FiInfo className="input-icon" /> Qoshimcha ma'lumot
+                  </h3>
+                  <div className="details-content">
+                    <p>{selectedPatient.note}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="details-section">
+                <h3 className="details-title">
+                  <FiCalendar className="input-icon" /> Retseptlar ({selectedPatient.prescriptions?.length || 0})
+                </h3>
+                <div className="details-content">
+                  {selectedPatient.prescriptions?.length > 0 ? (
+                    <ul className="prescription-list" aria-label="Retseptlar ro'yxati">
+                      {selectedPatient.prescriptions.map((pres, index) => (
+                        <li key={index} className="prescription-item">
+                          {formatDate(pres.date)} - {pres.medicine}: {pres.dosage} {pres.notes && `(${pres.notes})`}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="no-data">Hali retseptlar mavjud emas</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  className="primary-button" 
                   onClick={() => {
                     closeModal();
                     openModal(selectedPatient);
                   }}
+                  aria-label={`Tahrirlash ${selectedPatient.name}`}
                 >
                   <FiEdit /> Tahrirlash
                 </button>
                 <button 
-                  className="tugma tugma-ikkilamchi"
-                  onClick={closeModal}
+                  type="button" 
+                  onClick={closeModal} 
+                  className="action-button"
+                  aria-label="Modalni yopish"
                 >
                   Yopish
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {exportModalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Ma'lumotlarni eksport qilish</h2>
+              <button type="button" onClick={closeModal} className="modal-close-button" aria-label="Modalni yopish">
+                <FiX />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="export-format" className="input-label">Format tanlang</label>
+                <select
+                  id="export-format"
+                  value={selectedExportFormat}
+                  onChange={(e) => setSelectedExportFormat(e.target.value)}
+                  aria-label="Eksport formatini tanlang"
+                >
+                  <option value="excel">Excel (.xlsx)</option>
+                </select>
+              </div>
+
+              <div className="modal-actions">
+                <button className="primary-button" onClick={handleExport} aria-label="Ma'lumotlarni eksport qilish">
+                  <FiDownload /> Eksport qilish
+                </button>
+                <button type="button" onClick={closeModal} className="action-button" aria-label="Bekor qilish">
+                  Bekor qilish
                 </button>
               </div>
             </div>

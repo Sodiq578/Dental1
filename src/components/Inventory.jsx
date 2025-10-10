@@ -1,10 +1,9 @@
 import React, { useState, useContext } from 'react';
-import { FiSearch, FiPlus, FiEdit, FiTrash2, FiBox } from 'react-icons/fi';
 import { AppContext } from '../App';
 import './Inventory.css';
 
 const Inventory = () => {
-  const { inventory, setInventory } = useContext(AppContext);
+  const { inventory, setInventory, darkMode } = useContext(AppContext);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -19,7 +18,7 @@ const Inventory = () => {
     setCurrentItem(item ? { ...item } : {
       id: null,
       name: '',
-      type: 'medication', // medication yoki material
+      type: 'dori',
       quantity: 0,
       unit: '',
       expiryDate: '',
@@ -54,38 +53,52 @@ const Inventory = () => {
     setTimeout(() => {
       setSuccessMessage('');
       closeModal();
-    }, 3000);
+    }, 2000);
   };
 
   const deleteItem = (id) => {
     if (window.confirm('Haqiqatan ham bu mahsulotni o‘chirmoqchimisiz?')) {
       setInventory(inventory.filter(i => i.id !== id));
       setSuccessMessage('Mahsulot o‘chirildi');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setTimeout(() => setSuccessMessage(''), 2000);
     }
   };
 
+  const getTypeLabel = (type) => {
+    return type === 'dori' ? 'Dori' : 'Maxsulot';
+  };
+
   return (
-    <div className="inventory">
-      <div className="page-header">
+    <div className={`inventory-container ${darkMode ? 'dark-mode' : ''}`}>
+      <div className="inventory-header">
         <h1>Ombor</h1>
-        <span className="badge">{inventory.length} ta</span>
+        <span className="inventory-count">{filteredItems.length} ta mahsulot</span>
       </div>
 
       {successMessage && <div className="success-message">{successMessage}</div>}
 
-      <div className="actions">
-        <div className="search-box">
+      <div className="inventory-controls">
+        <div className="search-bar">
           <input
             type="text"
-            placeholder="Mahsulot nomi bo‘yicha qidirish..."
+            placeholder="Mahsulot nomini kiriting..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
+            className="search-field"
+            aria-label="Mahsulot nomi bo‘yicha qidirish"
           />
+          {searchTerm && (
+            <button
+              className="clear-search"
+              onClick={() => setSearchTerm('')}
+              aria-label="Qidiruvni tozalash"
+            >
+              Tozalash
+            </button>
+          )}
         </div>
-        <button onClick={() => openModal()} className="btn-primary">
-          <FiPlus /> Yangi Mahsulot
+        <button onClick={() => openModal()} className="primary-button">
+          Yangi Qo‘shish
         </button>
       </div>
 
@@ -93,57 +106,66 @@ const Inventory = () => {
         <div className="empty-state">
           {searchTerm ? (
             <>
-              <h3>Hech narsa topilmadi</h3>
-              <p>"{searchTerm}" bo‘yicha mahsulot topilmadi</p>
-              <button onClick={() => setSearchTerm('')} className="btn-secondary">
-                Filterni tozalash
+              <h3>Mahsulot topilmadi</h3>
+              <p>"{searchTerm}" bo‘yicha hech narsa topilmadi</p>
+              <button onClick={() => setSearchTerm('')} className="action-button">
+                Qidiruvni tozalash
               </button>
             </>
           ) : (
             <>
-              <h3>Hali mahsulotlar mavjud emas</h3>
+              <h3>Ombor bo‘sh</h3>
               <p>Birinchi mahsulotingizni qo‘shing</p>
-              <button onClick={() => openModal()} className="btn-primary">
-                <FiPlus /> Yangi mahsulot qo'shish
+              <button onClick={() => openModal()} className="primary-button">
+                Yangi Qo‘shish
               </button>
             </>
           )}
         </div>
       ) : (
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Nomi</th>
-                <th>Turi</th>
-                <th>Miqdori</th>
-                <th>Birligi</th>
-                <th>Yaroqlilik Muddati</th>
-                <th>Amallar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.map(i => (
-                <tr key={i.id} className={i.quantity < 20 ? 'low-stock' : ''}>
-                  <td>{i.name}</td>
-                  <td>{i.type === 'medication' ? 'Dori' : 'Material'}</td>
-                  <td>{i.quantity}</td>
-                  <td>{i.unit || '-'}</td>
-                  <td>{i.expiryDate || '-'}</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button onClick={() => openModal(i)} className="btn-edit" title="Tahrirlash">
-                        <FiEdit />
-                      </button>
-                      <button onClick={() => deleteItem(i.id)} className="btn-delete" title="O‘chirish">
-                        <FiTrash2 />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="inventory-list">
+          {filteredItems.map(i => (
+            <div
+              key={i.id}
+              className={`inventory-item ${i.quantity < 20 ? 'low-stock' : ''}`}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  openModal(i);
+                }
+              }}
+              aria-label={`Mahsulot ${i.name} tafsilotlarini ko‘rish yoki tahrirlash`}
+            >
+              <div className="inventory-item-content" onClick={() => openModal(i)}>
+                <div className="inventory-item-header">
+                  <h3>{i.name}</h3>
+                  <span className={`type-tag type-${i.type}`}>{getTypeLabel(i.type)}</span>
+                </div>
+                <div className="inventory-item-details">
+                  <p><strong>Miqdori:</strong> {i.quantity} {i.unit || ''}</p>
+                  <p><strong>Yaroqlilik:</strong> {i.expiryDate || '-'}</p>
+                  <p><strong>Izoh:</strong> {i.notes || '-'}</p>
+                </div>
+              </div>
+              <div className="inventory-item-actions">
+                <button
+                  onClick={() => openModal(i)}
+                  className="edit-button"
+                  aria-label={`Mahsulot ${i.name} ni tahrirlash`}
+                >
+                  Tahrirlash
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteItem(i.id); }}
+                  className="delete-button"
+                  aria-label={`Mahsulot ${i.name} ni o‘chirish`}
+                >
+                  O‘chirish
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -152,18 +174,22 @@ const Inventory = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <form onSubmit={handleSubmit}>
               <div className="modal-header">
-                <h2>{currentItem.id ? 'Mahsulotni Tahrirlash' : 'Yangi Mahsulot Qo‘shish'}</h2>
-                <button type="button" onClick={closeModal} className="close-button">&times;</button>
+                <h2>{currentItem.id ? 'Tahrirlash' : 'Yangi Mahsulot'}</h2>
+                <button type="button" onClick={closeModal} className="modal-close-button">
+                  &times;
+                </button>
               </div>
               {error && <div className="error-message">{error}</div>}
               {successMessage && <div className="success-message">{successMessage}</div>}
               <div className="form-group">
-                <label><FiBox /> Nomi *</label>
+                <label>Nomi *</label>
                 <input
                   type="text"
                   value={currentItem.name}
                   onChange={(e) => setCurrentItem({ ...currentItem, name: e.target.value })}
                   required
+                  placeholder="Mahsulot nomini kiriting"
+                  aria-label="Mahsulot nomi"
                 />
               </div>
               <div className="form-group">
@@ -171,9 +197,10 @@ const Inventory = () => {
                 <select
                   value={currentItem.type}
                   onChange={(e) => setCurrentItem({ ...currentItem, type: e.target.value })}
+                  aria-label="Mahsulot turi"
                 >
-                  <option value="medication">Dori</option>
-                  <option value="material">Material</option>
+                  <option value="dori">Dori</option>
+                  <option value="maxsulot">Maxsulot</option>
                 </select>
               </div>
               <div className="form-group">
@@ -184,6 +211,8 @@ const Inventory = () => {
                   onChange={(e) => setCurrentItem({ ...currentItem, quantity: parseInt(e.target.value) || 0 })}
                   required
                   min="0"
+                  placeholder="Miqdorni kiriting"
+                  aria-label="Mahsulot miqdori"
                 />
               </div>
               <div className="form-group">
@@ -193,6 +222,7 @@ const Inventory = () => {
                   value={currentItem.unit}
                   onChange={(e) => setCurrentItem({ ...currentItem, unit: e.target.value })}
                   placeholder="Masalan: dona, quti"
+                  aria-label="Mahsulot birligi"
                 />
               </div>
               <div className="form-group">
@@ -201,6 +231,7 @@ const Inventory = () => {
                   type="date"
                   value={currentItem.expiryDate}
                   onChange={(e) => setCurrentItem({ ...currentItem, expiryDate: e.target.value })}
+                  aria-label="Yaroqlilik muddati"
                 />
               </div>
               <div className="form-group">
@@ -209,11 +240,13 @@ const Inventory = () => {
                   value={currentItem.notes}
                   onChange={(e) => setCurrentItem({ ...currentItem, notes: e.target.value })}
                   rows="3"
+                  placeholder="Qo'shimcha ma'lumotlar"
+                  aria-label="Mahsulot izohi"
                 />
               </div>
               <div className="modal-actions">
-                <button type="submit" className="btn-primary">Saqlash</button>
-                <button type="button" onClick={closeModal} className="btn-secondary">Bekor qilish</button>
+                <button type="submit" className="primary-button">Saqlash</button>
+                <button type="button" onClick={closeModal} className="action-button">Bekor qilish</button>
               </div>
             </form>
           </div>

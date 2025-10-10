@@ -320,7 +320,7 @@ export const validateAdminRequestData = (request) => {
   return errors;
 };
 
-// Ma'lumotlarni boshlang'ich holatga keltirish
+// Boshlang'ich ma'lumotlar
 export const initializeData = () => {
   console.log('🦷 Keksri Dental - Ma\'lumotlarni boshlash...');
 
@@ -331,17 +331,17 @@ export const initializeData = () => {
         name: 'Ali Valiev',
         phone: '+998901234567',
         gender: 'Erkak',
-        address: 'Tashkent city, Yunusabad district',
+        address: 'Toshkent shahri, Yunusobod tumani',
         dob: '1990-05-15',
         telegram: '123456789',
-        note: 'Has diabetes, sensitive to local anesthesia',
+        note: 'Qandli diabet kasalligi bor, mahalliy behushlikka sezgir',
         prescriptions: [
           {
             id: 1,
             date: '2024-01-15',
             medication: 'Amoxicillin 500mg',
-            dosage: '1 tablet, 3 times a day, 7 days',
-            notes: 'Infection prevention'
+            dosage: '1 tabletka, kuniga 3 marta, 7 kun',
+            notes: 'Infeksiyadan himoyalanish'
           }
         ],
         lastVisit: '2024-01-15',
@@ -357,17 +357,17 @@ export const initializeData = () => {
         name: 'Zilola Karimova',
         phone: '+998912345678',
         gender: 'Ayol',
-        address: 'Samarkand city, Registan street',
+        address: 'Samarqand shahri, Registon ko‘chasi',
         dob: '1985-08-22',
         telegram: '987654321',
-        note: '6th month of pregnancy, requires special care',
+        note: 'Homiladorlikning 6-oyida, maxsus parvarish talab qilinadi',
         prescriptions: [
           {
             id: 1,
             date: '2024-01-10',
             medication: 'Paracetamol 500mg',
-            dosage: 'As needed, 2 times a day',
-            notes: 'For pain relief'
+            dosage: 'Kerak bo‘lganda, kuniga 2 marta',
+            notes: 'Og‘riqni yo‘qotish uchun'
           }
         ],
         lastVisit: '2024-01-10',
@@ -383,10 +383,10 @@ export const initializeData = () => {
         name: 'Sherzod Qodirov',
         phone: '+998934567890',
         gender: 'Erkak',
-        address: 'Bukhara region, Kogon city',
+        address: 'Buxoro viloyati, Kogon shahri',
         dob: '1978-12-03',
         telegram: '555666777',
-        note: 'Prosthetic teeth, requires regular checkups',
+        note: 'Protez tishlar, muntazam tekshiruvlar talab qilinadi',
         prescriptions: [],
         lastVisit: '2023-12-20',
         toothChart: [
@@ -395,7 +395,412 @@ export const initializeData = () => {
         ],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
+      },
+      {
+        id: 4,
+        name: 'Nodira Usmonova',
+        phone: '+998907654321',
+        gender: 'Ayol',
+        address: 'Farg‘ona viloyati, Qo‘qon shahri',
+        dob: '1992-03-10',
+        telegram: '444555666',
+        note: 'Allergik reaksiyalar mavjud, antibiotiklarga ehtiyotkorlik',
+        prescriptions: [
+          {
+            id: 1,
+            date: '2024-02-05',
+            medication: 'Ibuprofen 400mg',
+            dosage: '1 tabletka, kuniga 2 marta, 5 kun',
+            notes: 'Og‘riqni kamaytirish'
+          }
+        ],
+        lastVisit: '2024-02-05',
+        toothChart: [
+          { tooth: 25, status: 'karies', color: '#FF9800' },
+          { tooth: 17, status: 'plomba', color: '#2196F3' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 5,
+        name: 'Javlonbek Rahimov',
+        phone: '+998908765432',
+        gender: 'Erkak',
+        address: 'Andijon shahri, Navoiy ko‘chasi',
+        dob: '1980-07-19',
+        telegram: '777888999',
+        note: 'Ortodontik davolanish talab qilinadi',
+        prescriptions: [],
+        lastVisit: '2024-03-12',
+        toothChart: [
+          { tooth: 21, status: 'koronka', color: '#9C27B0' },
+          { tooth: 31, status: 'sog', color: '#4CAF50' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 6,
+        name: 'Mohira Sobirova',
+        phone: '+998909876543',
+        gender: 'Ayol',
+        address: 'Toshkent shahri, Chilanzor tumani',
+        dob: '1995-11-27',
+        telegram: '222333444',
+        note: 'Tish go‘shti muammolari, gingivit',
+        prescriptions: [
+          {
+            id: 1,
+            date: '2024-04-10',
+            medication: 'Chlorhexidine 0.2%',
+            dosage: 'Og‘iz chayish, kuniga 2 marta, 10 kun',
+            notes: 'Gingivit davolash'
+          }
+        ],
+        lastVisit: '2024-04-10',
+        toothChart: [
+          { tooth: 18, status: 'davl', color: '#FFC107' },
+          { tooth: 28, status: 'karies', color: '#FF9800' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 7,
+        name: 'Oybek Mirzayev',
+        phone: '+998901111222',
+        gender: 'Erkak',
+        address: 'Namangan viloyati, Chust tumani',
+        dob: '1988-09-14',
+        telegram: '111222333',
+        note: 'Tish sinishi, protez kerak',
+        prescriptions: [],
+        lastVisit: '2024-05-20',
+        toothChart: [
+          { tooth: 26, status: 'protez', color: '#607D8B' },
+          { tooth: 15, status: 'yoq', color: '#F44336' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 8,
+        name: 'Gulnoza Xolmatova',
+        phone: '+998902222333',
+        gender: 'Ayol',
+        address: 'Qashqadaryo viloyati, Qarshi shahri',
+        dob: '1993-02-18',
+        telegram: '999888777',
+        note: 'Estetik tish tozalash talab qilinadi',
+        prescriptions: [],
+        lastVisit: '2024-06-15',
+        toothChart: [
+          { tooth: 12, status: 'sog', color: '#4CAF50' },
+          { tooth: 22, status: 'sog', color: '#4CAF50' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 9,
+        name: 'Temur Juraev',
+        phone: '+998903333444',
+        gender: 'Erkak',
+        address: 'Toshkent shahri, Mirzo Ulug‘bek tumani',
+        dob: '1975-04-22',
+        telegram: '666777888',
+        note: 'Tish implantlari, muntazam nazorat',
+        prescriptions: [
+          {
+            id: 1,
+            date: '2024-07-10',
+            medication: 'Amoxicillin 500mg',
+            dosage: '1 tabletka, kuniga 3 marta, 7 kun',
+            notes: 'Implantdan keyin infeksiyadan himoya'
+          }
+        ],
+        lastVisit: '2024-07-10',
+        toothChart: [
+          { tooth: 14, status: 'protez', color: '#607D8B' },
+          { tooth: 24, status: 'karies', color: '#FF9800' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 10,
+        name: 'Malika To‘xtayeva',
+        phone: '+998904444555',
+        gender: 'Ayol',
+        address: 'Jizzax viloyati, Jizzax shahri',
+        dob: '1987-12-05',
+        telegram: '555444333',
+        note: 'Tish oqartirish xizmati so‘ralgan',
+        prescriptions: [],
+        lastVisit: '2024-08-01',
+        toothChart: [
+          { tooth: 13, status: 'sog', color: '#4CAF50' },
+          { tooth: 23, status: 'sog', color: '#4CAF50' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }
+      ,{
+  id: 11,
+  name: 'Rustam Abdurahmonov',
+  phone: '+998905555666',
+  gender: 'Erkak',
+  address: 'Toshkent viloyati, Zangiota tumani',
+  dob: '1982-11-02',
+  telegram: '112233445',
+  note: 'Yuqori qon bosimi, behushlik oldidan tekshirish zarur',
+  prescriptions: [
+    {
+      id: 1,
+      date: '2024-09-01',
+      medication: 'Lisinopril 10mg',
+      dosage: 'Kuniga 1 marta, ertalab',
+      notes: 'Qon bosimini boshqarish uchun'
+    }
+  ],
+  lastVisit: '2024-09-01',
+  toothChart: [
+    { tooth: 45, status: 'plomba', color: '#4CAF50' },
+    { tooth: 35, status: 'karies', color: '#FF9800' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 12,
+  name: 'Dilnoza Raxmatova',
+  phone: '+998911223344',
+  gender: 'Ayol',
+  address: 'Navoiy shahri, Xalqobod mahallasi',
+  dob: '1997-06-18',
+  telegram: '223344556',
+  note: 'O‘tgan oyda og‘ir angina bilan davolangan, antibiotiklar bilan ehtiyotkorlik',
+  prescriptions: [
+    {
+      id: 1,
+      date: '2024-08-20',
+      medication: 'Azithromycin 500mg',
+      dosage: '1 tabletka, kuniga 1 marta, 3 kun',
+      notes: 'Yuqori nafas yo‘li infeksiyasi uchun'
+    }
+  ],
+  lastVisit: '2024-08-20',
+  toothChart: [
+    { tooth: 26, status: 'koronka', color: '#9C27B0' },
+    { tooth: 16, status: 'yoq', color: '#F44336' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 13,
+  name: 'Sardorbek Ismoilov',
+  phone: '+998933221100',
+  gender: 'Erkak',
+  address: 'Surxondaryo viloyati, Termiz shahri',
+  dob: '1991-04-08',
+  telegram: '778899000',
+  note: 'Professional sportchi, og‘riq qoldiruvchilarga sezgir',
+  prescriptions: [],
+  lastVisit: '2024-07-25',
+  toothChart: [
+    { tooth: 37, status: 'sog', color: '#4CAF50' },
+    { tooth: 27, status: 'karies', color: '#FF9800' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 14,
+  name: 'Saida Mamatqulova',
+  phone: '+998909999000',
+  gender: 'Ayol',
+  address: 'Xorazm viloyati, Urganch shahri',
+  dob: '1983-01-30',
+  telegram: '665544332',
+  note: 'Kattalashtirilgan tiroid bezlari, umumiy behushlikdan saqlanish zarur',
+  prescriptions: [
+    {
+      id: 1,
+      date: '2024-09-10',
+      medication: 'Ibuprofen 400mg',
+      dosage: 'Kerak bo‘lganda, kuniga 2 marta',
+      notes: 'Og‘riqni kamaytirish'
+    }
+  ],
+  lastVisit: '2024-09-10',
+  toothChart: [
+    { tooth: 33, status: 'plomba', color: '#4CAF50' },
+    { tooth: 43, status: 'yoq', color: '#F44336' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 15,
+  name: 'Bekzod Nasrullayev',
+  phone: '+998907001122',
+  gender: 'Erkak',
+  address: 'Toshkent shahri, Yakkasaroy tumani',
+  dob: '1990-10-12',
+  telegram: '889900112',
+  note: 'Tish siqilishi (bruksizm), kechasi uchun moslama tayyorlash kerak',
+  prescriptions: [],
+  lastVisit: '2024-10-01',
+  toothChart: [
+    { tooth: 17, status: 'sog', color: '#4CAF50' },
+    { tooth: 27, status: 'sog', color: '#4CAF50' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},{
+  id: 16,
+  name: 'Muxlisa Yo‘ldosheva',
+  phone: '+998911234567',
+  gender: 'Ayol',
+  address: 'Andijon shahri, Asaka tumani',
+  dob: '1995-03-22',
+  telegram: '998877665',
+  note: 'Homiladorlikning 2-choragida, faqat zarur tibbiy muolajalar',
+  prescriptions: [
+    {
+      id: 1,
+      date: '2024-08-15',
+      medication: 'Paracetamol 500mg',
+      dosage: 'Kerak bo‘lganda, kuniga 3 marta',
+      notes: 'Og‘riq va isitma uchun'
+    }
+  ],
+  lastVisit: '2024-08-15',
+  toothChart: [
+    { tooth: 12, status: 'karies', color: '#FF9800' },
+    { tooth: 22, status: 'plomba', color: '#4CAF50' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 17,
+  name: 'Jasur Olimov',
+  phone: '+998933300022',
+  gender: 'Erkak',
+  address: 'Namangan viloyati, Pop tumani',
+  dob: '1988-07-14',
+  telegram: '554433221',
+  note: 'Shakar diabeti bor, yara bitishi sekin',
+  prescriptions: [
+    {
+      id: 1,
+      date: '2024-06-05',
+      medication: 'Metronidazole 250mg',
+      dosage: 'Kuniga 2 marta, 5 kun',
+      notes: 'Infeksiya nazorati uchun'
+    }
+  ],
+  lastVisit: '2024-06-05',
+  toothChart: [
+    { tooth: 36, status: 'yoq', color: '#F44336' },
+    { tooth: 46, status: 'plomba', color: '#4CAF50' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 18,
+  name: 'Shahnoza Karimova',
+  phone: '+998909988776',
+  gender: 'Ayol',
+  address: 'Buxoro viloyati, G‘ijduvon tumani',
+  dob: '1979-11-01',
+  telegram: '445566778',
+  note: 'Yurak ritmi nosozligi – adrenalinni ishlatmaslik kerak',
+  prescriptions: [],
+  lastVisit: '2024-09-12',
+  toothChart: [
+    { tooth: 11, status: 'koronka', color: '#9C27B0' },
+    { tooth: 21, status: 'karies', color: '#FF9800' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 19,
+  name: 'Ulug‘bek Abdullayev',
+  phone: '+998939999222',
+  gender: 'Erkak',
+  address: 'Qashqadaryo viloyati, Qarshi shahri',
+  dob: '1985-05-18',
+  telegram: '776655443',
+  note: 'Og‘iz bo‘shlig‘ida suvsizlanish, ko‘p suv tavsiya etilgan',
+  prescriptions: [
+    {
+      id: 1,
+      date: '2024-08-28',
+      medication: 'Chlorhexidine 0.12%',
+      dosage: 'Kuniga 2 marta chayish',
+      notes: 'Og‘iz gigienasi'
+    }
+  ],
+  lastVisit: '2024-08-28',
+  toothChart: [
+    { tooth: 15, status: 'sog', color: '#4CAF50' },
+    { tooth: 25, status: 'karies', color: '#FF9800' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 20,
+  name: 'Dilorom To‘xtayeva',
+  phone: '+998914455667',
+  gender: 'Ayol',
+  address: 'Toshkent viloyati, Zangiota tumani',
+  dob: '1993-12-25',
+  telegram: '334422110',
+  note: 'Og‘ir stress holatlari, muolajalarni asta-sekin boshlash lozim',
+  prescriptions: [],
+  lastVisit: '2024-09-30',
+  toothChart: [
+    { tooth: 31, status: 'yoq', color: '#F44336' },
+    { tooth: 41, status: 'sog', color: '#4CAF50' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+},
+{
+  id: 21,
+  name: 'Islomjon Niyozov',
+  phone: '+998935566778',
+  gender: 'Erkak',
+  address: 'Farg‘ona shahri, Qo‘qon tumani',
+  dob: '1998-02-14',
+  telegram: '998877441',
+  note: 'Allergiya: Penitsillin',
+  prescriptions: [
+    {
+      id: 1,
+      date: '2024-07-10',
+      medication: 'Clarithromycin 500mg',
+      dosage: 'Kuniga 2 marta, 7 kun',
+      notes: 'Alternativa antibiotik sifatida'
+    }
+  ],
+  lastVisit: '2024-07-10',
+  toothChart: [
+    { tooth: 44, status: 'plomba', color: '#4CAF50' },
+    { tooth: 45, status: 'yoq', color: '#F44336' }
+  ],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString()
+}
+
+
     ],
     appointments: [
       {
@@ -404,10 +809,10 @@ export const initializeData = () => {
         patientName: 'Ali Valiev',
         date: '2024-09-01',
         time: '10:00',
-        procedure: 'Teeth cleaning',
-        status: 'completed',
-        notes: 'Good condition, next checkup in 6 months',
-        prescription: 'Recommended toothpaste and floss',
+        procedure: 'Tish tozalash',
+        status: 'yakunlandi',
+        notes: 'Yaxshi holat, 6 oydan keyin tekshiruv',
+        prescription: 'Tish pastasi va ip tavsiya qilindi',
         duration: '45',
         doctor: 'Dr. Aziza',
         cost: '150000',
@@ -421,10 +826,10 @@ export const initializeData = () => {
         patientName: 'Ali Valiev',
         date: '2024-09-10',
         time: '14:00',
-        procedure: 'Filling',
-        status: 'completed',
-        notes: 'Tooth #36, composite filling',
-        prescription: 'Avoid hot/cold',
+        procedure: 'Plomba qo‘yish',
+        status: 'yakunlandi',
+        notes: '36-tish, kompozit plomba',
+        prescription: 'Issiq/sovuqdan saqlanish',
         duration: '30',
         doctor: 'Dr. Jamshid',
         cost: '200000',
@@ -438,9 +843,9 @@ export const initializeData = () => {
         patientName: 'Zilola Karimova',
         date: '2024-09-15',
         time: '11:30',
-        procedure: 'Dental checkup',
-        status: 'pending',
-        notes: 'Pregnancy checkup',
+        procedure: 'Tish tekshiruvi',
+        status: 'kutilmoqda',
+        notes: 'Homiladorlik tekshiruvi',
         prescription: '',
         duration: '60',
         doctor: 'Dr. Aziza',
@@ -455,13 +860,115 @@ export const initializeData = () => {
         patientName: 'Sherzod Qodirov',
         date: '2024-09-20',
         time: '09:00',
-        procedure: 'Prosthesis checkup',
-        status: 'scheduled',
-        notes: 'Prosthesis adjustment needed',
+        procedure: 'Protez tekshiruvi',
+        status: 'rejalashtirilgan',
+        notes: 'Protez sozlash kerak',
         prescription: '',
         duration: '90',
         doctor: 'Dr. Jamshid',
         cost: '120000',
+        nextVisit: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 5,
+        patientId: 4,
+        patientName: 'Nodira Usmonova',
+        date: '2024-09-25',
+        time: '15:00',
+        procedure: 'Tish tozalash',
+        status: 'rejalashtirilgan',
+        notes: 'Allergik reaksiyalarga ehtiyotkorlik',
+        prescription: '',
+        duration: '45',
+        doctor: 'Dr. Aziza',
+        cost: '150000',
+        nextVisit: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 6,
+        patientId: 5,
+        patientName: 'Javlonbek Rahimov',
+        date: '2024-10-01',
+        time: '10:30',
+        procedure: 'Ortodontik tekshiruv',
+        status: 'kutilmoqda',
+        notes: 'Braket o‘rnatish imkoniyati',
+        prescription: '',
+        duration: '60',
+        doctor: 'Dr. Aziza',
+        cost: '100000',
+        nextVisit: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 7,
+        patientId: 6,
+        patientName: 'Mohira Sobirova',
+        date: '2024-10-05',
+        time: '12:00',
+        procedure: 'Gingivit davolash',
+        status: 'rejalashtirilgan',
+        notes: 'Tish go‘shti muammolari',
+        prescription: 'Og‘iz chayish vositasi',
+        duration: '60',
+        doctor: 'Dr. Jamshid',
+        cost: '120000',
+        nextVisit: '2024-10-19',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 8,
+        patientId: 7,
+        patientName: 'Oybek Mirzayev',
+        date: '2024-10-10',
+        time: '09:30',
+        procedure: 'Protez sozlash',
+        status: 'kutilmoqda',
+        notes: 'Protez qayta sozlash',
+        prescription: '',
+        duration: '90',
+        doctor: 'Dr. Jamshid',
+        cost: '150000',
+        nextVisit: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 9,
+        patientId: 8,
+        patientName: 'Gulnoza Xolmatova',
+        date: '2024-10-15',
+        time: '11:00',
+        procedure: 'Estetik tozalash',
+        status: 'rejalashtirilgan',
+        notes: 'Tishlarni oqartirish',
+        prescription: '',
+        duration: '45',
+        doctor: 'Dr. Aziza',
+        cost: '200000',
+        nextVisit: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 10,
+        patientId: 9,
+        patientName: 'Temur Juraev',
+        date: '2024-10-20',
+        time: '14:30',
+        procedure: 'Implant tekshiruvi',
+        status: 'kutilmoqda',
+        notes: 'Implant holatini tekshirish',
+        prescription: '',
+        duration: '60',
+        doctor: 'Dr. Jamshid',
+        cost: '150000',
         nextVisit: '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -471,38 +978,62 @@ export const initializeData = () => {
       {
         id: 1,
         name: 'Amoxicillin 500mg',
-        type: 'antibiotic',
+        type: 'antibiotik',
         dosage: '500mg',
-        form: 'tablet',
+        form: 'tabletka',
         stock: 150,
         price: 2500,
-        description: 'Broad-spectrum antibiotic',
-        sideEffects: 'Nausea, allergy',
-        contraindications: 'Penicillin allergy'
+        description: 'Keng spektrli antibiotik',
+        sideEffects: 'Ko‘ngil aynishi, allergiya',
+        contraindications: 'Penitsillin allergiyasi'
       },
       {
         id: 2,
         name: 'Paracetamol 500mg',
-        type: 'painkiller',
+        type: 'og‘riq qoldiruvchi',
         dosage: '500mg',
-        form: 'tablet',
+        form: 'tabletka',
         stock: 300,
         price: 800,
-        description: 'Pain and fever relief',
-        sideEffects: 'Liver damage (high doses)',
-        contraindications: 'Liver diseases'
+        description: 'Og‘riq va isitmani yo‘qotish',
+        sideEffects: 'Yuqori dozalarda jigar shikastlanishi',
+        contraindications: 'Jigar kasalliklari'
       },
       {
         id: 3,
         name: 'Lidocaine 2%',
-        type: 'anesthetic',
+        type: 'behushlik',
         dosage: '2%',
-        form: 'injection',
+        form: 'in’ektsiya',
         stock: 50,
         price: 15000,
-        description: 'Local anesthetic',
-        sideEffects: 'Increased heart rate',
-        contraindications: 'Heart conditions'
+        description: 'Mahalliy behushlik vositasi',
+        sideEffects: 'Yurak urishining tezlashishi',
+        contraindications: 'Yurak kasalliklari'
+      },
+      {
+        id: 4,
+        name: 'Ibuprofen 400mg',
+        type: 'og‘riq qoldiruvchi',
+        dosage: '400mg',
+        form: 'tabletka',
+        stock: 200,
+        price: 1200,
+        description: 'Yallig‘lanish va og‘riqni kamaytirish',
+        sideEffects: 'Oshqozon og‘rig‘i, bosh aylanishi',
+        contraindications: 'Oshqozon yarasiga ehtiyotkorlik'
+      },
+      {
+        id: 5,
+        name: 'Chlorhexidine 0.2%',
+        type: 'antiseptik',
+        dosage: '0.2%',
+        form: 'suyuqlik',
+        stock: 100,
+        price: 10000,
+        description: 'Og‘iz bo‘shlig‘ini dezinfeksiya qilish',
+        sideEffects: 'Ta’m sezishning o‘zgarishi',
+        contraindications: 'Allergik reaksiyalar'
       }
     ],
     users: [
@@ -513,8 +1044,8 @@ export const initializeData = () => {
         password: 'keksri123',
         role: 'admin',
         phone: '+998901112233',
-        specialty: 'Chief Dentist',
-        bio: '15 years of experience, implantology specialist',
+        specialty: 'Bosh stomatolog',
+        bio: '15 yillik tajriba, implantologiya mutaxassisi',
         createdAt: new Date().toISOString()
       },
       {
@@ -522,10 +1053,10 @@ export const initializeData = () => {
         name: 'Dr. Aziza',
         email: 'aziza@keksri.uz',
         password: 'aziza123',
-        role: 'staff',
+        role: 'xodim',
         phone: '+998902223344',
-        specialty: 'Orthodontist',
-        bio: 'Pediatric and adult orthodontics',
+        specialty: 'Ortodont',
+        bio: 'Bolalar va kattalar ortodontiyasi',
         createdAt: new Date().toISOString()
       },
       {
@@ -533,10 +1064,21 @@ export const initializeData = () => {
         name: 'Dr. Jamshid',
         email: 'jamshid@keksri.uz',
         password: 'jamshid123',
-        role: 'staff',
+        role: 'xodim',
         phone: '+998903334455',
-        specialty: 'Surgeon',
-        bio: 'Dental surgery and implantology',
+        specialty: 'Jarroh',
+        bio: 'Stomatologik jarrohlik va implantologiya',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 4,
+        name: 'Dr. Shaxnoza',
+        email: 'shaxnoza@keksri.uz',
+        password: 'shaxnoza123',
+        role: 'xodim',
+        phone: '+998904445566',
+        specialty: 'Pediatrik stomatolog',
+        bio: 'Bolalar stomatologiyasi mutaxassisi',
         createdAt: new Date().toISOString()
       }
     ],
@@ -547,54 +1089,106 @@ export const initializeData = () => {
         patientName: 'Ali Valiev',
         date: '2024-09-01',
         services: [
-          { name: 'Teeth cleaning', cost: 150000 },
-          { name: 'Consultation', cost: 50000 }
+          { name: 'Tish tozalash', cost: 150000 },
+          { name: 'Maslahat', cost: 50000 }
         ],
         total: 200000,
         paid: 200000,
-        status: 'paid',
-        paymentMethod: 'cash',
-        notes: 'Fully paid'
-      }
-    ],
-    inventory: [
-      {
-        id: 1,
-        name: 'Colgate Toothpaste',
-        category: 'hygiene',
-        stock: 45,
-        minStock: 10,
-        price: 15000,
-        supplier: 'Medtex Group'
+        status: 'to‘langan',
+        paymentMethod: 'naqd',
+        notes: 'To‘liq to‘langan'
       },
       {
         id: 2,
-        name: 'Oral-B Floss',
-        category: 'hygiene',
-        stock: 30,
-        minStock: 5,
-        price: 8000,
-        supplier: 'Dental Market'
+        patientId: 2,
+        patientName: 'Zilola Karimova',
+        date: '2024-09-15',
+        services: [
+          { name: 'Tish tekshiruvi', cost: 80000 }
+        ],
+        total: 80000,
+        paid: 0,
+        status: 'to‘lanmagan',
+        paymentMethod: '',
+        notes: 'To‘lov kutilmoqda'
       },
       {
         id: 3,
-        name: 'Composite Filling Material',
-        category: 'material',
-        stock: 25,
-        minStock: 3,
-        price: 85000,
-        supplier: '3M Dental'
+        patientId: 3,
+        patientName: 'Sherzod Qodirov',
+        date: '2024-09-20',
+        services: [
+          { name: 'Protez tekshiruvi', cost: 120000 }
+        ],
+        total: 120000,
+        paid: 120000,
+        status: 'to‘langan',
+        paymentMethod: 'karta',
+        notes: 'To‘liq to‘langan'
+      },
+      {
+        id: 4,
+        patientId: 4,
+        patientName: 'Nodira Usmonova',
+        date: '2024-09-25',
+        services: [
+          { name: 'Tish tozalash', cost: 150000 }
+        ],
+        total: 150000,
+        paid: 150000,
+        status: 'to‘langan',
+        paymentMethod: 'naqd',
+        notes: 'To‘liq to‘langan'
       }
     ],
+  inventory: [
+  {
+    id: 1,
+    name: "Colgate tish pastasi",
+    category: "gigiyena",
+    stock: 45,            // Ombordagi mavjud miqdor
+    minStock: 10,         // Minimal zarur miqdor (xabar uchun)
+    price: 15000,         // Narxi (so'mda)
+    supplier: "Medtex Group" // Yetkazib beruvchi
+  },
+  {
+    id: 2,
+    name: "Oral-B tish ipi",
+    category: "gigiyena",
+    stock: 30,
+    minStock: 5,
+    price: 8000,
+    supplier: "Dental Market"
+  },
+  {
+    id: 3,
+    name: "Kompozit plomba materiali",
+    category: "material",
+    stock: 25,
+    minStock: 3,
+    price: 85000,
+    supplier: "3M Dental"
+  },
+  {
+    id: 4,
+    name: "Steril qo‘lqoplar",
+    category: "material",
+    stock: 100,
+    minStock: 20,
+    price: 5000,
+    supplier: "Medtex Group"
+  }
+]
+,
     staff: [
       {
         id: 1,
         name: 'Dilobar',
-        position: 'Nurse',
+        position: 'Hamshira',
         phone: '+998904445566',
         salary: '4000000',
         joinDate: '2023-01-15',
-        status: 'active'
+        status: 'faol'
       },
       {
         id: 2,
@@ -603,7 +1197,16 @@ export const initializeData = () => {
         phone: '+998905556677',
         salary: '3500000',
         joinDate: '2023-03-20',
-        status: 'active'
+        status: 'faol'
+      },
+      {
+        id: 3,
+        name: 'Zarina',
+        position: 'Hamshira',
+        phone: '+998906667788',
+        salary: '3800000',
+        joinDate: '2023-06-10',
+        status: 'faol'
       }
     ],
     admins: [
@@ -627,11 +1230,22 @@ export const initializeData = () => {
         name: 'John Doe',
         email: 'john@keksri.uz',
         phone: '+998901234568',
-        role: 'staff',
-        status: 'pending',
+        role: 'xodim',
+        status: 'kutilmoqda',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         telegram: '987654321'
+      },
+      {
+        id: 2,
+        name: 'Mahmud Xo‘jayev',
+        email: 'mahmud@keksri.uz',
+        phone: '+998901234569',
+        role: 'xodim',
+        status: 'kutilmoqda',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        telegram: '456789123'
       }
     ],
     logins: [
@@ -651,7 +1265,7 @@ export const initializeData = () => {
         name: 'Dr. Aziza',
         email: 'aziza@keksri.uz',
         phone: '+998902223344',
-        role: 'staff',
+        role: 'xodim',
         loginMethod: 'email',
         timestamp: '2025-10-04T14:30:00.000Z'
       },
@@ -661,9 +1275,19 @@ export const initializeData = () => {
         name: 'Dr. Jamshid',
         email: 'jamshid@keksri.uz',
         phone: '+998903334455',
-        role: 'staff',
+        role: 'xodim',
         loginMethod: 'token',
         timestamp: '2025-10-05T09:15:00.000Z'
+      },
+      {
+        id: 4,
+        userId: 4,
+        name: 'Dr. Shaxnoza',
+        email: 'shaxnoza@keksri.uz',
+        phone: '+998904445566',
+        role: 'xodim',
+        loginMethod: 'email',
+        timestamp: '2025-10-06T11:00:00.000Z'
       }
     ],
     sidebarOpen: false,
@@ -953,7 +1577,7 @@ export const cancelAppointment = (appointmentId, callback) => {
 
     const updatedAppointments = appointments.map(app =>
       String(app.id) === String(appointmentId)
-        ? { ...app, status: 'cancelled', updatedAt: new Date().toISOString() }
+        ? { ...app, status: 'bekor qilingan', updatedAt: new Date().toISOString() }
         : app
     );
 

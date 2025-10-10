@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   FiEdit, FiTrash2, FiPlus, FiX, FiSearch, 
   FiCalendar, FiClock, FiUser, FiPhone, 
-  FiActivity, FiArrowRight, FiDownload, FiUpload 
+  FiActivity, FiArrowRight, FiDownload, FiUpload,
+  FiChevronLeft, FiChevronRight
 } from 'react-icons/fi';
 import { 
   getFromLocalStorage, 
@@ -22,8 +23,10 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState(() => getFromLocalStorage('appointments', []));
   const [patients, setPatients] = useState(() => validateStoredPatients(getFromLocalStorage('patients', [])));
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [currentApp, setCurrentApp] = useState(null);
   const [originalApp, setOriginalApp] = useState(null);
+  const [selectedDetailsApp, setSelectedDetailsApp] = useState(null);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +47,8 @@ const Appointments = () => {
     prescriptions: []
   });
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     saveToLocalStorage('appointments', appointments);
@@ -105,6 +110,16 @@ const Appointments = () => {
     });
     setSelectedPatient(null);
     setOriginalApp(null);
+  };
+
+  const openDetailsModal = (app) => {
+    setSelectedDetailsApp(app);
+    setDetailsModalOpen(true);
+  };
+
+  const closeDetailsModal = () => {
+    setDetailsModalOpen(false);
+    setSelectedDetailsApp(null);
   };
 
   const handleSubmit = (e) => {
@@ -207,7 +222,7 @@ const Appointments = () => {
           sendTelegramMessage(patient.telegram, message);
         }
       } else {
-        const adminMessage = `Yangi uchrashuv qo'shildi/yangilandi: ${patient.name} - ${newApp.date} ${newApp.time} - ${newApp.procedure}. (Bemor Telegram ma'lumoti yo'q) ${messageParts.slice(1).join(' ')}`;
+        const adminMessage = `Yangi uchrashuv qoshildi/yangilandi: ${patient.name} - ${newApp.date} ${newApp.time} - ${newApp.procedure}. (Bemor Telegram ma'lumoti yoq) ${messageParts.slice(1).join(' ')}`;
         sendTelegramMessage(adminChatId, adminMessage);
       }
     }
@@ -241,7 +256,7 @@ const Appointments = () => {
     if (patient && patient.telegram) {
       sendTelegramMessage(patient.telegram, message);
     } else {
-      sendTelegramMessage('5838205785', `Bemor ${patientName} uchun eslatma: ${message} (Telegram yo'q)`);
+      sendTelegramMessage('5838205785', `Bemor ${patientName} uchun eslatma: ${message} (Telegram yoq)`);
     }
   };
 
@@ -272,6 +287,17 @@ const Appointments = () => {
     const matchesDate = !dateFilter || app.date === dateFilter;
     return matchesSearch && matchesStatus && matchesDate;
   });
+
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAppointments = filteredAppointments.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -448,7 +474,6 @@ const Appointments = () => {
               onChange={(e) => setDateFilter(e.target.value)}
             />
           </div>
-        
         </div>
       </div>
 
@@ -490,7 +515,7 @@ const Appointments = () => {
               <h3>Hali uchrashuvlar mavjud emas</h3>
               <p>Birinchi uchrashuvingizni qoʻshing</p>
               <button onClick={() => openModal()} className="primary-button">
-                <FiPlus /> Yangi uchrashuv qo'shish
+                <FiPlus /> Yangi uchrashuv qoshish
               </button>
             </>
           )}
@@ -512,8 +537,8 @@ const Appointments = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredAppointments.map((app) => (
-                <tr key={app.id}>
+              {paginatedAppointments.map((app) => (
+                <tr key={app.id} onClick={() => openDetailsModal(app)}>
                   <td>{getPatientName(app.patientId)}</td>
                   <td>{app.date} {app.time}</td>
                   <td>{app.procedure}</td>
@@ -524,9 +549,9 @@ const Appointments = () => {
                   </td>
                   <td>{app.nextVisit || '-'}</td>
                   <td>{countdowns[app.id] || '-'}</td>
-                  <td>{app.notes ? app.notes.slice(0, 20) + '...' : '-'}</td>
-                  <td>{app.prescription ? app.prescription.slice(0, 20) + '...' : '-'}</td>
-                  <td>
+                  <td>{app.notes || '-'}</td>
+                  <td>{app.prescription || '-'}</td>
+                  <td onClick={(e) => e.stopPropagation()}>
                     <div className="table-actions">
                       <button onClick={() => openModal(app)} className="edit-button" title="Tahrirlash">
                         <FiEdit />
@@ -540,6 +565,27 @@ const Appointments = () => {
               ))}
             </tbody>
           </table>
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="pagination-button"
+              >
+                <FiChevronLeft /> Oldingi
+              </button>
+              <span className="pagination-info">
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="pagination-button"
+              >
+                Keyingi <FiChevronRight />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -681,7 +727,7 @@ const Appointments = () => {
                       <label htmlFor="new-patient-note" className="input-label">Izoh</label>
                       <textarea
                         id="new-patient-note"
-                        placeholder="Bemor haqida qo'shimcha izohlar"
+                        placeholder="Bemor haqida qoshimcha izohlar"
                         value={newPatient.note}
                         onChange={(e) => setNewPatient({ ...newPatient, note: e.target.value })}
                         rows="3"
@@ -817,6 +863,40 @@ const Appointments = () => {
                 <button type="button" onClick={closeModal} className="action-button">Bekor qilish</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {detailsModalOpen && selectedDetailsApp && (
+        <div className="modal-overlay" onClick={closeDetailsModal}>
+          <div className="details-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="details-modal-header">
+              <h2>Uchrashuv tafsilotlari</h2>
+              <button type="button" onClick={closeDetailsModal} className="details-close-button">
+                <FiX />
+              </button>
+            </div>
+            <div className="details-modal-content">
+              <p><strong>Bemor:</strong> {getPatientName(selectedDetailsApp.patientId)}</p>
+              <p><strong>Sana va Vaqt:</strong> {selectedDetailsApp.date} {selectedDetailsApp.time}</p>
+              <p><strong>Jarayon:</strong> {selectedDetailsApp.procedure}</p>
+              <p><strong>Status:</strong> {selectedDetailsApp.status}</p>
+              <p><strong>Keyingi kelish:</strong> {selectedDetailsApp.nextVisit || 'Yo\'q'}</p>
+              <p><strong>Qoldiq vaqt:</strong> {countdowns[selectedDetailsApp.id] || 'Yo\'q'}</p>
+              <p><strong>Izoh:</strong> {selectedDetailsApp.notes || 'Yo\'q'}</p>
+              <p><strong>Retsept:</strong> {selectedDetailsApp.prescription || 'Yo\'q'}</p>
+              <p><strong>Telefon:</strong> {formatPhoneNumber(selectedDetailsApp.phone)}</p>
+              <p><strong>Yaratilgan sana:</strong> {new Date(selectedDetailsApp.createdAt).toLocaleString()}</p>
+              <p><strong>Yangilangan sana:</strong> {selectedDetailsApp.updatedAt ? new Date(selectedDetailsApp.updatedAt).toLocaleString() : 'Yo\'q'}</p>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => { closeDetailsModal(); openModal(selectedDetailsApp); }} className="primary-button">
+                Tahrirlash
+              </button>
+              <button onClick={closeDetailsModal} className="action-button">
+                Yopish
+              </button>
+            </div>
           </div>
         </div>
       )}

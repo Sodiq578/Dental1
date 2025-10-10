@@ -1,3 +1,4 @@
+/* ===== :root o'zgaruvchilari ===== */
 :root {
     /* 🎨 Asosiy ranglar - zamonaviy palitra */
     --primary-color: #3a86ff;
@@ -67,7 +68,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .main-content {
     flex: 1;
-    padding: 20px;
+    padding: 20px; /* Telefon va planshetlar uchun umumiy padding */
+    padding-top: 80px; /* Telefon va planshetlar uchun yuqori padding */
     margin-left: 0;
     transition: var(--transition);
     width: 100%;
@@ -77,6 +79,7 @@ h1, h2, h3, h4, h5, h6 {
     .main-content {
         margin-left: var(--sidebar-width);
         width: calc(100% - var(--sidebar-width));
+        padding: 20px; /* Katta ekranlarda barcha padding 20px */
     }
 }
 
