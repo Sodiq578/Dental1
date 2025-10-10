@@ -1,6 +1,4 @@
-/* Sidebar.css */
-
-/* CSS Variables - Yangi dizayn uchun yangi ranglar va o'zgarishlar qo'shildi */
+/* CSS Variables */
 :root {
   --sidebar-width: 280px;
   --primary-color: #007bff; /* Asosiy rang */
@@ -15,7 +13,7 @@
   --gray-800: #343a40;
   --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   --transition: all 0.3s ease;
-  --border-radius: 8px; /* Yumshoq burchaklar uchun */
+  --border-radius: 8px; /* Yumshoq burchaklar */
 }
 
 /* === OVERLAY === */
@@ -49,51 +47,101 @@
   z-index: 999;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Scrollni faollashtirish */
+  overflow-y: auto;
   transform: translateX(-100%);
   transition: var(--transition);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0; /* Yumshoq burchaklar */
-  scrollbar-width: none; /* Firefox uchun scroll bar yashirish */
-  -ms-overflow-style: none; /* IE va Edge uchun */
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .sidebar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera uchun scroll bar yashirish */
+  display: none;
 }
 
 .sidebar.open {
   transform: translateX(0);
 }
 
-/* Dark mode - Yangi ranglar bilan */
 .sidebar.dark {
   background-color: var(--gray-800);
   color: var(--gray-200);
 }
 
 .sidebar-header {
-  padding: 24px 20px; /* Ko'proq bo'shliq */
+  padding: 24px 20px;
   border-bottom: 1px solid var(--gray-200);
   text-align: center;
-  color: var(--white); /* Matn rangi oq */
-  border-radius: 0 0 var(--border-radius) var(--border-radius); /* Yumshoq burchaklar */
+  color: var(--gray-700);
+  position: relative;
 }
 
 .sidebar-header h2 {
-  font-size: 26px; /* Kattaroq font */
-  font-weight: 700; /* Qalinroq */
+  font-size: 26px;
+  font-weight: 700;
   margin: 0;
 }
 
 .sidebar.dark .sidebar-header {
   border-bottom-color: var(--gray-700);
-  background-color: var(--gray-700); /* Dark modeda yangi fon */
+  background-color: var(--gray-700);
+}
+
+/* Close button */
+.sidebar-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.sidebar-close-btn .sidebar-icon {
+  font-size: 24px;
+  color: var(--gray-700);
+}
+
+.sidebar.dark .sidebar-close-btn .sidebar-icon {
+  color: var(--gray-200);
+}
+
+.sidebar-close-btn:hover .sidebar-icon {
+  color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.sidebar.dark .sidebar-close-btn:hover .sidebar-icon {
+  background-color: var(--gray-700);
+}
+
+/* Icons */
+.sidebar-icon {
+  font-size: 20px;
+  color: var(--gray-700);
+  flex-shrink: 0;
+}
+
+.sidebar.dark .sidebar-icon {
+  color: var(--gray-300);
+}
+
+.sidebar-nav a:hover .sidebar-icon,
+.sidebar-logout-btn:hover .sidebar-icon {
+  color: var(--primary-color);
+}
+
+.sidebar-nav a.active .sidebar-icon {
+  color: var(--white);
 }
 
 /* === NAVIGATION === */
 .sidebar-nav {
   flex: 1;
-  padding: 24px 0; /* Ko'proq bo'shliq */
+  padding: 24px 0;
 }
 
 .sidebar-nav ul {
@@ -103,228 +151,110 @@
 }
 
 .sidebar-nav li {
-  margin-bottom: 12px; /* Ko'proq bo'shliq */
+  margin-bottom: 12px;
 }
 
 .sidebar-nav a {
   display: flex;
   align-items: center;
-  padding: 14px 24px; /* Kattaroq padding */
+  padding: 14px 24px;
   color: var(--gray-700);
   text-decoration: none;
   transition: var(--transition);
-  gap: 14px; /* Ikon va matn orasidagi masofa */
-  border-radius: var(--border-radius); /* Yumshoq burchaklar */
-  margin: 0 12px; /* Yon tomondan bo'shliq */
+  gap: 14px;
+  border-radius: var(--border-radius);
+  margin: 0 12px;
 }
 
 .sidebar.dark .sidebar-nav a {
   color: var(--gray-300);
 }
 
-/* Hover effect - Yangi effekt: skalalash va rang o'zgarishi */
 .sidebar-nav a:hover {
   background-color: var(--gray-100);
   color: var(--primary-color);
-  transform: scale(1.02); /* Kichik skalalash */
+  transform: scale(1.02);
 }
 
 .sidebar.dark .sidebar-nav a:hover {
   background-color: var(--gray-700);
 }
 
-/* Active link - Yangi dizayn: aksent rang bilan */
 .sidebar-nav a.active {
   background-color: var(--accent-color);
   color: var(--white);
-  font-weight: 600; /* Qalinroq */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Kichik soya */
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* === FOOTER & SETTINGS === */
-.sidebar-footer {
-  padding: 24px 20px; /* Ko'proq bo'shliq */
-  border-top: 1px solid var(--gray-200);
-  background-color: var(--gray-100); /* Footer uchun yangi fon */
-  border-radius: 0 0 var(--border-radius) 0; /* Yumshoq burchaklar */
-}
-
-.sidebar.dark .sidebar-footer {
-  border-top-color: var(--gray-700);
-  background-color: var(--gray-700); /* Dark modeda yangi fon */
-}
-
-.settings-section h3 {
+/* === USER INFO === */
+.user-info {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 20px; /* Ko'proq bo'shliq */
-  font-size: 18px; /* Kattaroq font */
-  color: var(--gray-700);
-  font-weight: 700; /* Qalinroq */
-}
-
-.sidebar.dark .settings-section h3 {
-  color: var(--gray-300);
-}
-
-.setting-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 0; /* Kattaroq padding */
-  color: var(--gray-600);
-  font-size: 15px; /* Kattaroq font */
-  border-bottom: 1px solid var(--gray-200); /* Har bir item uchun chegara */
-}
-
-.sidebar.dark .setting-item {
-  color: var(--gray-400);
-  border-bottom-color: var(--gray-700);
-}
-
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  padding: 0;
-  font-size: 15px;
-  transition: var(--transition);
-}
-
-.theme-toggle:hover {
-  color: var(--primary-color);
-  transform: scale(1.02); /* Hoverda skalalash */
-}
-
-.setting-item select {
-  margin-left: auto;
-  padding: 8px 12px; /* Kattaroq padding */
-  border-radius: var(--border-radius); /* Yumshoq burchaklar */
-  border: 1px solid var(--gray-300);
-  background-color: var(--white);
-  color: var(--gray-700);
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.sidebar.dark .setting-item select {
-  background-color: var(--gray-700);
-  color: var(--gray-200);
-  border-color: var(--gray-600);
-}
-
-.setting-item button {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 0;
-  font-size: 15px;
-  transition: var(--transition);
-}
-
-.setting-item button:hover {
-  color: var(--primary-color);
-  transform: scale(1.02); /* Hoverda skalalash */
-}
-
-.setting-item input[type="file"] {
-  width: 0.1px;
-  height: 0.1px;
-  opacity: 0;
-  overflow: hidden;
-  position: absolute;
-  z-index: -1;
-}
-
-.restore-label {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.restore-label:hover {
-  color: var(--primary-color);
-  transform: scale(1.02); /* Hoverda skalalash */
-}
-
-/* === RESPONSIVE === */
-@media (min-width: 768px) {
-  .sidebar {
-    transform: translateX(0);
-  }
-  
-  .sidebar-overlay {
-    display: none;
-  }
-}
-
-/* Mobile menu button (agar kerak bo'lsa) */
-.menu-btn {
-  position: fixed;
-  top: 15px;
-  left: 15px;
-  z-index: 997;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius);
-  padding: 10px 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
   justify-content: center;
-  box-shadow: var(--box-shadow);
 }
 
-@media (min-width: 768px) {
-  .menu-btn {
-    display: none;
-  }
+.user-icon {
+  font-size: 24px;
+  color: var(--gray-700);
 }
 
-/* Sidebar logout button */
+.sidebar.dark .user-icon {
+  color: var(--gray-200);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.user-role {
+  font-size: 14px;
+  color: var(--gray-600);
+}
+
+.sidebar.dark .user-role {
+  color: var(--gray-400);
+}
+
+/* === LOGOUT BUTTON === */
 .sidebar-logout-btn {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 12px 20px;
+  padding: 12px 24px;
   background: none;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   font-size: 16px;
   font-weight: 500;
-  color: #333;
+  color: var(--gray-700);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
   text-align: left;
+  margin: 0 12px;
 }
 
 .dark .sidebar-logout-btn {
-  color: #f0f0f0;
+  color: var(--gray-300);
 }
 
 .sidebar-logout-btn:hover {
-  background-color: #4a6cf7;
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--white);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.sidebar-logout-btn svg {
+.sidebar-logout-btn .sidebar-icon {
   font-size: 20px;
 }
 
@@ -333,14 +263,59 @@
   font-weight: 500;
 }
 
-/* Responsive design */
+/* === MODAL === */
+.token-login-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--white);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.token-login-modal .modal-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.token-login-modal .modal-close-btn .sidebar-icon {
+  font-size: 24px;
+  color: var(--gray-700);
+}
+
+.token-login-modal.dark .modal-close-btn .sidebar-icon {
+  color: var(--gray-200);
+}
+
+.token-login-modal .modal-close-btn:hover .sidebar-icon {
+  color: var(--primary-color);
+  transform: scale(1.1);
+}
+
+.token-login-modal.dark .modal-close-btn:hover .sidebar-icon {
+  background-color: var(--gray-700);
+}
+
+/* === RESPONSIVE === */
 @media (max-width: 768px) {
   .sidebar-logout-btn {
     padding: 10px 16px;
     font-size: 15px;
   }
 
-  .sidebar-logout-btn svg {
+  .sidebar-logout-btn .sidebar-icon {
     font-size: 18px;
   }
 
@@ -355,11 +330,25 @@
     font-size: 14px;
   }
 
-  .sidebar-logout-btn svg {
+  .sidebar-logout-btn .sidebar-icon {
     font-size: 16px;
   }
 
   .sidebar-logout-btn span {
     font-size: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: none;
+  }
+
+  .menu-btn {
+    display: none;
   }
 }

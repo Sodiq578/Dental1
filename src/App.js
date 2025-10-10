@@ -148,6 +148,7 @@ const App = () => {
     saveToLocalStorage("currentUser", userData);
     logLogin(userData);
     setLogins(getFromLocalStorage("logins", []));
+    setTokenLoginOpen(false); // Modalni yopish
   };
 
   const handleLogout = () => {
@@ -254,7 +255,6 @@ const App = () => {
               <Sidebar
                 isOpen={sidebarOpen}
                 toggleSidebar={toggleSidebar}
-                currentUser={currentUser}
                 onLogout={handleLogout}
               />
 
@@ -298,3 +298,4 @@ const App = () => {
 };
 
 export default App;
+

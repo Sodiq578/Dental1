@@ -1,244 +1,70 @@
 /* PatientPortal.css */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-/* Root container for the entire portal */
 .container {
-  max-width: 896px; /* Equivalent to max-w-4xl */
+  max-width: 900px;
   margin: 0 auto;
-  padding: 16px;
-  background-color: #f9fafb; /* Light gray background */
+  padding: 20px;
+  font-family: 'Inter', 'Arial', sans-serif;
+  background-color: #f8fafc;
   min-height: 100vh;
 }
 
-/* Main heading */
 h1 {
-  font-size: 1.5rem; /* 24px */
-  font-weight: 700;
-  margin-bottom: 24px;
-  color: #1f2937; /* Gray-800 */
-  text-align: center;
-}
-
-/* Success and error messages */
-.bg-green-100 {
-  background-color: #ecfdf5; /* Green-50 */
-  color: #047857; /* Green-700 */
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #d1fae5; /* Green-200 */
-  opacity: 1;
-  transition: opacity 0.3s ease-in-out;
-}
-
-.bg-red-100 {
-  background-color: #fef2f2; /* Red-50 */
-  color: #b91c1c; /* Red-700 */
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #fee2e2; /* Red-200 */
-  opacity: 1;
-  transition: opacity 0.3s ease-in-out;
-}
-
-/* Card for registration and appointment sections */
-.bg-white {
-  background-color: #ffffff;
-  padding: 24px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #f3f4f6; /* Gray-100 */
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-}
-
-.bg-white:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Section headings */
-h2 {
-  font-size: 1.25rem; /* 20px */
+  font-size: 2.25rem;
   font-weight: 600;
-  margin-bottom: 16px;
-  color: #1f2937; /* Gray-800 */
+  color: #1e293b;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+h2 {
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 20px;
 }
 
 h3 {
-  font-size: 1.125rem; /* 18px */
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #374151; /* Gray-700 */
-}
-
-/* Form labels */
-label {
-  display: block;
-  color: #374151; /* Gray-700 */
+  font-size: 1.25rem;
   font-weight: 500;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #334155;
+  margin: 15px 0 10px;
 }
 
-/* Input fields */
-input[type="text"],
-input[type="tel"],
-input[type="date"] {
-  width: 100%;
-  border: 1px solid #d1d5db; /* Gray-300 */
-  border-radius: 8px;
+/* Success and Error Messages */
+.bg-green-100 {
+  background-color: #d1fae5;
+  color: #065f46;
   padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  text-align: center;
   font-size: 1rem;
-  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-input[type="text"]:focus,
-input[type="tel"]:focus,
-input[type="date"]:focus {
-  outline: none;
-  border-color: transparent;
-  box-shadow: 0 0 0 2px #2563eb; /* Blue-500 */
-}
-
-/* Read-only input */
-input[readonly] {
-  background-color: #f3f4f6; /* Gray-100 */
-  color: #4b5563; /* Gray-600 */
-  cursor: not-allowed;
-}
-
-/* Placeholder text */
-input::placeholder {
-  color: #9ca3af; /* Gray-400 */
-  font-style: italic;
-}
-
-/* Buttons */
-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border-radius: 8px;
   font-weight: 500;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.bg-red-100 {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  text-align: center;
   font-size: 1rem;
-  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
-  cursor: pointer;
-}
-
-.bg-blue-500 {
-  background-color: #2563eb; /* Blue-600 */
-  color: #ffffff;
-  border: none;
-}
-
-.bg-blue-500:hover {
-  background-color: #1d4ed8; /* Blue-700 */
-}
-
-.bg-blue-500:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
-}
-
-.bg-green-500 {
-  background-color: #059669; /* Green-600 */
-  color: #ffffff;
-  border: none;
-}
-
-.bg-green-500:hover {
-  background-color: #047857; /* Green-700 */
-}
-
-.bg-green-500:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #059669;
-}
-
-.bg-gray-300 {
-  background-color: #d1d5db; /* Gray-300 */
-  color: #4b5563; /* Gray-600 */
-  cursor: not-allowed;
-  border: none;
-}
-
-.bg-blue-100 {
-  background-color: #eff6ff; /* Blue-50 */
-  color: #1d4ed8; /* Blue-700 */
-  border: 1px solid #dbeafe; /* Blue-100 */
-}
-
-.bg-blue-100:hover {
-  background-color: #dbeafe; /* Blue-100 */
-}
-
-.bg-blue-100:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #93c5fd; /* Blue-300 */
-}
-
-/* Time slot grid */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-/* Time slot buttons */
-button.p-2 {
-  padding: 8px;
-  border-radius: 8px;
-  font-size: 0.875rem; /* 14px */
   font-weight: 500;
-  border: 1px solid #e5e7eb; /* Gray-200 */
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  animation: fadeIn 0.3s ease-in;
 }
 
-/* Selected time slot */
-button.bg-blue-100[aria-selected="true"] {
-  background-color: #dbeafe; /* Blue-100 */
-  border-color: #2563eb; /* Blue-500 */
-}
-
-/* Helper text for Telegram input */
-.text-sm.text-gray-500 {
-  font-size: 0.75rem; /* 12px */
-  color: #6b7280; /* Gray-500 */
-  margin-top: 4px;
-}
-
-/* Form spacing */
-form > div {
-  margin-bottom: 16px;
-}
-
-/* Icon styling */
-label svg,
-button svg {
-  width: 20px;
-  height: 20px;
-}
-
-/* Hover effects for interactive buttons */
-button:not(.bg-gray-300):hover {
-  transform: scale(1.05);
-}
-
-/* Disabled button styling */
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
@@ -246,91 +72,184 @@ button:disabled {
   }
 }
 
-.bg-white,
-.bg-green-100,
-.bg-red-100 {
-  animation: fadeIn 0.3s ease-in-out;
+/* Form Container */
+.bg-white {
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
 }
 
-/* Focus states for accessibility */
+/* Form Styling */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1e293b;
+  background-color: #f9fafb;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
 input:focus,
-button:focus {
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.3);
 }
 
-/* Button spacing in forms */
-form button {
-  margin-top: 8px;
-  margin-right: 8px;
+input[readonly] {
+  background-color: #e5e7eb;
+  cursor: not-allowed;
+  color: #6b7280;
 }
 
-/* Responsive adjustments */
-@media (min-width: 640px) {
+/* Time Slots Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+}
+
+button.bg-blue-500 {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+button.bg-blue-500:hover:not(:disabled) {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+button.bg-green-500 {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+button.bg-green-500:hover:not(:disabled) {
+  background-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+button.bg-blue-100 {
+  background-color: #dbeafe;
+  color: #1e293b;
+}
+
+button.bg-blue-100:hover:not(:disabled) {
+  background-color: #bfdbfe;
+}
+
+button.bg-gray-300 {
+  background-color: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+button[aria-selected="true"] {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: 2px solid #2563eb;
+}
+
+/* Helper Text */
+.text-sm.text-gray-500 {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+/* Icon Styling */
+label svg {
+  width: 20px;
+  height: 20px;
+  color: #4b5563;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
   .container {
-    padding: 24px;
+    padding: 15px;
   }
 
   h1 {
-    font-size: 1.875rem; /* 30px */
-    text-align: left;
+    font-size: 1.75rem;
   }
 
   h2 {
-    font-size: 1.5rem; /* 24px */
-  }
-
-  .text-sm.text-gray-500 {
-    font-size: 0.875rem; /* 14px */
-  }
-
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .bg-white {
-    padding: 32px;
-  }
-}
-
-@media (min-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (max-width: 640px) {
-  .container {
-    padding: 12px;
-  }
-
-  h1 {
-    font-size: 1.25rem; /* 20px */
-  }
-
-  h2 {
-    font-size: 1.125rem; /* 18px */
+    font-size: 1.5rem;
   }
 
   h3 {
-    font-size: 1rem; /* 16px */
+    font-size: 1.125rem;
   }
 
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
 
   button {
-    font-size: 0.875rem; /* 14px */
-    padding: 6px 12px;
+    font-size: 0.9rem;
+    padding: 10px;
   }
 
-  input[type="text"],
-  input[type="tel"],
-  input[type="date"] {
+  input,
+  select {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  }
+
+  button {
+    font-size: 0.875rem;
     padding: 8px;
-  }
-
-  .bg-white {
-    padding: 16px;
   }
 }

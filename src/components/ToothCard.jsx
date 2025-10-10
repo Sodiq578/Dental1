@@ -5,6 +5,7 @@ import "./Tooth.css";
 
 const ToothCard = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Model yuklanishini simulyatsiya qilish
   React.useEffect(() => {
@@ -14,6 +15,10 @@ const ToothCard = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
 
   const relatedTopics = [
     {
@@ -39,7 +44,7 @@ const ToothCard = () => {
   ];
 
   return (
-    <div className="tish-anatomiya-konteyner">
+    <div className={`tish-anatomiya-konteyner ${isFullscreen ? 'fullscreen-mode' : ''}`}>
       {/* Sarlavha qismi */}
       <header className="tish-sarlavha">
         <div className="konteyner">
@@ -75,7 +80,17 @@ const ToothCard = () => {
           </div>
 
           {/* 3D model oynasi */}
-          <div className={`model-konteyner ${isLoading ? 'yuklanmoqda' : ''}`}>
+          <div className={`model-konteyner ${isLoading ? 'yuklanmoqda' : ''} ${isFullscreen ? 'fullscreen' : ''}`}>
+            <div className="model-controls">
+              <button 
+                className="fullscreen-btn"
+                onClick={toggleFullscreen}
+                aria-label={isFullscreen ? "Kichiklashtirish" : "To'liq ekran"}
+              >
+                {isFullscreen ? "✕" : "⛶"}
+              </button>
+            </div>
+            
             <iframe
               className="model-iframe"
               src="https://human.biodigital.com/widget/?be=2W7q&background.colors=255,255,255,1,51,64,77,1&initial.hand-hint=true&ui-info=true&ui-fullscreen=true&ui-center=false&ui-dissect=true&ui-zoom=true&ui-help=true&ui-tools-display=primary&uaid=3bH1u"
@@ -83,36 +98,45 @@ const ToothCard = () => {
               sandbox="allow-modals allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
               onLoad={() => setIsLoading(false)}
             />
+            
+            {isLoading && (
+              <div className="loading-indicator">
+                <div className="loading-spinner"></div>
+                <p>3D Model yuklanmoqda...</p>
+              </div>
+            )}
           </div>
 
           {/* Tegishli mavzular */}
-          <section className="qoshimcha-malumotlar">
-            <h3 className="mavzular-sarlavha">
-              <FaHeart />
-              Tegishli Anatomiya Mavzulari
-            </h3>
-            <div className="mavzular-roʻyxati">
-              {relatedTopics.map((topic, index) => (
-                <div key={index} className="mavzu-karta" tabIndex={0}>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '12px', 
-                    marginBottom: '8px' 
-                  }}>
-                    <span style={{ 
-                      color: 'var(--primary-blue)', 
-                      fontSize: '1.25rem' 
+          {!isFullscreen && (
+            <section className="qoshimcha-malumotlar">
+              <h3 className="mavzular-sarlavha">
+                <FaHeart />
+                Tegishli Anatomiya Mavzulari
+              </h3>
+              <div className="mavzular-roʻyxati">
+                {relatedTopics.map((topic, index) => (
+                  <div key={index} className="mavzu-karta" tabIndex={0}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '12px', 
+                      marginBottom: '8px' 
                     }}>
-                      {topic.icon}
-                    </span>
-                    <h4>{topic.title}</h4>
+                      <span style={{ 
+                        color: 'var(--primary-blue)', 
+                        fontSize: '1.25rem' 
+                      }}>
+                        {topic.icon}
+                      </span>
+                      <h4>{topic.title}</h4>
+                    </div>
+                    <p>{topic.description}</p>
                   </div>
-                  <p>{topic.description}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          )}
         </main>
       </div>
     </div>

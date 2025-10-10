@@ -1,3 +1,5 @@
+/* App.css */
+
 /* ===== :root o'zgaruvchilari ===== */
 :root {
     /* 🎨 Asosiy ranglar - zamonaviy palitra */
@@ -31,7 +33,7 @@
 
     /* 📐 Oʻlchamlar va boshqa o'zgaruvchilar */
     --base-font-size: 16px;
-    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     --layout-width: 600px;
     --sidebar-width: 250px;
     --border-radius: 12px;
@@ -66,20 +68,29 @@ h1, h2, h3, h4, h5, h6 {
     transition: var(--transition);
 }
 
-.main-content {
+.main-content,
+.patient-main {
     flex: 1;
-    padding: 20px; /* Telefon va planshetlar uchun umumiy padding */
-    padding-top: 80px; /* Telefon va planshetlar uchun yuqori padding */
-    margin-left: 0;
+    padding: 20px;
+    padding-top: 80px;
     transition: var(--transition);
     width: 100%;
+    background-color: var(--gray-100);
+}
+
+.patient-main {
+    margin-left: 0; /* No sidebar offset for patient users */
 }
 
 @media (min-width: 768px) {
     .main-content {
         margin-left: var(--sidebar-width);
         width: calc(100% - var(--sidebar-width));
-        padding: 20px; /* Katta ekranlarda barcha padding 20px */
+        padding: 20px;
+    }
+    .patient-main {
+        margin-left: 0; /* Ensure no sidebar offset on larger screens */
+        width: 100%;
     }
 }
 
@@ -312,3 +323,68 @@ tr:hover {
 .status.tasdiqlangan { background-color: #d4edda; color: #155724; }
 .status.yakunlangan { background-color: #d1ecf1; color: #0c5460; }
 .status.bekor_qilingan { background-color: #f8d7da; color: #721c24; }
+
+/* ===== LOADING AND ERROR STATES ===== */
+.storage-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+    color: var(--gray-800);
+    background-color: var(--gray-100);
+}
+
+.storage-error svg {
+    color: var(--danger-color);
+    margin-bottom: 16px;
+}
+
+.loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: var(--gray-100);
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-overlay p {
+    color: var(--white);
+    margin-top: 16px;
+    font-size: 1.25rem;
+}
+
+/* ===== MENU BUTTON ===== */
+.menu-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.menu-btn:hover {
+    background-color: var(--info-color);
+}

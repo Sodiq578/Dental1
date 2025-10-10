@@ -1,487 +1,340 @@
-/* ToothCard Komponenti - Zamonaviy 3D Anatomiya Dizayni */
-
+/* Asosiy o'zgaruvchilar */
 :root {
-  /* Asosiy ranglar */
   --primary-blue: #2563eb;
-  --primary-blue-dark: #1e40af;
-  --primary-blue-light: #3b82f6;
-  --accent-teal: #0d9488;
-  --accent-teal-dark: #0f766e;
+  --primary-dark: #1e40af;
+  --text-dark: #1f2937;
+  --text-light: #6b7280;
+  --background-light: #f8fafc;
   --white: #ffffff;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
-  
-  /* Gradientlar */
-  --gradient-medical: linear-gradient(135deg, #2563eb, #0d9488);
-  --gradient-header: linear-gradient(135deg, #1e40af, #0f766e);
-  --gradient-card: linear-gradient(145deg, #ffffff, #f8fafc);
-  
-  /* Shadow effektlar */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 20px 25px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.25);
-  
-  /* Border radius */
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  
-  /* Transitionlar */
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: all 0.15s ease;
-  
-  /* Spacing */
-  --space-xs: 0.5rem;
-  --space-sm: 0.75rem;
-  --space: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
-  --space-3xl: 4rem;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --border-radius: 12px;
+  --transition: all 0.3s ease;
 }
 
-/* Dark mode */
-.dark {
-  --gradient-card: linear-gradient(145deg, #1f2937, #111827);
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --bg-primary: #111827;
-}
-
-/* Asosiy konteyner */
+/* Umumiy stillar */
 .tish-anatomiya-konteyner {
   min-height: 100vh;
-  background: var(--gray-50);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
-.dark .tish-anatomiya-konteyner {
-  background: var(--gray-900);
+.tish-anatomiya-konteyner.fullscreen-mode {
+  background: #1a202c;
 }
 
-/* Umumiy konteyner */
 .konteyner {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 var(--space);
+  padding: 0 20px;
 }
 
-/* Sarlavha bo'limi - Mukammal gradient dizayn */
+/* Sarlavha qismi */
 .tish-sarlavha {
-  background: var(--gradient-header);
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-dark) 100%);
   color: var(--white);
-  padding: var(--space-3xl) 0;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: var(--space-2xl);
-}
-
-.tish-sarlavha::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.05) 0%, transparent 50%);
-  animation: float 20s infinite linear;
-}
-
-@keyframes float {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(-50px, -50px) rotate(360deg); }
+  padding: 3rem 0;
+  margin-bottom: 2rem;
 }
 
 .sarlavha-mazmuni {
-  position: relative;
-  z-index: 2;
   text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .asosiy-sarlavha {
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 800;
-  margin-bottom: var(--space);
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space);
-  line-height: 1.2;
+  gap: 1rem;
 }
 
 .tish-ikona {
   font-size: 2.5rem;
-  background: rgba(255, 255, 255, 0.2);
-  padding: var(--space);
-  border-radius: var(--radius-xl);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
   animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
 .sarlavha-tavsifi {
-  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-size: 1.25rem;
   opacity: 0.9;
-  max-width: 600px;
-  margin: 0 auto;
   line-height: 1.6;
 }
 
 /* Asosiy kontent */
 .asosiy-kontent {
-  padding: var(--space-2xl) 0;
+  padding: 2rem 0;
 }
 
-/* Kontent sarlavhasi */
 .kontent-sarlavha {
-  background: var(--gradient-card);
-  padding: var(--space-xl);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  margin-bottom: var(--space-2xl);
-  border: 1px solid var(--gray-200);
-  position: relative;
-  overflow: hidden;
-}
-
-.dark .kontent-sarlavha {
-  border-color: var(--gray-700);
-}
-
-.kontent-sarlavha::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--gradient-medical);
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .model-sarlavha {
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 700;
-  margin-bottom: var(--space);
-  color: var(--gray-800);
+  font-size: 2.25rem;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
-  gap: var(--space);
-}
-
-.dark .model-sarlavha {
-  color: var(--white);
+  justify-content: center;
+  gap: 1rem;
 }
 
 .malumot-ikona {
-  font-size: 1.75rem;
+  font-size: 2rem;
   color: var(--primary-blue);
-  background: rgba(37, 99, 235, 0.1);
-  padding: var(--space-sm);
-  border-radius: var(--radius);
 }
 
 .model-tavsifi {
-  font-size: 1.1rem;
+  font-size: 1.125rem;
+  color: var(--text-light);
   line-height: 1.7;
-  color: var(--gray-600);
-  max-width: 900px;
+  text-align: center;
 }
 
-.dark .model-tavsifi {
-  color: var(--gray-300);
-}
-
-/* 3D Model konteyneri - Mukammal dizayn */
+/* MODEL KONTEYNER - KATTA QILINDI */
 .model-konteyner {
   position: relative;
   width: 100%;
-  height: 70vh;
-  min-height: 600px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  margin-bottom: var(--space-2xl);
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--gray-200);
+  height: 700px; /* Oldingisidan kattaroq */
   background: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  margin-bottom: 3rem;
+  border: 1px solid #e5e7eb;
+  transition: var(--transition);
 }
 
-.dark .model-konteyner {
-  border-color: var(--gray-700);
-  background: var(--gray-800);
-}
-
-.model-konteyner::before {
-  content: '';
-  position: absolute;
+.model-konteyner.fullscreen {
+  position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    linear-gradient(45deg, transparent 49%, rgba(37, 99, 235, 0.1) 50%, transparent 51%),
-    linear-gradient(-45deg, transparent 49%, rgba(13, 148, 136, 0.1) 50%, transparent 51%);
-  background-size: 20px 20px;
-  opacity: 0.3;
-  z-index: 1;
-  pointer-events: none;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  border-radius: 0;
+  margin-bottom: 0;
 }
 
+.model-konteyner.yuklanmoqda {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+}
+
+.model-controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+.fullscreen-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+}
+
+.fullscreen-btn:hover {
+  background: var(--white);
+  transform: scale(1.1);
+}
+
+/* Model iframe - kattalashtirildi */
 .model-iframe {
   width: 100%;
   height: 100%;
   border: none;
-  position: relative;
-  z-index: 2;
+  background: transparent;
 }
 
-/* Model yuklanayotganda ko'rsatkich */
-.model-konteyner::after {
-  content: '3D Model yuklanmoqda...';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: var(--space) var(--space-lg);
-  border-radius: var(--radius);
-  font-size: 0.9rem;
-  z-index: 3;
-  opacity: 0;
-  transition: var(--transition);
+/* Yuklanish indikatori */
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
 }
 
-.model-konteyner.yuklanmoqda::after {
-  opacity: 1;
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid var(--primary-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-/* Qo'shimcha ma'lumotlar paneli */
+.loading-indicator p {
+  color: var(--text-light);
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+/* Tegishli mavzular */
 .qoshimcha-malumotlar {
-  background: var(--gradient-card);
-  padding: var(--space-xl);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--gray-200);
-}
-
-.dark .qoshimcha-malumotlar {
-  border-color: var(--gray-700);
+  margin-top: 4rem;
 }
 
 .mavzular-sarlavha {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: var(--space-lg);
-  color: var(--gray-800);
+  font-size: 2rem;
+  color: var(--text-dark);
+  margin-bottom: 2rem;
   display: flex;
   align-items: center;
-  gap: var(--space);
+  gap: 1rem;
+  justify-content: center;
 }
 
-.dark .mavzular-sarlavha {
-  color: var(--white);
+.mavzular-sarlavha svg {
+  color: #dc2626;
 }
 
 .mavzular-roʻyxati {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space);
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
 .mavzu-karta {
   background: var(--white);
-  padding: var(--space-lg);
-  border-radius: var(--radius);
-  border-left: 4px solid var(--primary-blue);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
   transition: var(--transition);
+  border: 1px solid #f1f5f9;
   cursor: pointer;
-  border: 1px solid var(--gray-200);
-}
-
-.dark .mavzu-karta {
-  background: var(--gray-800);
-  border-color: var(--gray-700);
 }
 
 .mavzu-karta:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-left-color: var(--accent-teal);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-blue);
 }
 
 .mavzu-karta h4 {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
+  color: var(--text-dark);
+  margin: 0;
   font-weight: 600;
-  margin-bottom: var(--space-xs);
-  color: var(--gray-800);
-}
-
-.dark .mavzu-karta h4 {
-  color: var(--white);
 }
 
 .mavzu-karta p {
-  font-size: 0.9rem;
-  color: var(--gray-600);
-  line-height: 1.5;
+  color: var(--text-light);
+  line-height: 1.6;
   margin: 0;
 }
 
-.dark .mavzu-karta p {
-  color: var(--gray-300);
-}
-
-/* Yuklanayotgan holat */
-.yuklanmoqda {
-  opacity: 0.7;
-  pointer-events: none;
-  position: relative;
-}
-
-.yuklanmoqda::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--gray-200);
-  border-top: 3px solid var(--primary-blue);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+/* Animatsiyalar */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
 }
 
 @keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive dizayn */
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
+  .konteyner {
+    padding: 0 15px;
+  }
+  
+  .asosiy-sarlavha {
+    font-size: 2rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .tish-ikona {
+    font-size: 2rem;
+  }
+  
+  .sarlavha-tavsifi {
+    font-size: 1.125rem;
+  }
+  
+  .model-sarlavha {
+    font-size: 1.75rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
   .model-konteyner {
-    height: 60vh;
-    min-height: 500px;
+    height: 500px;
   }
   
   .mavzular-roʻyxati {
     grid-template-columns: 1fr;
   }
-}
-
-@media (max-width: 768px) {
-  :root {
-    --space: 0.75rem;
-    --space-lg: 1rem;
-    --space-xl: 1.5rem;
-    --space-2xl: 2rem;
-    --space-3xl: 3rem;
-  }
   
-  .tish-sarlavha {
-    padding: var(--space-2xl) 0;
-  }
-  
-  .asosiy-sarlavha {
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-  
-  .tish-ikona {
-    font-size: 2rem;
-    padding: var(--space-sm);
-  }
-  
-  .model-konteyner {
-    height: 50vh;
-    min-height: 400px;
-  }
-  
-  .kontent-sarlavha,
-  .qoshimcha-malumotlar {
-    padding: var(--space-lg);
-  }
-  
-  .model-sarlavha {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-sm);
+  .mavzular-sarlavha {
+    font-size: 1.75rem;
+    text-align: center;
   }
 }
 
 @media (max-width: 480px) {
-  .tish-sarlavha {
-    padding: var(--space-xl) 0;
+  .model-konteyner {
+    height: 400px;
   }
   
   .asosiy-sarlavha {
     font-size: 1.75rem;
   }
   
-  .model-konteyner {
-    height: 40vh;
-    min-height: 300px;
+  .model-sarlavha {
+    font-size: 1.5rem;
   }
   
   .mavzu-karta {
-    padding: var(--space);
+    padding: 1.5rem;
   }
 }
 
-/* Aksessuarlik uchun */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  
-  .tish-sarlavha::before {
-    animation: none;
-  }
-  
-  .tish-ikona {
-    animation: none;
-  }
+/* Fullscreen mode uchun maxsus stillar */
+.fullscreen-mode .tish-sarlavha,
+.fullscreen-mode .kontent-sarlavha,
+.fullscreen-mode .qoshimcha-malumotlar {
+  display: none;
 }
 
-/* Fokus holatlari */
-.tish-ikona:focus,
-.mavzu-karta:focus {
-  outline: 2px solid var(--primary-blue);
-  outline-offset: 2px;
+.fullscreen-mode .asosiy-kontent {
+  padding: 0;
 }
 
-/* Print stil */
-@media print {
-  .tish-sarlavha {
-    background: white !important;
-    color: black !important;
-    padding: 1rem 0 !important;
-  }
-  
-  .model-konteyner {
-    height: 400px !important;
-    box-shadow: none !important;
-    border: 2px solid #ccc !important;
-  }
-  
-  .qoshimcha-malumotlar {
-    box-shadow: none !important;
-    border: 1px solid #ccc !important;
-  }
+.fullscreen-mode .konteyner {
+  max-width: none;
+  padding: 0;
 }
