@@ -1,83 +1,142 @@
-import React, { useState } from 'react';
-import { getFromLocalStorage, saveToLocalStorage } from '../utils.js';
-import './Settings.css';
+import React, { useContext } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  FiHome,
+  FiUsers,
+  FiCalendar,
+  FiPackage,
+  FiBarChart2,
+  FiSettings,
+  FiClock,
+  FiDollarSign,
+  FiBox,
+  FiBriefcase,
+  FiGlobe,
+  FiHelpCircle,
+  FiSmile,
+  FiLogOut,
+  FiUser,
+} from "react-icons/fi";
+import { AppContext } from "../App";
+import "./Sidebar.css";
 
-const Settings = () => {
-  const [user, setUser] = useState(
-    getFromLocalStorage('user', { 
-      name: '', 
-      email: '', 
-      phone: '', 
-      specialty: '', 
-      bio: '' 
-    })
-  );
-  const [message, setMessage] = useState('');
+const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
+  const { setIsLoading, currentUser } = useContext(AppContext);
+  const location = useLocation();
 
-  const handleChange = (e) => {
-    setUser({ ...user, [e.target.name]: e.target.value });
+  const handleNavClick = () => {
+    setIsLoading(true);
+    setTimeout(() => setIsLoading(false), 300);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    saveToLocalStorage('user', user);
-    setMessage('Maʼlumotlar saqlandi ✅');
+  const baseMenu = [
+    { path: "/", icon: <FiHome />, label: "Bosh sahifa" },
+    { path: "/bemorlar", icon: <FiUsers />, label: "Bemorlar" },
+    { path: "/uchrashuvlar", icon: <FiCalendar />, label: "Uchrashuvlar" },
+    { path: "/dorilar", icon: <FiPackage />, label: "Dorilar" },
+    { path: "/hisobotlar", icon: <FiBarChart2 />, label: "Hisobotlar" },
+    { path: "/davolash-tarixi", icon: <FiClock />, label: "Davolash Tarixi" },
+    { path: "/hisob-kitob", icon: <FiDollarSign />, label: "Hisob-kitob" },
+    { path: "/ombor", icon: <FiBox />, label: "Ombor" },
+    { path: "/xodimlar", icon: <FiBriefcase />, label: "Xodimlar" },
+    { path: "/davolashda-yordam", icon: <FiHelpCircle />, label: "Davolashda Yordam" },
+    { path: "/tooth", icon: <FiSmile />, label: "Tishlar" },
+    { path: "/foydalanuvchi", icon: <FiUser />, label: "Foydalanuvchi" },
+    { path: "/kirganlar", icon: <FiUsers />, label: "Kirganlar" },
+    {
+      path: "/mijozlar-kabinet",
+      icon: <FiUsers />,
+      label: "Mijozlar (Kabinet)",
+      restricted: true, // Only for users with patients permission
+    },
+    { path: "/mijozlar", icon: <FiUsers />, label: "Mijozlar" },
+  ];
 
-    setTimeout(() => setMessage(''), 3000); // 3 soniyadan keyin xabar yo‘qoladi
+  const adminMenu = [
+    { path: "/admin", icon: <FiSettings />, label: "Admin Panel" },
+    { path: "/admin/filiallar", icon: <FiHome />, label: "Filiallar" },
+    { path: "/admin/xodimlar", icon: <FiUsers />, label: "Xodim Ruxsatlari" },
+  ];
+
+  const getMenuItems = () => {
+    if (currentUser?.role === "admin") {
+      return [...baseMenu, ...adminMenu];
+    }
+    return baseMenu.filter(
+      (item) =>
+        !item.restricted ||
+        (item.restricted && currentUser?.permissions?.patients)
+    );
+  };
+
+  const menuItems = getMenuItems();
+
+  const isActivePath = (path) => {
+    if (path === "/") return location.pathname === "/";
+    if (path.startsWith("/admin")) return location.pathname === path;
+    return location.pathname.startsWith(path) && path !== "/";
   };
 
   return (
-    <div className="settings">
-      <h1>⚙️ Sozlamalar</h1>
-      <form onSubmit={handleSubmit} className="settings-form">
-        <h2>👤 Foydalanuvchi profili</h2>
+    <>
+      <div
+        className={`sidebar-overlay ${isOpen ? "active" : ""}`}
+        onClick={toggleSidebar}
+        aria-hidden={!isOpen}
+      ></div>
 
-        <input 
-          type="text"
-          name="name" 
-          placeholder="Ism" 
-          value={user.name} 
-          onChange={handleChange} 
-          required
-        />
+      <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+        <div className="sidebar-header">
+          <h2>Tish Shifoxonasi</h2>
+          <div className="user-info">
+            <FiUser className="user-icon" />
+            <div className="user-details">
+              <span className="user-name">{currentUser?.name || "Foydalanuvchi"}</span>
+              <span className="user-role">
+                {currentUser?.role === "admin"
+                  ? "Administrator"
+                  : currentUser?.role === "doctor"
+                  ? "Shifokor"
+                  : currentUser?.role === "nurse"
+                  ? "Hamshira"
+                  : currentUser?.role === "patient"
+                  ? "Mijoz"
+                  : "Xodim"}
+              </span>
+            </div>
+          </div>
+        </div>
 
-        <input 
-          type="email"
-          name="email" 
-          placeholder="Email" 
-          value={user.email} 
-          onChange={handleChange} 
-        />
+        <nav className="sidebar-nav">
+          <ul>
+            {menuItems.map((item) => (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className={isActivePath(item.path) ? "active" : ""}
+                  onClick={() => {
+                    handleNavClick();
+                    if (window.innerWidth <= 768) toggleSidebar();
+                  }}
+                  aria-current={isActivePath(item.path) ? "page" : undefined}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </Link>
+              </li>
+            ))}
 
-        <input 
-          type="tel"
-          name="phone" 
-          placeholder="Telefon" 
-          value={user.phone} 
-          onChange={handleChange} 
-        />
-
-        <input 
-          type="text"
-          name="specialty" 
-          placeholder="Mutaxassislik (masalan: stomatolog)" 
-          value={user.specialty} 
-          onChange={handleChange} 
-        />
-
-        <textarea 
-          name="bio" 
-          placeholder="O‘zingiz haqingizda qisqacha yozing..." 
-          value={user.bio} 
-          onChange={handleChange} 
-        />
-
-        <button type="submit" className="save-btn">💾 Saqlash</button>
-
-        {message && <p className="success-message">{message}</p>}
-      </form>
-    </div>
+            <li className="logout-item">
+              <button className="sidebar-logout-btn" onClick={onLogout}>
+                <FiLogOut />
+                <span>Chiqish</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+    </>
   );
 };
 
-export default Settings;
+export default Sidebar;

@@ -202,30 +202,42 @@ const Appointments = () => {
     const adminChatId = '5838205785';
     const isNew = !currentApp.id;
 
-    if (patient) {
-      let messageParts = [];
-      messageParts.push(isNew 
-        ? `Sizning uchrashuvingiz ${newApp.date} kuni soat ${newApp.time} da rejalashtirildi. Jarayon: ${newApp.procedure}.`
-        : `Uchrashuv yangilandi: ${newApp.date} ${newApp.time}, Jarayon: ${newApp.procedure}.`);
-      if (newApp.nextVisit && (isNew || newApp.nextVisit !== (originalApp?.nextVisit || ''))) {
-        messageParts.push(`Keyingi kelish sanasi: ${newApp.nextVisit}.`);
-      }
-      if (prescriptionChanged) {
-        messageParts.push(`Retsept: ${newApp.prescription}.`);
-      }
-      if (!isNew && newApp.status !== originalApp.status) {
-        messageParts.push(`Uchrashuv statusi: ${newApp.status}.`);
-      }
-      if (patient.telegram) {
-        if (messageParts.length > 0) {
-          const message = `Hurmatli ${patient.name}, ${messageParts.join(' ')}`;
-          sendTelegramMessage(patient.telegram, message);
-        }
-      } else {
-        const adminMessage = `Yangi uchrashuv qoshildi/yangilandi: ${patient.name} - ${newApp.date} ${newApp.time} - ${newApp.procedure}. (Bemor Telegram ma'lumoti yoq) ${messageParts.slice(1).join(' ')}`;
-        sendTelegramMessage(adminChatId, adminMessage);
-      }
+ if (patient) {
+  let messageParts = [];
+
+  if (isNew) {
+    messageParts.push(`✅ Sizning uchrashuvingiz ${newApp.date} kuni, soat ${newApp.time} da rejalashtirildi.\n🔹 Jarayon: ${newApp.procedure}.`);
+  } else {
+    messageParts.push(`✏️ Uchrashuvingiz yangilandi:\n📅 Sana: ${newApp.date}\n🕒 Vaqt: ${newApp.time}\n🔹 Jarayon: ${newApp.procedure}`);
+  }
+
+  if (newApp.nextVisit && (isNew || newApp.nextVisit !== (originalApp?.nextVisit || ''))) {
+    messageParts.push(`📌 Keyingi kelish sanasi: ${newApp.nextVisit}`);
+  }
+
+  if (prescriptionChanged) {
+    messageParts.push(`💊 Retsept: ${newApp.prescription}`);
+  }
+
+  if (!isNew && newApp.status !== originalApp.status) {
+    messageParts.push(`📋 Uchrashuv statusi: ${newApp.status}`);
+  }
+
+  const footer = "\n\n📍 SDK DENTAL klinikasi\n📞 Qo‘shimcha ma’lumot uchun bog‘laning: +998 ** *** ** **\n\n🦷 Sog‘lig’ingiz biz uchun muhim!";
+
+  if (patient.telegram) {
+    if (messageParts.length > 0) {
+      const message = `Hurmatli ${patient.name},\n\n${messageParts.join('\n')}${footer}`;
+      sendTelegramMessage(patient.telegram, message);
     }
+  } else {
+    const adminMessage = `📢 Yangi uchrashuv qo‘shildi/yangilandi:\n\n👤 Bemor: ${patient.name}\n📅 Sana: ${newApp.date}\n🕒 Vaqt: ${newApp.time}\n🔹 Jarayon: ${newApp.procedure}\n⚠️ Telegram mavjud emas` +
+      (messageParts.length > 1 ? `\n\n${messageParts.slice(1).join('\n')}` : '') +
+      `\n\n🦷 SDK DENTAL tizimi`;
+    sendTelegramMessage(adminChatId, adminMessage);
+  }
+}
+
 
     setTimeout(() => {
       setSuccessMessage('');

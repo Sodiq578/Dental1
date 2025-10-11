@@ -1,9 +1,21 @@
 import React, { useContext } from "react";
+import PropTypes from "prop-types";
 import { Link, useLocation } from "react-router-dom";
 import {
-  FiHome, FiUsers, FiCalendar, FiPackage, FiBarChart2, FiSettings,
-  FiClock, FiDollarSign, FiBox, FiBriefcase, FiGlobe, FiHelpCircle,
-  FiSmile, FiLogOut, FiUser
+  FiHome,
+  FiUsers,
+  FiCalendar,
+  FiPackage,
+  FiBarChart2,
+  FiSettings,
+  FiClock,
+  FiDollarSign,
+  FiBox,
+  FiBriefcase,
+  FiHelpCircle,
+  FiSmile,
+  FiLogOut,
+  FiUser,
 } from "react-icons/fi";
 import { AppContext } from "../App";
 import "./Sidebar.css";
@@ -12,11 +24,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
   const { setIsLoading, currentUser } = useContext(AppContext);
   const location = useLocation();
 
+  // Handle navigation click with loading state
   const handleNavClick = () => {
     setIsLoading(true);
     setTimeout(() => setIsLoading(false), 300);
   };
 
+  // Base menu items for all users
   const baseMenu = [
     { path: "/", icon: <FiHome />, label: "Bosh sahifa" },
     { path: "/bemorlar", icon: <FiUsers />, label: "Bemorlar" },
@@ -27,48 +41,62 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
     { path: "/hisob-kitob", icon: <FiDollarSign />, label: "Hisob-kitob" },
     { path: "/ombor", icon: <FiBox />, label: "Ombor" },
     { path: "/xodimlar", icon: <FiBriefcase />, label: "Xodimlar" },
-    { path: "/bemor-portali", icon: <FiGlobe />, label: "Bemor Portali" },
     { path: "/davolashda-yordam", icon: <FiHelpCircle />, label: "Davolashda Yordam" },
     { path: "/tooth", icon: <FiSmile />, label: "Tishlar" },
     { path: "/foydalanuvchi", icon: <FiUser />, label: "Foydalanuvchi" },
-    { path: "/mijozlar", icon: <FiUsers />, label: "Mijozlar" },
     { path: "/kirganlar", icon: <FiUsers />, label: "Kirganlar" },
+    {
+      path: "/mijozlar-kabinet",
+      icon: <FiUsers />,
+      label: "Mijozlar (Kabinet)",
+      restricted: true, // Restricted to users with 'patients' permission
+    },
+    { path: "/mijozlar", icon: <FiUsers />, label: "Mijozlar" },
   ];
 
+  // Admin-specific menu items
   const adminMenu = [
     { path: "/admin", icon: <FiSettings />, label: "Admin Panel" },
-    { path: "/admin/filiallar", icon: <FiHome />, label: "Filiallar" },
+ 
     { path: "/admin/xodimlar", icon: <FiUsers />, label: "Xodim Ruxsatlari" },
   ];
 
+  // Determine menu items based on user role and permissions
   const getMenuItems = () => {
-    if (currentUser?.role === "admin") {
-      return [...baseMenu, ...adminMenu];
+    if (currentUser?.role === "patient") {
+      return [{ path: "/foydalanuvchi", icon: <FiUser />, label: "Shaxsiy Kabinet" }];
     }
-    return baseMenu;
+    const menu = currentUser?.role === "admin" ? [...baseMenu, ...adminMenu] : baseMenu;
+    return menu.filter(
+      (item) => !item.restricted || (item.restricted && currentUser?.permissions?.patients)
+    );
   };
 
-  const menuItems = getMenuItems();
-
+  // Check if a path is active
   const isActivePath = (path) => {
     if (path === "/") return location.pathname === "/";
     if (path.startsWith("/admin")) return location.pathname === path;
-    return location.pathname.startsWith(path) && path !== "/";
+    return location.pathname.startsWith(path);
   };
 
   return (
     <>
+      {/* Overlay for mobile sidebar */}
       <div
         className={`sidebar-overlay ${isOpen ? "active" : ""}`}
         onClick={toggleSidebar}
-        aria-hidden={!isOpen}
-      ></div>
+        onKeyDown={(e) => e.key === "Enter" && toggleSidebar()}
+        role="button"
+        tabIndex={isOpen ? 0 : -1}
+        aria-label="Close sidebar"
+      />
 
+      {/* Sidebar */}
       <aside className={`sidebar ${isOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <h2>Tish Shifoxonasi</h2>
           <div className="user-info">
-            <FiUser className="user-icon" />
+            <FiUser className="user-icon" aria-hidden="true" />
             <div className="user-details">
               <span className="user-name">{currentUser?.name || "Foydalanuvchi"}</span>
               <span className="user-role">
@@ -78,6 +106,8 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
                   ? "Shifokor"
                   : currentUser?.role === "nurse"
                   ? "Hamshira"
+                  : currentUser?.role === "patient"
+                  ? "Mijoz"
                   : "Xodim"}
               </span>
             </div>
@@ -86,7 +116,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
 
         <nav className="sidebar-nav">
           <ul>
-            {menuItems.map((item) => (
+            {getMenuItems().map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}
@@ -102,10 +132,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
                 </Link>
               </li>
             ))}
-
             <li className="logout-item">
-              <button className="sidebar-logout-btn" onClick={onLogout}>
-                <FiLogOut />
+              <button
+                className="sidebar-logout-btn"
+                onClick={onLogout}
+                aria-label="Log out"
+              >
+                <FiLogOut aria-hidden="true" />
                 <span>Chiqish</span>
               </button>
             </li>
@@ -114,6 +147,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
       </aside>
     </>
   );
+};
+
+// PropTypes for type checking
+Sidebar.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  toggleSidebar: PropTypes.func.isRequired,
+  onLogout: PropTypes.func.isRequired,
 };
 
 export default Sidebar;

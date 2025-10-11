@@ -91,52 +91,82 @@ const PatientPortal = () => {
   };
 
   // Handle appointment booking
-  const handleBookAppointment = (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMessage('');
+const handleBookAppointment = (e) => {
+  e.preventDefault();
+  setError('');
+  setSuccessMessage('');
 
-    if (!patientId) {
-      setError('Iltimos, avval roʻyxatdan oʻting.');
-      return;
-    }
-    if (!selectedTime) {
-      setError('Iltimos, vaqtni tanlang.');
-      return;
-    }
-    if (!procedure.trim()) {
-      setError('Iltimos, jarayon nomini kiriting.');
-      return;
-    }
+  // 🔍 Validatsiya
+  if (!patientId) {
+    setError('Iltimos, avval roʻyxatdan oʻting.');
+    return;
+  }
+  if (!selectedTime) {
+    setError('Iltimos, vaqtni tanlang.');
+    return;
+  }
+  if (!procedure.trim()) {
+    setError('Iltimos, jarayon nomini kiriting.');
+    return;
+  }
 
-    const newAppointment = {
-      id: Date.now(),
-      patientId,
-      date: selectedDate,
-      time: selectedTime,
-      procedure,
-      status: 'kutilmoqda',
-      notes: '',
-      prescription: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    setAppointments([...appointments, newAppointment]);
-    setSuccessMessage('Uchrashuv muvaffaqiyatli band qilindi!');
-    
-    const message = `Hurmatli ${newPatient.name}, sizning uchrashuvingiz ${selectedDate} kuni soat ${selectedTime} da rejalashtirildi. Jarayon: ${procedure}.`;
-    if (newPatient.telegram) {
-      sendTelegramMessage(newPatient.telegram, message);
-    }
-    sendTelegramMessage('5838205785', `Yangi uchrashuv: ${newPatient.name} - ${selectedDate} ${selectedTime} - ${procedure}`);
-
-    setTimeout(() => {
-      setSuccessMessage('');
-      setSelectedTime('');
-      setProcedure('');
-    }, 3000);
+  // 🆕 Yangi uchrashuvni yaratish
+  const newAppointment = {
+    id: Date.now(),
+    patientId,
+    date: selectedDate,
+    time: selectedTime,
+    procedure,
+    status: 'kutilmoqda',
+    notes: '',
+    prescription: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   };
+
+  // 📋 Uchrashuvlar ro'yxatiga qo'shish
+  setAppointments([...appointments, newAppointment]);
+  setSuccessMessage('✅ Uchrashuv muvaffaqiyatli band qilindi!');
+
+  // 📲 Telegram xabari - Bemor uchun
+  const patientMessage = `
+Hurmatli ${newPatient.name},
+
+✅ Sizning uchrashuvingiz ${selectedDate} kuni, soat ${selectedTime} da rejalashtirildi.
+🔹 Jarayon: ${procedure}
+
+📍 SDK DENTAL klinikasi
+📞 Qo‘shimcha ma’lumot uchun bog‘laning: +998 ***
+
+🦷 Sog‘lig’ingiz biz uchun muhim!
+  `.trim();
+
+  if (newPatient.telegram) {
+    sendTelegramMessage(newPatient.telegram, patientMessage);
+  }
+
+  // 👩‍⚕️ Telegram xabari - Admin uchun
+  const adminMessage = `
+📢 Yangi uchrashuv band qilindi:
+
+👤 Bemor: ${newPatient.name}
+📅 Sana: ${selectedDate}
+🕒 Vaqt: ${selectedTime}
+🔹 Jarayon: ${procedure}
+
+🦷 SDK DENTAL tizimi
+  `.trim();
+
+  sendTelegramMessage('5838205785', adminMessage); // Admin chat ID
+
+  // 🧹 Tozalash
+  setTimeout(() => {
+    setSuccessMessage('');
+    setSelectedTime('');
+    setProcedure('');
+  }, 3000);
+};
+
 
   // Handle request for next available slot
   const handleRequestNextSlot = () => {

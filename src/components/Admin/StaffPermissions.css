@@ -1,212 +1,71 @@
-/* StaffPermissions.css */
+/* Umumiy konteyner */
 .staff-permissions {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  font-family: Arial, sans-serif;
 }
 
+/* Sarlavha */
 .page-header {
+  text-align: center;
   margin-bottom: 30px;
 }
 
 .page-header h1 {
-  color: #2c3e50;
-  margin: 0 0 8px 0;
-  font-size: 28px;
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 10px;
 }
 
 .page-header p {
-  color: #7f8c8d;
-  margin: 0;
   font-size: 16px;
+  color: #666;
 }
 
+/* Jadval konteyneri */
 .staff-table-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  overflow: hidden;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
 }
 
+/* Jadval */
 .staff-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.staff-table th {
-  background: #f8f9fa;
-  padding: 16px 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #2c3e50;
-  border-bottom: 2px solid #e9ecef;
-}
-
+.staff-table th,
 .staff-table td {
-  padding: 16px 12px;
-  border-bottom: 1px solid #e9ecef;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
 }
 
+.staff-table th {
+  background: #f8f8f8;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Xodim ma'lumotlari */
 .staff-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .staff-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
+  background: #007bff;
+  color: #fff;
   border-radius: 50%;
-  background: #e3f2fd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #1976d2;
-}
-
-.staff-name {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.staff-email {
-  font-size: 12px;
-  color: #7f8c8d;
-}
-
-.role-badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.role-doctor {
-  background: #d1ecf1;
-  color: #0c5460;
-}
-
-.role-nurse {
-  background: #d4edda;
-  color: #155724;
-}
-
-.role-admin {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.branch-select {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  width: 100%;
-}
-
-.permissions-summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.permission-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.permission-dot.active {
-  background: #27ae60;
-}
-
-.permission-dot.inactive {
-  background: #bdc3c7;
-}
-
-.more-permissions {
-  font-size: 12px;
-  color: #7f8c8d;
-}
-
-.btn-permissions {
-  background: #3498db;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.3s ease;
-}
-
-.btn-permissions:hover {
-  background: #2980b9;
-}
-
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.permissions-modal {
-  background: white;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.modal-header h2 {
-  margin: 0;
-  color: #2c3e50;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #7f8c8d;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.close-btn:hover {
-  background: #f8f9fa;
-  color: #2c3e50;
-}
-
-.staff-details {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 24px;
-  border-bottom: 1px solid #e9ecef;
 }
 
 .staff-avatar.large {
@@ -215,173 +74,240 @@
   font-size: 24px;
 }
 
+.staff-name {
+  font-weight: bold;
+  color: #333;
+}
+
+.staff-email {
+  color: #666;
+  font-size: 14px;
+}
+
+/* Rol badgelari */
+.role-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.role-doctor {
+  background: #28a745;
+}
+
+.role-nurse {
+  background: #17a2b8;
+}
+
+.role-admin {
+  background: #dc3545;
+}
+
+.role-staff {
+  background: #6c757d;
+}
+
+/* Filial tanlash */
+.branch-select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+  max-width: 200px;
+}
+
+/* Ruxsatlar ko'rsatkichi */
+.permissions-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.permission-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.permission-dot.active {
+  background: #28a745;
+}
+
+.permission-dot.inactive {
+  background: #ccc;
+}
+
+.more-permissions {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Tahrirlash tugmasi */
+.btn-permissions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-permissions:hover {
+  background: #0056b3;
+}
+
+/* Modal oynasi */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.permissions-modal {
+  background: #fff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+/* Xodim tafsilotlari */
+.staff-details {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
 .staff-details h3 {
-  margin: 0 0 4px 0;
-  color: #2c3e50;
+  font-size: 18px;
+  color: #333;
 }
 
 .staff-details p {
-  margin: 0;
-  color: #7f8c8d;
+  font-size: 14px;
+  color: #666;
 }
 
 .staff-branch {
-  font-size: 14px;
-  color: #3498db !important;
-  font-weight: 500;
+  font-style: italic;
 }
 
+/* Ruxsatlar ro'yxati */
 .permissions-list {
-  padding: 24px;
+  margin-bottom: 20px;
 }
 
 .permissions-list h4 {
-  margin: 0 0 16px 0;
-  color: #2c3e50;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
 }
 
 .permission-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-}
-
-.permission-item:hover {
-  border-color: #3498db;
-  background: #f8f9fa;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
 }
 
 .permission-info h5 {
-  margin: 0 0 4px 0;
-  color: #2c3e50;
-  font-size: 16px;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
 }
 
 .permission-info p {
-  margin: 0;
-  color: #7f8c8d;
-  font-size: 14px;
+  font-size: 12px;
+  color: #666;
 }
 
+/* Ruxsat tugmasi */
 .toggle-btn {
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: all 0.3s ease;
-  min-width: 140px;
-  justify-content: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 .toggle-btn.active {
-  background: #d4edda;
-  border-color: #c3e6cb;
-  color: #155724;
+  background: #28a745;
+  color: #fff;
 }
 
 .toggle-btn:not(.active) {
-  background: #f8d7da;
-  border-color: #f5c6cb;
-  color: #721c24;
+  background: #ccc;
+  color: #333;
 }
 
 .toggle-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  opacity: 0.9;
 }
 
+/* Modal tugmalari */
 .modal-actions {
-  padding: 24px;
-  border-top: 1px solid #e9ecef;
-  display: flex;
-  justify-content: flex-end;
+  text-align: right;
 }
 
 .btn-primary {
-  background: #3498db;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
+  gap: 5px;
+  padding: 10px 16px;
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 .btn-primary:hover {
-  background: #2980b9;
-  transform: translateY(-1px);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .staff-permissions {
-    padding: 10px;
-  }
-  
-  .staff-table {
-    font-size: 14px;
-  }
-  
-  .staff-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  
-  .permission-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .permission-toggle {
-    width: 100%;
-  }
-  
-  .toggle-btn {
-    width: 100%;
-  }
-  
-  .staff-details {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .permissions-modal {
-    width: 95%;
-    margin: 10px;
-  }
-  
-  .modal-header,
-  .staff-details,
-  .permissions-list,
-  .modal-actions {
-    padding: 16px;
-  }
-  
-  .staff-table-container {
-    overflow-x: auto;
-  }
-  
-  .staff-table {
-    min-width: 600px;
-  }
+  background: #0056b3;
 }
