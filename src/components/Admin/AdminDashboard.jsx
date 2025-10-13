@@ -26,11 +26,11 @@ const AdminDashboard = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(""); // branch, admin, insurance, staff, discount
+  const [modalType, setModalType] = useState(""); // filial, admin, sugurta, xodim, chegirma
   const [currentItem, setCurrentItem] = useState(null);
   const [copiedTokenId, setCopiedTokenId] = useState(null);
 
-  // Data states
+  // Ma'lumotlar holatlari
   const [branches, setBranches] = useState(getFromLocalStorage("branches", []));
   const [admins, setAdmins] = useState(getFromLocalStorage("admins", []));
   const [insuranceCompanies, setInsuranceCompanies] = useState(getFromLocalStorage("insuranceCompanies", []));
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
   const [pendingAdmins, setPendingAdmins] = useState(getPendingAdminRequests());
   const [insuranceDiscounts, setInsuranceDiscounts] = useState(getFromLocalStorage("insuranceDiscounts", []));
 
-  // Forms
+  // Formlar
   const [branchForm, setBranchForm] = useState({
     name: "", address: "", phone: "", email: "", manager: "", status: "active", branchId: "", token: ""
   });
@@ -95,7 +95,7 @@ const AdminDashboard = () => {
     setStats(newStats);
   };
 
-  // Token generation function
+  // Token yaratish funksiyasi
   const generateToken = (length = 12, type = "alphanumeric") => {
     let chars = '';
     let token = '';
@@ -115,14 +115,14 @@ const AdminDashboard = () => {
     return token;
   };
 
-  // Branch ID generation
+  // Filial ID yaratish
   const generateBranchId = () => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substr(2, 6).toUpperCase();
     return `BR-${timestamp}-${random}`;
   };
 
-  // Refresh token
+  // Token yangilash
   const handleRefreshToken = (item, type) => {
     const newToken = generateToken();
 
@@ -131,7 +131,7 @@ const AdminDashboard = () => {
         branch.id === item.id ? { ...branch, token: newToken } : branch
       );
       setBranches(updatedBranches);
-      setSuccessMessage(`${item.name} branch token updated!`);
+      setSuccessMessage(`${item.name} filial tokeni yangilandi!`);
     } else if (type === "admin") {
       const updatedAdmins = admins.map(admin =>
         admin.id === item.id ? {
@@ -141,7 +141,7 @@ const AdminDashboard = () => {
         } : admin
       );
       setAdmins(updatedAdmins);
-      setSuccessMessage(`${item.name} admin token updated!`);
+      setSuccessMessage(`${item.name} admin tokeni yangilandi!`);
     }
 
     setTimeout(() => setSuccessMessage(""), 3000);
@@ -151,19 +151,19 @@ const AdminDashboard = () => {
     navigator.clipboard.writeText(token)
       .then(() => {
         setCopiedTokenId(item.id);
-        setSuccessMessage(`${isBranch ? item.name + ' branch' : item.name} token copied!`);
+        setSuccessMessage(`${isBranch ? item.name + ' filial' : item.name} token nusxalandi!`);
         setTimeout(() => {
           setCopiedTokenId(null);
           setSuccessMessage("");
         }, 2000);
       })
       .catch(() => {
-        setError("Error copying token");
+        setError("Token nusxalashda xatolik");
         setTimeout(() => setError(""), 3000);
       });
   };
 
-  // Insurance Discount Management
+  // Sug'urta chegirmalari boshqaruvi
   const handleAddDiscount = (insuranceId = "") => {
     setModalType("discount");
     setCurrentItem(null);
@@ -204,25 +204,25 @@ const AdminDashboard = () => {
     setIsLoading(true);
 
     if (!discountForm.insuranceId) {
-      setError("Insurance company must be selected");
+      setError("Sug'urta kompaniyasi tanlanishi shart");
       setIsLoading(false);
       return;
     }
 
     if (discountForm.discountValue <= 0) {
-      setError("Discount value must be greater than 0");
+      setError("Chegirma qiymati 0 dan katta bo'lishi kerak");
       setIsLoading(false);
       return;
     }
 
     if (discountForm.discountType === "percentage" && discountForm.discountValue > 100) {
-      setError("Percentage discount cannot exceed 100%");
+      setError("Foiz chegirmasi 100% dan oshmasligi kerak");
       setIsLoading(false);
       return;
     }
 
     if (new Date(discountForm.endDate) <= new Date(discountForm.startDate)) {
-      setError("End date must be after start date");
+      setError("Tugash sanasi boshlanish sanasidan keyin bo'lishi kerak");
       setIsLoading(false);
       return;
     }
@@ -242,16 +242,16 @@ const AdminDashboard = () => {
 
     initializeStats();
     setModalOpen(false);
-    setSuccessMessage("Discount saved successfully");
+    setSuccessMessage("Chegirma muvaffaqiyatli saqlandi");
     setTimeout(() => setSuccessMessage(""), 3000);
     setIsLoading(false);
   };
 
   const handleDeleteDiscount = (discountId) => {
-    if (window.confirm("Are you sure you want to delete this discount?")) {
+    if (window.confirm("Ushbu chegirmni o'chirishga ishonchingiz komilmi?")) {
       setInsuranceDiscounts(insuranceDiscounts.filter(d => d.id !== discountId));
       initializeStats();
-      setSuccessMessage("Discount deleted successfully");
+      setSuccessMessage("Chegirma muvaffaqiyatli o'chirildi");
       setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
@@ -263,11 +263,11 @@ const AdminDashboard = () => {
         : discount
     );
     setInsuranceDiscounts(updatedDiscounts);
-    setSuccessMessage("Discount status updated");
+    setSuccessMessage("Chegirma holati yangilandi");
     setTimeout(() => setSuccessMessage(""), 3000);
   };
 
-  // Branch Management
+  // Filiallar boshqaruvi
   const handleAddBranch = () => {
     setModalType("branch");
     setCurrentItem(null);
@@ -299,17 +299,17 @@ const AdminDashboard = () => {
   const handleSaveBranch = () => {
     setIsLoading(true);
     if (!branchForm.name || !branchForm.address || !branchForm.phone) {
-      setError("Branch name, address and phone number are required");
+      setError("Filial nomi, manzili va telefon raqami majburiy");
       setIsLoading(false);
       return;
     }
     if (!validatePhone(branchForm.phone)) {
-      setError("Phone number must be in +998XXXXXXXXX format");
+      setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
       setIsLoading(false);
       return;
     }
     if (!validateEmail(branchForm.email)) {
-      setError("Invalid email format");
+      setError("Noto'g'ri email format");
       setIsLoading(false);
       return;
     }
@@ -329,13 +329,13 @@ const AdminDashboard = () => {
 
     initializeStats();
     setModalOpen(false);
-    setSuccessMessage("Branch saved successfully");
+    setSuccessMessage("Filial muvaffaqiyatli saqlandi");
     setTimeout(() => setSuccessMessage(""), 3000);
     setIsLoading(false);
   };
 
   const handleDeleteBranch = (branchId) => {
-    if (window.confirm("Are you sure you want to delete this branch? All related data will also be deleted.")) {
+    if (window.confirm("Ushbu filialni o'chirishga ishonchingiz komilmi? Barcha bog'liq ma'lumotlar ham o'chiriladi.")) {
       setBranches(branches.filter(b => b.id !== branchId));
       setAdmins(admins.filter(a => a.branchId !== branchId));
       setStaff(staff.filter(s => s.branchId !== branchId));
@@ -343,12 +343,12 @@ const AdminDashboard = () => {
       setPatients(patients.filter(p => p.branchId !== branchId));
       setAppointments(appointments.filter(a => a.branchId !== branchId));
       initializeStats();
-      setSuccessMessage("Branch deleted successfully");
+      setSuccessMessage("Filial muvaffaqiyatli o'chirildi");
       setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
 
-  // Admin Management
+  // Admin boshqaruvi
   const handleAddAdmin = (branchId = "") => {
     setModalType("admin");
     setCurrentItem(null);
@@ -380,32 +380,32 @@ const AdminDashboard = () => {
   const handleSaveAdmin = () => {
     setIsLoading(true);
     if (!adminForm.name || !adminForm.email || !adminForm.phone || !adminForm.telegram) {
-      setError("All fields including Telegram Chat ID are required");
+      setError("Barcha maydonlar, shu jumladan Telegram Chat ID majburiy");
       setIsLoading(false);
       return;
     }
     if (!validateEmail(adminForm.email)) {
-      setError("Invalid email format");
+      setError("Noto'g'ri email format");
       setIsLoading(false);
       return;
     }
     if (!validatePhone(adminForm.phone)) {
-      setError("Phone number must be in +998XXXXXXXXX format");
+      setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
       setIsLoading(false);
       return;
     }
     if (!/^\d+$/.test(adminForm.telegram)) {
-      setError("Telegram Chat ID must contain only numbers");
+      setError("Telegram Chat ID faqat raqamlardan iborat bo'lishi kerak");
       setIsLoading(false);
       return;
     }
     if (!currentItem && !adminForm.password) {
-      setError("Password is required for new admin");
+      setError("Yangi admin uchun parol majburiy");
       setIsLoading(false);
       return;
     }
     if (adminForm.password && !validatePassword(adminForm.password)) {
-      setError("Password must be at least 6 characters long");
+      setError("Parol kamida 6 ta belgidan iborat bo'lishi kerak");
       setIsLoading(false);
       return;
     }
@@ -428,26 +428,26 @@ const AdminDashboard = () => {
 
     initializeStats();
     setModalOpen(false);
-    setSuccessMessage("Admin saved successfully");
+    setSuccessMessage("Admin muvaffaqiyatli saqlandi");
     setTimeout(() => setSuccessMessage(""), 3000);
     setIsLoading(false);
   };
 
   const handleDeleteAdmin = (adminId) => {
-    if (window.confirm("Are you sure you want to delete this admin?")) {
+    if (window.confirm("Ushbu adminni o'chirishga ishonchingiz komilmi?")) {
       if (admins.find(a => a.id === adminId)?.email === currentUser?.email) {
-        setError("You cannot delete yourself!");
+        setError("O'zingizni o'chira olmaysiz!");
         setTimeout(() => setError(""), 3000);
         return;
       }
       setAdmins(admins.filter(a => a.id !== adminId));
       initializeStats();
-      setSuccessMessage("Admin deleted successfully");
+      setSuccessMessage("Admin muvaffaqiyatli o'chirildi");
       setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
 
-  // Insurance Management
+  // Sug'urta boshqaruvi
   const handleAddInsurance = () => {
     setModalType("insurance");
     setCurrentItem(null);
@@ -480,17 +480,17 @@ const AdminDashboard = () => {
   const handleSaveInsurance = () => {
     setIsLoading(true);
     if (!insuranceForm.name || !insuranceForm.contactName || !insuranceForm.phone) {
-      setError("Company name, contact person and phone number are required");
+      setError("Kompaniya nomi, aloqa shaxsi va telefon raqami majburiy");
       setIsLoading(false);
       return;
     }
     if (!validatePhone(insuranceForm.phone)) {
-      setError("Phone number must be in +998XXXXXXXXX format");
+      setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
       setIsLoading(false);
       return;
     }
     if (!validateEmail(insuranceForm.email)) {
-      setError("Invalid email format");
+      setError("Noto'g'ri email format");
       setIsLoading(false);
       return;
     }
@@ -510,22 +510,22 @@ const AdminDashboard = () => {
 
     initializeStats();
     setModalOpen(false);
-    setSuccessMessage("Insurance company saved successfully");
+    setSuccessMessage("Sug'urta kompaniyasi muvaffaqiyatli saqlandi");
     setTimeout(() => setSuccessMessage(""), 3000);
     setIsLoading(false);
   };
 
   const handleDeleteInsurance = (insuranceId) => {
-    if (window.confirm("Are you sure you want to delete this insurance company?")) {
+    if (window.confirm("Ushbu sug'urta kompaniyasini o'chirishga ishonchingiz komilmi?")) {
       setInsuranceCompanies(insuranceCompanies.filter(i => i.id !== insuranceId));
       setInsuranceDiscounts(insuranceDiscounts.filter(d => d.insuranceId !== insuranceId));
       initializeStats();
-      setSuccessMessage("Insurance company deleted successfully");
+      setSuccessMessage("Sug'urta kompaniyasi muvaffaqiyatli o'chirildi");
       setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
 
-  // Staff Management
+  // Xodimlar boshqaruvi
   const handleAddStaff = (branchId = "") => {
     setModalType("staff");
     setCurrentItem(null);
@@ -557,17 +557,17 @@ const AdminDashboard = () => {
   const handleSaveStaff = () => {
     setIsLoading(true);
     if (!staffForm.name || !staffForm.position || !staffForm.phone || !staffForm.branchId) {
-      setError("All fields and branch selection are required");
+      setError("Barcha maydonlar va filial tanlovi majburiy");
       setIsLoading(false);
       return;
     }
     if (!validatePhone(staffForm.phone)) {
-      setError("Phone number must be in +998XXXXXXXXX format");
+      setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
       setIsLoading(false);
       return;
     }
     if (staffForm.email && !validateEmail(staffForm.email)) {
-      setError("Invalid email format");
+      setError("Noto'g'ri email format");
       setIsLoading(false);
       return;
     }
@@ -589,16 +589,16 @@ const AdminDashboard = () => {
 
     initializeStats();
     setModalOpen(false);
-    setSuccessMessage("Staff added successfully");
+    setSuccessMessage("Xodim muvaffaqiyatli qo'shildi");
     setTimeout(() => setSuccessMessage(""), 3000);
     setIsLoading(false);
   };
 
   const handleDeleteStaff = (staffId) => {
-    if (window.confirm("Are you sure you want to delete this staff member?")) {
+    if (window.confirm("Ushbu xodimni o'chirishga ishonchingiz komilmi?")) {
       setStaff(staff.filter(s => s.id !== staffId));
       initializeStats();
-      setSuccessMessage("Staff deleted successfully");
+      setSuccessMessage("Xodim muvaffaqiyatli o'chirildi");
       setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
@@ -623,21 +623,21 @@ const AdminDashboard = () => {
     setAdmins([...admins, newAdmin]);
     updatePendingAdminRequest(request.id, { status: "approved" });
     setPendingAdmins(getPendingAdminRequests());
-    setSuccessMessage(`${request.name} approved as admin`);
+    setSuccessMessage(`${request.name} admin sifatida tasdiqlandi`);
     setTimeout(() => setSuccessMessage(""), 3000);
     setIsLoading(false);
   };
 
   const handleRejectAdminRequest = (requestId) => {
-    if (window.confirm("Are you sure you want to reject this request?")) {
+    if (window.confirm("Ushbu so'rovni rad etishga ishonchingiz komilmi?")) {
       updatePendingAdminRequest(requestId, { status: "rejected" });
       setPendingAdmins(getPendingAdminRequests());
-      setSuccessMessage("Request rejected");
+      setSuccessMessage("So'rov rad etildi");
       setTimeout(() => setSuccessMessage(""), 3000);
     }
   };
 
-  // Filtered data
+  // Filtrlangan ma'lumotlar
   const filteredBranches = branches.filter(b =>
     b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     b.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -669,24 +669,24 @@ const AdminDashboard = () => {
     );
   });
 
-  // Render functions
+  // Render funksiyalari
   const renderBranchesTab = () => (
     <div className="adminDashboardTabContent">
       <div className="adminDashboardPageHeader">
-        <h2>Branches</h2>
+        <h2>Filiallar</h2>
         <div className="adminDashboardHeaderActions">
           <div className="adminDashboardSearchContainer">
             <FiSearch className="adminDashboardSearchIcon" />
             <input
               type="text"
-              placeholder="Search branches..."
+              placeholder="Filiallarni qidirish..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="adminDashboardSearchInput"
             />
           </div>
           <button className="adminDashboardBtnPrimary" onClick={handleAddBranch}>
-            <FiPlus /> New Branch
+            <FiPlus /> Yangi Filial
           </button>
         </div>
       </div>
@@ -700,13 +700,15 @@ const AdminDashboard = () => {
 
       <div className="adminDashboardBranchesGrid">
         {filteredBranches.length === 0 ? (
-          <p className="adminDashboardNoData">No branches found</p>
+          <p className="adminDashboardNoData">Filiallar topilmadi</p>
         ) : (
           filteredBranches.map(branch => (
             <div key={branch.id} className="adminDashboardBranchCard">
               <div className="adminDashboardBranchHeader">
                 <h3>{branch.name}</h3>
-                <span className={`adminDashboardStatusBadge ${branch.status}`}>{branch.status === "active" ? "Active" : "Inactive"}</span>
+                <span className={`adminDashboardStatusBadge ${branch.status}`}>
+                  {branch.status === "active" ? "Faol" : "Faol emas"}
+                </span>
               </div>
               <div className="adminDashboardBranchInfo">
                 <div className="adminDashboardInfoItem">
@@ -719,7 +721,7 @@ const AdminDashboard = () => {
                   <FiMail /> {branch.email}
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiUsers /> Manager: {branch.manager}
+                  <FiUsers /> Menejer: {branch.manager}
                 </div>
                 <div className="adminDashboardInfoItem adminDashboardTokenItem">
                   <div className="adminDashboardTokenText">
@@ -729,15 +731,15 @@ const AdminDashboard = () => {
                     <button
                       className={`adminDashboardBtnCopy ${copiedTokenId === branch.id ? 'adminDashboardCopied' : ''}`}
                       onClick={() => handleCopyToken(branch.token, branch, true)}
-                      title="Copy token"
+                      title="Tokenni nusxalash"
                     >
                       <FiCopy />
-                      <span>{copiedTokenId === branch.id ? "Copied!" : "Copy"}</span>
+                      <span>{copiedTokenId === branch.id ? "Nusxalandi!" : "Nusxalash"}</span>
                     </button>
                     <button
                       className="adminDashboardBtnRefresh"
                       onClick={() => handleRefreshToken(branch, "branch")}
-                      title="Refresh token"
+                      title="Tokenni yangilash"
                     >
                       <FiRefreshCw />
                     </button>
@@ -746,13 +748,13 @@ const AdminDashboard = () => {
               </div>
               <div className="adminDashboardBranchActions">
                 <button className="adminDashboardBtnEdit" onClick={() => handleEditBranch(branch)}>
-                  <FiEdit /> Edit
+                  <FiEdit /> Tahrirlash
                 </button>
                 <button className="adminDashboardBtnDelete" onClick={() => handleDeleteBranch(branch.id)}>
-                  <FiTrash2 /> Delete
+                  <FiTrash2 /> O'chirish
                 </button>
                 <button className="adminDashboardBtnView" onClick={() => handleViewBranch(branch)}>
-                  <FiEye /> Details
+                  <FiEye /> Tafsilotlar
                 </button>
               </div>
             </div>
@@ -765,20 +767,20 @@ const AdminDashboard = () => {
   const renderAdminsTab = () => (
     <div className="adminDashboardTabContent">
       <div className="adminDashboardPageHeader">
-        <h2>Administrators</h2>
+        <h2>Administratorlar</h2>
         <div className="adminDashboardHeaderActions">
           <div className="adminDashboardSearchContainer">
             <FiSearch className="adminDashboardSearchIcon" />
             <input
               type="text"
-              placeholder="Search admins..."
+              placeholder="Adminlarni qidirish..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="adminDashboardSearchInput"
             />
           </div>
           <button className="adminDashboardBtnPrimary" onClick={() => handleAddAdmin()}>
-            <FiPlus /> New Admin
+            <FiPlus /> Yangi Admin
           </button>
         </div>
       </div>
@@ -792,13 +794,15 @@ const AdminDashboard = () => {
 
       <div className="adminDashboardAdminsGrid">
         {filteredAdmins.length === 0 ? (
-          <p className="adminDashboardNoData">No admins found</p>
+          <p className="adminDashboardNoData">Adminlar topilmadi</p>
         ) : (
           filteredAdmins.map(admin => (
             <div key={admin.id} className="adminDashboardAdminCard">
               <div className="adminDashboardAdminHeader">
                 <h3>{admin.name}</h3>
-                <span className="adminDashboardRoleBadge">{admin.role === "super_admin" ? "Super Admin" : "Branch Admin"}</span>
+                <span className="adminDashboardRoleBadge">
+                  {admin.role === "super_admin" ? "Bosh Admin" : "Filial Admini"}
+                </span>
               </div>
               <div className="adminDashboardAdminInfo">
                 <div className="adminDashboardInfoItem">
@@ -808,10 +812,10 @@ const AdminDashboard = () => {
                   <FiPhone /> {admin.phone}
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiMapPin /> Branch: {admin.branchId ? branches.find(b => b.id === admin.branchId)?.name || "N/A" : "General"}
+                  <FiMapPin /> Filial: {admin.branchId ? branches.find(b => b.id === admin.branchId)?.name || "Yo'q" : "Umumiy"}
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiKey /> Telegram Chat ID: {admin.telegram || "N/A"}
+                  <FiKey /> Telegram Chat ID: {admin.telegram || "Yo'q"}
                 </div>
                 <div className="adminDashboardInfoItem adminDashboardTokenItem">
                   <div className="adminDashboardTokenText">
@@ -821,30 +825,30 @@ const AdminDashboard = () => {
                     <button
                       className={`adminDashboardBtnCopy ${copiedTokenId === admin.id ? 'adminDashboardCopied' : ''}`}
                       onClick={() => handleCopyToken(admin.token, admin)}
-                      title="Copy token"
+                      title="Tokenni nusxalash"
                     >
                       <FiCopy />
-                      <span>{copiedTokenId === admin.id ? "Copied!" : "Copy"}</span>
+                      <span>{copiedTokenId === admin.id ? "Nusxalandi!" : "Nusxalash"}</span>
                     </button>
                     <button
                       className="adminDashboardBtnRefresh"
                       onClick={() => handleRefreshToken(admin, "admin")}
-                      title="Refresh token"
+                      title="Tokenni yangilash"
                     >
                       <FiRefreshCw />
                     </button>
                   </div>
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiDatabase /> Token expiry: {new Date(admin.tokenExpiry).toLocaleDateString('en-US')}
+                  <FiDatabase /> Token tugash sanasi: {new Date(admin.tokenExpiry).toLocaleDateString('uz-UZ')}
                 </div>
               </div>
               <div className="adminDashboardAdminActions">
                 <button className="adminDashboardBtnEdit" onClick={() => handleEditAdmin(admin)}>
-                  <FiEdit /> Edit
+                  <FiEdit /> Tahrirlash
                 </button>
                 <button className="adminDashboardBtnDelete" onClick={() => handleDeleteAdmin(admin.id)}>
-                  <FiTrash2 /> Delete
+                  <FiTrash2 /> O'chirish
                 </button>
               </div>
             </div>
@@ -857,13 +861,13 @@ const AdminDashboard = () => {
   const renderPendingAdminsTab = () => (
     <div className="adminDashboardTabContent">
       <div className="adminDashboardPageHeader">
-        <h2>Pending Admin Requests</h2>
+        <h2>Kutilayotgan Admin So'rovlari</h2>
         <div className="adminDashboardHeaderActions">
           <div className="adminDashboardSearchContainer">
             <FiSearch className="adminDashboardSearchIcon" />
             <input
               type="text"
-              placeholder="Search requests..."
+              placeholder="So'rovlarni qidirish..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="adminDashboardSearchInput"
@@ -881,7 +885,7 @@ const AdminDashboard = () => {
 
       <div className="adminDashboardAdminsGrid">
         {pendingAdmins.length === 0 ? (
-          <p className="adminDashboardNoData">No pending requests</p>
+          <p className="adminDashboardNoData">Kutilayotgan so'rovlar yo'q</p>
         ) : (
           pendingAdmins
             .filter(a =>
@@ -894,7 +898,7 @@ const AdminDashboard = () => {
                 <div className="adminDashboardAdminHeader">
                   <h3>{request.name}</h3>
                   <span className={`adminDashboardStatusBadge ${request.status}`}>
-                    {request.status === "pending" ? "Pending" : request.status === "approved" ? "Approved" : "Rejected"}
+                    {request.status === "pending" ? "Kutilmoqda" : request.status === "approved" ? "Tasdiqlandi" : "Rad etildi"}
                   </span>
                 </div>
                 <div className="adminDashboardAdminInfo">
@@ -905,19 +909,19 @@ const AdminDashboard = () => {
                     <FiPhone /> {request.phone}
                   </div>
                   <div className="adminDashboardInfoItem">
-                    <FiKey /> Telegram Chat ID: {request.telegram || "N/A"}
+                    <FiKey /> Telegram Chat ID: {request.telegram || "Yo'q"}
                   </div>
                   <div className="adminDashboardInfoItem">
-                    <FiFileText /> Created: {new Date(request.createdAt).toLocaleDateString()}
+                    <FiFileText /> Yaratilgan: {new Date(request.createdAt).toLocaleDateString('uz-UZ')}
                   </div>
                 </div>
                 {request.status === "pending" && (
                   <div className="adminDashboardAdminActions">
                     <button className="adminDashboardBtnEdit" onClick={() => handleApproveAdminRequest(request)}>
-                      <FiCheck /> Approve
+                      <FiCheck /> Tasdiqlash
                     </button>
                     <button className="adminDashboardBtnDelete" onClick={() => handleRejectAdminRequest(request.id)}>
-                      <FiXCircle /> Reject
+                      <FiXCircle /> Rad etish
                     </button>
                   </div>
                 )}
@@ -931,20 +935,20 @@ const AdminDashboard = () => {
   const renderInsuranceTab = () => (
     <div className="adminDashboardTabContent">
       <div className="adminDashboardPageHeader">
-        <h2>Insurance Companies</h2>
+        <h2>Sug'urta Kompaniyalari</h2>
         <div className="adminDashboardHeaderActions">
           <div className="adminDashboardSearchContainer">
             <FiSearch className="adminDashboardSearchIcon" />
             <input
               type="text"
-              placeholder="Search insurance companies..."
+              placeholder="Sug'urta kompaniyalarini qidirish..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="adminDashboardSearchInput"
             />
           </div>
           <button className="adminDashboardBtnPrimary" onClick={handleAddInsurance}>
-            <FiPlus /> New Insurance
+            <FiPlus /> Yangi Sug'urta
           </button>
         </div>
       </div>
@@ -958,19 +962,19 @@ const AdminDashboard = () => {
 
       <div className="adminDashboardInsuranceGrid">
         {filteredInsurance.length === 0 ? (
-          <p className="adminDashboardNoData">No insurance companies found</p>
+          <p className="adminDashboardNoData">Sug'urta kompaniyalari topilmadi</p>
         ) : (
           filteredInsurance.map(insurance => (
             <div key={insurance.id} className="adminDashboardInsuranceCard">
               <div className="adminDashboardInsuranceHeader">
                 <h3>{insurance.name}</h3>
                 <span className={`adminDashboardStatusBadge ${insurance.status}`}>
-                  {insurance.status === "active" ? "Active" : "Inactive"}
+                  {insurance.status === "active" ? "Faol" : "Faol emas"}
                 </span>
               </div>
               <div className="adminDashboardInsuranceInfo">
                 <div className="adminDashboardInfoItem">
-                  <FiUsers /> Contact: {insurance.contactName}
+                  <FiUsers /> Aloqa: {insurance.contactName}
                 </div>
                 <div className="adminDashboardInfoItem">
                   <FiPhone /> {insurance.phone}
@@ -982,10 +986,10 @@ const AdminDashboard = () => {
                   <FiMapPin /> {insurance.address}
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiDollarSign /> Commission: {insurance.commission}%
+                  <FiDollarSign /> Komissiya: {insurance.commission}%
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiPercent /> Active discounts: {
+                  <FiPercent /> Faol chegirmalar: {
                     insuranceDiscounts.filter(d =>
                       d.insuranceId === insurance.id && d.isActive
                     ).length
@@ -994,13 +998,13 @@ const AdminDashboard = () => {
               </div>
               <div className="adminDashboardInsuranceActions">
                 <button className="adminDashboardBtnEdit" onClick={() => handleEditInsurance(insurance)}>
-                  <FiEdit /> Edit
+                  <FiEdit /> Tahrirlash
                 </button>
                 <button className="adminDashboardBtnSecondary" onClick={() => handleAddDiscount(insurance.id)}>
-                  <FiTag /> Add Discount
+                  <FiTag /> Chegirma Qo'shish
                 </button>
                 <button className="adminDashboardBtnDelete" onClick={() => handleDeleteInsurance(insurance.id)}>
-                  <FiTrash2 /> Delete
+                  <FiTrash2 /> O'chirish
                 </button>
               </div>
             </div>
@@ -1013,20 +1017,20 @@ const AdminDashboard = () => {
   const renderDiscountsTab = () => (
     <div className="adminDashboardTabContent">
       <div className="adminDashboardPageHeader">
-        <h2>Insurance Discounts</h2>
+        <h2>Sug'urta Chegirmalari</h2>
         <div className="adminDashboardHeaderActions">
           <div className="adminDashboardSearchContainer">
             <FiSearch className="adminDashboardSearchIcon" />
             <input
               type="text"
-              placeholder="Search discounts..."
+              placeholder="Chegirmalarni qidirish..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="adminDashboardSearchInput"
             />
           </div>
           <button className="adminDashboardBtnPrimary" onClick={() => handleAddDiscount()}>
-            <FiPlus /> New Discount
+            <FiPlus /> Yangi Chegirma
           </button>
         </div>
       </div>
@@ -1040,7 +1044,7 @@ const AdminDashboard = () => {
 
       <div className="adminDashboardDiscountsGrid">
         {filteredDiscounts.length === 0 ? (
-          <p className="adminDashboardNoData">No discounts found</p>
+          <p className="adminDashboardNoData">Chegirmalar topilmadi</p>
         ) : (
           filteredDiscounts.map(discount => {
             const insurance = insuranceCompanies.find(i => i.id === discount.insuranceId);
@@ -1050,50 +1054,50 @@ const AdminDashboard = () => {
             return (
               <div key={discount.id} className={`adminDashboardDiscountCard ${!isActive ? 'adminDashboardExpired' : ''}`}>
                 <div className="adminDashboardDiscountHeader">
-                  <h3>{insurance?.name || "Unknown insurance"}</h3>
+                  <h3>{insurance?.name || "Noma'lum sug'urta"}</h3>
                   <div className="adminDashboardDiscountBadges">
                     <span className={`adminDashboardStatusBadge ${isActive ? 'active' : 'inactive'}`}>
-                      {isActive ? "Active" : isExpired ? "Expired" : "Inactive"}
+                      {isActive ? "Faol" : isExpired ? "Muddati tugagan" : "Faol emas"}
                     </span>
                     <span className="adminDashboardDiscountTypeBadge">
-                      {discount.discountType === "percentage" ? "Percentage" : "Fixed"}
+                      {discount.discountType === "percentage" ? "Foiz" : "Soddaroq"}
                     </span>
                   </div>
                 </div>
                 <div className="adminDashboardDiscountInfo">
                   <div className="adminDashboardInfoItem">
-                    <FiPercent /> Discount: {discount.discountValue}
-                    {discount.discountType === "percentage" ? "%" : " UZS"}
+                    <FiPercent /> Chegirma: {discount.discountValue}
+                    {discount.discountType === "percentage" ? "%" : " so'm"}
                   </div>
                   <div className="adminDashboardInfoItem">
-                    <FiDollarSign /> Min amount: {discount.minAmount || 0} UZS
+                    <FiDollarSign /> Min miqdor: {discount.minAmount || 0} so'm
                   </div>
                   <div className="adminDashboardInfoItem">
-                    <FiDollarSign /> Max amount: {discount.maxAmount || "Unlimited"} UZS
+                    <FiDollarSign /> Max miqdor: {discount.maxAmount || "Cheksiz"} so'm
                   </div>
                   <div className="adminDashboardInfoItem">
-                    <FiCalendar /> Start: {new Date(discount.startDate).toLocaleDateString('en-US')}
+                    <FiCalendar /> Boshlanish: {new Date(discount.startDate).toLocaleDateString('uz-UZ')}
                   </div>
                   <div className="adminDashboardInfoItem">
-                    <FiCalendar /> End: {new Date(discount.endDate).toLocaleDateString('en-US')}
+                    <FiCalendar /> Tugash: {new Date(discount.endDate).toLocaleDateString('uz-UZ')}
                   </div>
                   <div className="adminDashboardInfoItem">
-                    <FiDatabase /> Created: {new Date(discount.createdAt).toLocaleDateString('en-US')}
+                    <FiDatabase /> Yaratilgan: {new Date(discount.createdAt).toLocaleDateString('uz-UZ')}
                   </div>
                 </div>
                 <div className="adminDashboardDiscountActions">
                   <button className="adminDashboardBtnEdit" onClick={() => handleEditDiscount(discount)}>
-                    <FiEdit /> Edit
+                    <FiEdit /> Tahrirlash
                   </button>
                   <button
                     className={isActive ? "adminDashboardBtnWarning" : "adminDashboardBtnSecondary"}
                     onClick={() => handleToggleDiscountStatus(discount.id)}
                   >
                     {isActive ? <FiXCircle /> : <FiCheck />}
-                    {isActive ? " Deactivate" : " Activate"}
+                    {isActive ? " O'chirish" : " Faollashtirish"}
                   </button>
                   <button className="adminDashboardBtnDelete" onClick={() => handleDeleteDiscount(discount.id)}>
-                    <FiTrash2 /> Delete
+                    <FiTrash2 /> O'chirish
                   </button>
                 </div>
               </div>
@@ -1107,20 +1111,20 @@ const AdminDashboard = () => {
   const renderStaffTab = () => (
     <div className="adminDashboardTabContent">
       <div className="adminDashboardPageHeader">
-        <h2>Staff</h2>
+        <h2>Xodimlar</h2>
         <div className="adminDashboardHeaderActions">
           <div className="adminDashboardSearchContainer">
             <FiSearch className="adminDashboardSearchIcon" />
             <input
               type="text"
-              placeholder="Search staff..."
+              placeholder="Xodimlarni qidirish..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="adminDashboardSearchInput"
             />
           </div>
           <button className="adminDashboardBtnPrimary" onClick={() => handleAddStaff()}>
-            <FiPlus /> New Staff
+            <FiPlus /> Yangi Xodim
           </button>
         </div>
       </div>
@@ -1134,31 +1138,31 @@ const AdminDashboard = () => {
 
       <div className="adminDashboardStaffGrid">
         {filteredStaff.length === 0 ? (
-          <p className="adminDashboardNoData">No staff found</p>
+          <p className="adminDashboardNoData">Xodimlar topilmadi</p>
         ) : (
           filteredStaff.map(staffMember => (
             <div key={staffMember.id} className="adminDashboardStaffCard">
               <div className="adminDashboardStaffHeader">
                 <h3>{staffMember.name}</h3>
                 <span className={`adminDashboardStatusBadge ${staffMember.status}`}>
-                  {staffMember.status === "active" ? "Active" : "Inactive"}
+                  {staffMember.status === "active" ? "Faol" : "Faol emas"}
                 </span>
               </div>
               <div className="adminDashboardStaffInfo">
                 <div className="adminDashboardInfoItem">
-                  <FiUsers /> Position: {staffMember.position}
+                  <FiUsers /> Lavozim: {staffMember.position}
                 </div>
                 <div className="adminDashboardInfoItem">
                   <FiPhone /> {staffMember.phone}
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiMail /> {staffMember.email || "N/A"}
+                  <FiMail /> {staffMember.email || "Yo'q"}
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiMapPin /> Branch: {staffMember.branchId ? branches.find(b => b.id === staffMember.branchId)?.name || "N/A" : "General"}
+                  <FiMapPin /> Filial: {staffMember.branchId ? branches.find(b => b.id === staffMember.branchId)?.name || "Yo'q" : "Umumiy"}
                 </div>
                 <div className="adminDashboardInfoItem">
-                  <FiDollarSign /> Salary: {staffMember.salary || "N/A"} UZS
+                  <FiDollarSign /> Maosh: {staffMember.salary || "Yo'q"} so'm
                 </div>
                 {staffMember.token && (
                   <div className="adminDashboardInfoItem adminDashboardTokenItem">
@@ -1169,10 +1173,10 @@ const AdminDashboard = () => {
                       <button
                         className={`adminDashboardBtnCopy ${copiedTokenId === staffMember.id ? 'adminDashboardCopied' : ''}`}
                         onClick={() => handleCopyToken(staffMember.token, staffMember)}
-                        title="Copy token"
+                        title="Tokenni nusxalash"
                       >
                         <FiCopy />
-                        <span>{copiedTokenId === staffMember.id ? "Copied!" : "Copy"}</span>
+                        <span>{copiedTokenId === staffMember.id ? "Nusxalandi!" : "Nusxalash"}</span>
                       </button>
                     </div>
                   </div>
@@ -1180,10 +1184,10 @@ const AdminDashboard = () => {
               </div>
               <div className="adminDashboardStaffActions">
                 <button className="adminDashboardBtnEdit" onClick={() => handleEditStaff(staffMember)}>
-                  <FiEdit /> Edit
+                  <FiEdit /> Tahrirlash
                 </button>
                 <button className="adminDashboardBtnDelete" onClick={() => handleDeleteStaff(staffMember.id)}>
-                  <FiTrash2 /> Delete
+                  <FiTrash2 /> O'chirish
                 </button>
               </div>
             </div>
@@ -1196,7 +1200,7 @@ const AdminDashboard = () => {
   const renderStatsTab = () => (
     <div className="adminDashboardTabContent">
       <div className="adminDashboardPageHeader">
-        <h2>Statistics</h2>
+        <h2>Statistika</h2>
       </div>
 
       <div className="adminDashboardStatsGrid">
@@ -1205,7 +1209,7 @@ const AdminDashboard = () => {
             <FiHome />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Total Branches</h3>
+            <h3>Jami Filiallar</h3>
             <p>{stats.totalBranches || 0}</p>
           </div>
         </div>
@@ -1214,7 +1218,7 @@ const AdminDashboard = () => {
             <FiUsers />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Active Branches</h3>
+            <h3>Faol Filiallar</h3>
             <p>{stats.activeBranches || 0}</p>
           </div>
         </div>
@@ -1223,7 +1227,7 @@ const AdminDashboard = () => {
             <FiShield />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Admins</h3>
+            <h3>Adminlar</h3>
             <p>{stats.totalAdmins || 0}</p>
           </div>
         </div>
@@ -1232,7 +1236,7 @@ const AdminDashboard = () => {
             <FiUsers />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Staff</h3>
+            <h3>Xodimlar</h3>
             <p>{stats.totalStaff || 0}</p>
           </div>
         </div>
@@ -1241,7 +1245,7 @@ const AdminDashboard = () => {
             <FiFileText />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Insurance Companies</h3>
+            <h3>Sug'urta Kompaniyalari</h3>
             <p>{stats.totalInsurance || 0}</p>
           </div>
         </div>
@@ -1250,7 +1254,7 @@ const AdminDashboard = () => {
             <FiPercent />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Active Discounts</h3>
+            <h3>Faol Chegirmalar</h3>
             <p>{stats.activeDiscounts || 0}</p>
           </div>
         </div>
@@ -1259,8 +1263,8 @@ const AdminDashboard = () => {
             <FiDollarSign />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Total Revenue</h3>
-            <p>{(stats.totalRevenue || 0).toLocaleString()} UZS</p>
+            <h3>Jami Daromad</h3>
+            <p>{(stats.totalRevenue || 0).toLocaleString()} so'm</p>
           </div>
         </div>
         <div className="adminDashboardStatCard">
@@ -1268,7 +1272,7 @@ const AdminDashboard = () => {
             <FiTrendingUp />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Monthly Growth</h3>
+            <h3>Oylik O'sish</h3>
             <p>{stats.monthlyGrowth || "0%"}</p>
           </div>
         </div>
@@ -1277,14 +1281,14 @@ const AdminDashboard = () => {
             <FiActivity />
           </div>
           <div className="adminDashboardStatInfo">
-            <h3>Patient Satisfaction</h3>
+            <h3>Bemorlar Qoniqishi</h3>
             <p>{stats.patientSatisfaction || "N/A"}</p>
           </div>
         </div>
       </div>
 
       <div className="adminDashboardChartContainer">
-        <p>Chart placeholder: Monthly Revenue Statistics</p>
+        <p>Oylik daromad statistikasi uchun grafik joylashuvi</p>
       </div>
     </div>
   );
@@ -1292,51 +1296,51 @@ const AdminDashboard = () => {
   return (
     <div className="adminDashboard">
       <div className="adminDashboardSidebar">
-        <h1>Admin Panel</h1>
+        <h1>Admin Paneli</h1>
         <button
           className={`adminDashboardMenuItem ${activeTab === "branches" ? "adminDashboardActive" : ""}`}
           onClick={() => setActiveTab("branches")}
         >
-          <FiHome /> Branches
+          <FiHome /> Filiallar
         </button>
         <button
           className={`adminDashboardMenuItem ${activeTab === "admins" ? "adminDashboardActive" : ""}`}
           onClick={() => setActiveTab("admins")}
         >
-          <FiShield /> Admins
+          <FiShield /> Adminlar
         </button>
         <button
           className={`adminDashboardMenuItem ${activeTab === "pending_admins" ? "adminDashboardActive" : ""}`}
           onClick={() => setActiveTab("pending_admins")}
         >
-          <FiFileText /> Requests
+          <FiFileText /> So'rovlar
         </button>
         <button
           className={`adminDashboardMenuItem ${activeTab === "insurance" ? "adminDashboardActive" : ""}`}
           onClick={() => setActiveTab("insurance")}
         >
-          <FiFileText /> Insurance
+          <FiFileText /> Sug'urta
         </button>
         <button
           className={`adminDashboardMenuItem ${activeTab === "discounts" ? "adminDashboardActive" : ""}`}
           onClick={() => setActiveTab("discounts")}
         >
-          <FiPercent /> Discounts
+          <FiPercent /> Chegirmalar
         </button>
         <button
           className={`adminDashboardMenuItem ${activeTab === "staff" ? "adminDashboardActive" : ""}`}
           onClick={() => setActiveTab("staff")}
         >
-          <FiUsers /> Staff
+          <FiUsers /> Xodimlar
         </button>
         <button
           className={`adminDashboardMenuItem ${activeTab === "stats" ? "adminDashboardActive" : ""}`}
           onClick={() => setActiveTab("stats")}
         >
-          <FiBarChart2 /> Statistics
+          <FiBarChart2 /> Statistika
         </button>
         <button className="adminDashboardMenuItem" onClick={() => navigate("/")}>
-          Back
+          Orqaga
         </button>
       </div>
 
@@ -1359,11 +1363,11 @@ const AdminDashboard = () => {
             <div className="adminDashboardModalContent">
               <div className="adminDashboardModalHeader">
                 <h2>
-                  {modalType === "branch" && (currentItem ? "Edit Branch" : "Add New Branch")}
-                  {modalType === "admin" && (currentItem ? "Edit Admin" : "Add New Admin")}
-                  {modalType === "insurance" && (currentItem ? "Edit Insurance" : "Add New Insurance")}
-                  {modalType === "staff" && (currentItem ? "Edit Staff" : "Add New Staff")}
-                  {modalType === "discount" && (currentItem ? "Edit Discount" : "Add New Discount")}
+                  {modalType === "branch" && (currentItem ? "Filialni tahrirlash" : "Yangi Filial Qo'shish")}
+                  {modalType === "admin" && (currentItem ? "Adminni tahrirlash" : "Yangi Admin Qo'shish")}
+                  {modalType === "insurance" && (currentItem ? "Sug'urtani tahrirlash" : "Yangi Sug'urta Qo'shish")}
+                  {modalType === "staff" && (currentItem ? "Xodimni tahrirlash" : "Yangi Xodim Qo'shish")}
+                  {modalType === "discount" && (currentItem ? "Chegirmni tahrirlash" : "Yangi Chegirma Qo'shish")}
                 </h2>
                 <button className="adminDashboardModalClose" onClick={() => setModalOpen(false)}>
                   <FiX />
@@ -1372,32 +1376,32 @@ const AdminDashboard = () => {
               <div className="adminDashboardModalBody">
                 {modalType === "branch" && (
                   <div className="adminDashboardFormGroup">
-                    <label>Branch Name</label>
+                    <label>Filial Nomi</label>
                     <input type="text" value={branchForm.name} onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })}
-                      placeholder="Enter branch name"
+                      placeholder="Filial nomini kiriting"
                     />
-                    <label>Address</label>
+                    <label>Manzil</label>
                     <input type="text" value={branchForm.address} onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })}
-                      placeholder="Enter address"
+                      placeholder="Manzilni kiriting"
                     />
-                    <label>Phone</label>
+                    <label>Telefon</label>
                     <input type="text" value={branchForm.phone} onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })}
                       placeholder="+998 XX XXX XX XX"
                     />
                     <label>Email</label>
                     <input type="text" value={branchForm.email} onChange={(e) => setBranchForm({ ...branchForm, email: e.target.value })}
-                      placeholder="Enter email"
+                      placeholder="Email kiriting"
                     />
-                    <label>Manager</label>
+                    <label>Menejer</label>
                     <input type="text" value={branchForm.manager} onChange={(e) => setBranchForm({ ...branchForm, manager: e.target.value })}
-                      placeholder="Enter manager name"
+                      placeholder="Menejer nomini kiriting"
                     />
-                    <label>Status</label>
+                    <label>Holati</label>
                     <select value={branchForm.status} onChange={(e) => setBranchForm({ ...branchForm, status: e.target.value })}>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
+                      <option value="active">Faol</option>
+                      <option value="inactive">Faol emas</option>
                     </select>
-                    <label>Branch ID</label>
+                    <label>Filial ID</label>
                     <input type="text" value={branchForm.branchId} disabled />
                     <div className="adminDashboardTokenGenerator">
                       <label>Token</label>
@@ -1408,7 +1412,7 @@ const AdminDashboard = () => {
                           className="adminDashboardBtnGenerate"
                           onClick={() => setBranchForm({ ...branchForm, token: generateToken() })}
                         >
-                          <FiRefreshCw /> Refresh
+                          <FiRefreshCw /> Yangilash
                         </button>
                       </div>
                     </div>
@@ -1416,34 +1420,34 @@ const AdminDashboard = () => {
                 )}
                 {modalType === "admin" && (
                   <div className="adminDashboardFormGroup">
-                    <label>Name</label>
+                    <label>Ism</label>
                     <input type="text" value={adminForm.name} onChange={(e) => setAdminForm({ ...adminForm, name: e.target.value })}
-                      placeholder="Enter name"
+                      placeholder="Ism kiriting"
                     />
                     <label>Email</label>
                     <input type="text" value={adminForm.email} onChange={(e) => setAdminForm({ ...adminForm, email: e.target.value })}
-                      placeholder="Enter email"
+                      placeholder="Email kiriting"
                     />
-                    <label>Phone</label>
+                    <label>Telefon</label>
                     <input type="text" value={adminForm.phone} onChange={(e) => setAdminForm({ ...adminForm, phone: e.target.value })}
                       placeholder="+998 XX XXX XX XX"
                     />
                     <label>Telegram Chat ID</label>
                     <input type="text" value={adminForm.telegram} onChange={(e) => setAdminForm({ ...adminForm, telegram: e.target.value })}
-                      placeholder="Enter Telegram Chat ID"
+                      placeholder="Telegram Chat ID kiriting"
                     />
-                    <label>Password</label>
+                    <label>Parol</label>
                     <input type="password" value={adminForm.password} onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })}
-                      placeholder={currentItem ? "New password (optional)" : "Enter password"}
+                      placeholder={currentItem ? "Yangi parol (ixtiyoriy)" : "Parol kiriting"}
                     />
-                    <label>Role</label>
+                    <label>Roli</label>
                     <select value={adminForm.role} onChange={(e) => setAdminForm({ ...adminForm, role: e.target.value })}>
-                      <option value="super_admin">Super Admin</option>
-                      <option value="branch_admin">Branch Admin</option>
+                      <option value="super_admin">Bosh Admin</option>
+                      <option value="branch_admin">Filial Admini</option>
                     </select>
-                    <label>Branch</label>
+                    <label>Filial</label>
                     <select value={adminForm.branchId} onChange={(e) => setAdminForm({ ...adminForm, branchId: e.target.value })}>
-                      <option value="">General</option>
+                      <option value="">Umumiy</option>
                       {branches.map(branch => (
                         <option key={branch.id} value={branch.id}>
                           {branch.name}
@@ -1451,146 +1455,146 @@ const AdminDashboard = () => {
                       ))}
                     </select>
                     <div className="adminDashboardTokenGenerator">
-                      <label>Token (Auto-generated)</label>
-                      <input type="text" value={currentItem ? adminForm.token || "New token will be generated" : "Token will be generated when adding new admin"} disabled />
+                      <label>Token (Avtomatik yaratiladi)</label>
+                      <input type="text" value={currentItem ? adminForm.token || "Yangi token yaratiladi" : "Yangi admin qo'shilganda token yaratiladi"} disabled />
                     </div>
                   </div>
                 )}
                 {modalType === "insurance" && (
                   <div className="adminDashboardFormGroup">
-                    <label>Company Name</label>
+                    <label>Kompaniya Nomi</label>
                     <input type="text" value={insuranceForm.name} onChange={(e) => setInsuranceForm({ ...insuranceForm, name: e.target.value })}
-                      placeholder="Enter company name"
+                      placeholder="Kompaniya nomini kiriting"
                     />
-                    <label>Contact Person</label>
+                    <label>Aloqa Shaxsi</label>
                     <input type="text" value={insuranceForm.contactName} onChange={(e) => setInsuranceForm({ ...insuranceForm, contactName: e.target.value })}
-                      placeholder="Enter contact person name"
+                      placeholder="Aloqa shaxsini kiriting"
                     />
                     <label>Email</label>
                     <input type="text" value={insuranceForm.email} onChange={(e) => setInsuranceForm({ ...insuranceForm, email: e.target.value })}
-                      placeholder="Enter email"
+                      placeholder="Email kiriting"
                     />
-                    <label>Phone</label>
+                    <label>Telefon</label>
                     <input type="text" value={insuranceForm.phone} onChange={(e) => setInsuranceForm({ ...insuranceForm, phone: e.target.value })}
                       placeholder="+998 XX XXX XX XX"
                     />
-                    <label>Address</label>
+                    <label>Manzil</label>
                     <input type="text" value={insuranceForm.address} onChange={(e) => setInsuranceForm({ ...insuranceForm, address: e.target.value })}
-                      placeholder="Enter address"
+                      placeholder="Manzil kiriting"
                     />
-                    <label>Coverage</label>
+                    <label>Qoplama</label>
                     <input type="text" value={insuranceForm.coverage} onChange={(e) => setInsuranceForm({ ...insuranceForm, coverage: e.target.value })}
-                      placeholder="Enter coverage"
+                      placeholder="Qoplama kiriting"
                     />
-                    <label>Commission (%)</label>
+                    <label>Komissiya (%)</label>
                     <input type="number" value={insuranceForm.commission} onChange={(e) => setInsuranceForm({ ...insuranceForm, commission: e.target.value })}
-                      placeholder="Enter commission percentage"
+                      placeholder="Komissiya foizini kiriting"
                     />
-                    <label>Status</label>
+                    <label>Holati</label>
                     <select value={insuranceForm.status} onChange={(e) => setInsuranceForm({ ...insuranceForm, status: e.target.value })}>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
+                      <option value="active">Faol</option>
+                      <option value="inactive">Faol emas</option>
                     </select>
                   </div>
                 )}
                 {modalType === "staff" && (
                   <div className="adminDashboardFormGroup">
-                    <label>Name</label>
+                    <label>Ism</label>
                     <input type="text" value={staffForm.name} onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
-                      placeholder="Enter name"
+                      placeholder="Ism kiriting"
                     />
-                    <label>Position</label>
+                    <label>Lavozim</label>
                     <input type="text" value={staffForm.position} onChange={(e) => setStaffForm({ ...staffForm, position: e.target.value })}
-                      placeholder="Enter position"
+                      placeholder="Lavozim kiriting"
                     />
-                    <label>Phone</label>
+                    <label>Telefon</label>
                     <input type="text" value={staffForm.phone} onChange={(e) => setStaffForm({ ...staffForm, phone: e.target.value })}
                       placeholder="+998 XX XXX XX XX"
                     />
                     <label>Email</label>
                     <input type="text" value={staffForm.email} onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
-                      placeholder="Enter email (optional)"
+                      placeholder="Email kiriting (ixtiyoriy)"
                     />
-                    <label>Salary (UZS)</label>
+                    <label>Maosh (so'm)</label>
                     <input type="number" value={staffForm.salary} onChange={(e) => setStaffForm({ ...staffForm, salary: e.target.value })}
-                      placeholder="Enter salary"
+                      placeholder="Maosh kiriting"
                     />
-                    <label>Branch</label>
+                    <label>Filial</label>
                     <select value={staffForm.branchId} onChange={(e) => setStaffForm({ ...staffForm, branchId: e.target.value })}>
-                      <option value="">Select branch</option>
+                      <option value="">Filial tanlang</option>
                       {branches.map(branch => (
                         <option key={branch.id} value={branch.id}>
                           {branch.name}
                         </option>
                       ))}
                     </select>
-                    <label>Status</label>
+                    <label>Holati</label>
                     <select value={staffForm.status} onChange={(e) => setStaffForm({ ...staffForm, status: e.target.value })}>
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
+                      <option value="active">Faol</option>
+                      <option value="inactive">Faol emas</option>
                     </select>
                     <div className="adminDashboardTokenGenerator">
-                      <label>Token (Auto-generated)</label>
-                      <input type="text" value={currentItem ? staffForm.token || "New token will be generated" : "Token will be generated when adding new staff"} disabled />
+                      <label>Token (Avtomatik yaratiladi)</label>
+                      <input type="text" value={currentItem ? staffForm.token || "Yangi token yaratiladi" : "Yangi xodim qo'shilganda token yaratiladi"} disabled />
                     </div>
                   </div>
                 )}
                 {modalType === "discount" && (
                   <div className="adminDashboardFormGroup">
-                    <label>Insurance Company</label>
+                    <label>Sug'urta Kompaniyasi</label>
                     <select value={discountForm.insuranceId} onChange={(e) => setDiscountForm({ ...discountForm, insuranceId: e.target.value })}>
-                      <option value="">Select insurance company</option>
+                      <option value="">Sug'urta kompaniyasini tanlang</option>
                       {insuranceCompanies.map(insurance => (
                         <option key={insurance.id} value={insurance.id}>
                           {insurance.name}
                         </option>
                       ))}
                     </select>
-                    <label>Discount Type</label>
+                    <label>Chegirma Turi</label>
                     <select value={discountForm.discountType} onChange={(e) => setDiscountForm({ ...discountForm, discountType: e.target.value })}>
-                      <option value="percentage">Percentage (%)</option>
-                      <option value="fixed">Fixed Amount (UZS)</option>
+                      <option value="percentage">Foiz (%)</option>
+                      <option value="fixed">Soddaroq miqdor (so'm)</option>
                     </select>
                     <label>
-                      Discount Value
-                      {discountForm.discountType === "percentage" ? " (%)" : " (UZS)"}
+                      Chegirma Qiymati
+                      {discountForm.discountType === "percentage" ? " (%)" : " (so'm)"}
                     </label>
                     <input
                       type="number"
                       value={discountForm.discountValue}
                       onChange={(e) => setDiscountForm({ ...discountForm, discountValue: parseFloat(e.target.value) || 0 })}
-                      placeholder={discountForm.discountType === "percentage" ? "Enter percentage" : "Enter amount"}
+                      placeholder={discountForm.discountType === "percentage" ? "Foiz kiriting" : "Miqdor kiriting"}
                     />
-                    <label>Minimum Amount (UZS)</label>
+                    <label>Minimal Miqdor (so'm)</label>
                     <input
                       type="number"
                       value={discountForm.minAmount}
                       onChange={(e) => setDiscountForm({ ...discountForm, minAmount: parseFloat(e.target.value) || 0 })}
-                      placeholder="Enter minimum amount"
+                      placeholder="Minimal miqdor kiriting"
                     />
-                    <label>Maximum Amount (UZS)</label>
+                    <label>Maksimal Miqdor (so'm)</label>
                     <input
                       type="number"
                       value={discountForm.maxAmount}
                       onChange={(e) => setDiscountForm({ ...discountForm, maxAmount: parseFloat(e.target.value) || 0 })}
-                      placeholder="Enter maximum amount (0 - unlimited)"
+                      placeholder="Maksimal miqdor kiriting (0 - cheksiz)"
                     />
-                    <label>Start Date</label>
+                    <label>Boshlanish Sanasi</label>
                     <input
                       type="date"
                       value={discountForm.startDate}
                       onChange={(e) => setDiscountForm({ ...discountForm, startDate: e.target.value })}
                     />
-                    <label>End Date</label>
+                    <label>Tugash Sanasi</label>
                     <input
                       type="date"
                       value={discountForm.endDate}
                       onChange={(e) => setDiscountForm({ ...discountForm, endDate: e.target.value })}
                     />
-                    <label>Status</label>
+                    <label>Holati</label>
                     <select value={discountForm.isActive} onChange={(e) => setDiscountForm({ ...discountForm, isActive: e.target.value === "true" })}>
-                      <option value="true">Active</option>
-                      <option value="false">Inactive</option>
+                      <option value="true">Faol</option>
+                      <option value="false">Faol emas</option>
                     </select>
                   </div>
                 )}
@@ -1609,10 +1613,10 @@ const AdminDashboard = () => {
                   else if (modalType === "staff") handleSaveStaff();
                   else if (modalType === "discount") handleSaveDiscount();
                 }}>
-                  Save
+                  Saqlash
                 </button>
                 <button className="adminDashboardModalBtn adminDashboardModalBtnSecondary" onClick={() => setModalOpen(false)}>
-                  Cancel
+                  Bekor qilish
                 </button>
               </div>
             </div>

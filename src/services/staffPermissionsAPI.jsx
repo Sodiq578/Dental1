@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { AppContext } from '../../App';
 import { FiUser, FiEye, FiEyeOff, FiEdit3, FiSave, FiX, FiCheck, FiXCircle, FiMapPin } from 'react-icons/fi';
+import { getStaff, updateStaffPermissions, updateStaffBranch } from '../../api/staffApi'; // API service faylidan import qiling (fayl nomi mos ravishda o'zgartirilgan bo'lishi mumkin)
 import './StaffPermissions.css';
 
 const StaffPermissions = () => {
@@ -24,65 +25,75 @@ const StaffPermissions = () => {
     { id: 'reports', name: 'Reports', icon: '📊', description: 'Statistik hisobotlarni ko\'rish' },
   ];
 
+  // Komponent yuklanganda staff ma'lumotlarini API orqali olish
+  useEffect(() => {
+    const fetchStaffData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getStaff();
+        setStaff(data); // Context'dagi staff ni yangilash
+      } catch (error) {
+        console.error('Xodimlar ma\'lumotlarini yuklashda xato:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStaffData();
+  }, [setStaff]);
+
   const filteredStaff = staff.filter(member =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleEditPermissions = async (staffMember) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setSelectedStaff({ ...staffMember });
-      setIsLoading(false);
-    }, 300);
+  const handleEditPermissions = (staffMember) => {
+    setSelectedStaff({ ...staffMember });
   };
 
   const handlePermissionChange = async (moduleId) => {
     setIsLoading(true);
-    const hasAccess = hasPermission(selectedStaff, moduleId);
-
-    // Update local selectedStaff first for immediate UI feedback
     const updatedPermissions = { ...selectedStaff.permissions };
-    updatedPermissions[moduleId] = !hasAccess;
-    const updatedSelectedStaff = { ...selectedStaff, permissions: updatedPermissions };
-    setSelectedStaff(updatedSelectedStaff);
+    updatedPermissions[moduleId] = !updatedPermissions[moduleId];
 
-    // Then update global staff
-    const updatedStaff = staff.map((member) => {
-      if (member.id === selectedStaff.id) {
-        return updatedSelectedStaff;
-      }
-      return member;
-    });
-    setStaff(updatedStaff);
-
-    setTimeout(() => setIsLoading(false), 200);
+    try {
+      // API orqali ruxsatlarni yangilash
+      const updatedStaffData = await updateStaffPermissions(selectedStaff.id, updatedPermissions);
+      
+      // Local state ni yangilash
+      setStaff(prevStaff => prevStaff.map(member => 
+        member.id === selectedStaff.id ? updatedStaffData : member
+      ));
+      setSelectedStaff(updatedStaffData);
+    } catch (error) {
+      console.error('Ruxsatlarni yangilashda xato:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBranchChange = async (staffId, branchId) => {
     setIsLoading(true);
-    const updatedStaff = staff.map((member) => {
-      if (member.id === staffId) {
-        return { ...member, branchId: branchId || null };
+    try {
+      // API orqali filialni yangilash
+      const updatedStaffData = await updateStaffBranch(staffId, branchId);
+      
+      // Local state ni yangilash
+      setStaff(prevStaff => prevStaff.map(member => 
+        member.id === staffId ? updatedStaffData : member
+      ));
+      if (selectedStaff && selectedStaff.id === staffId) {
+        setSelectedStaff(updatedStaffData);
       }
-      return member;
-    });
-    setStaff(updatedStaff);
-
-    // If modal is open and branch changed for the selected staff, update selectedStaff too
-    if (selectedStaff && selectedStaff.id === staffId) {
-      setSelectedStaff({ ...selectedStaff, branchId: branchId || null });
+    } catch (error) {
+      console.error('Filialni yangilashda xato:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setTimeout(() => setIsLoading(false), 200);
   };
 
   const handleSaveAll = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setSelectedStaff(null);
-      setIsLoading(false);
-    }, 1000);
+    setSelectedStaff(null);
   };
 
   const getBranchName = (branchId) => {
@@ -319,12 +330,6 @@ const StaffPermissions = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {isLoading && (
-        <div className="global-loading-overlay">
-          <div className="loading-spinner"></div>
         </div>
       )}
     </div>
