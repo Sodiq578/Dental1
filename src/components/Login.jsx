@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUser, FiLock, FiX, FiMail, FiShield, FiKey, FiPhone, FiEye, FiEyeOff, FiArrowLeft } from "react-icons/fi";
+import { FiUser, FiLock, FiX, FiMail, FiShield, FiKey, FiPhone, FiEye, FiEyeOff, FiArrowLeft, FiMoreVertical } from "react-icons/fi";
 import { FaCrown } from "react-icons/fa";
 import { AppContext } from "../App";
 import { logLogin, getFromLocalStorage, saveToLocalStorage, savePendingAdminRequest, sendTelegramMessage } from "../utils";
@@ -30,13 +30,19 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
   const [showTokenLogin, setShowTokenLogin] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showAdminPhoneLogin, setShowAdminPhoneLogin] = useState(false);
+  const [showAdminSecretLogin, setShowAdminSecretLogin] = useState(false);
+  const [showAdminList, setShowAdminList] = useState(false);
   const [autoVerify, setAutoVerify] = useState(true);
   const [token, setToken] = useState("");
   const [telegramChatId, setTelegramChatId] = useState("");
+  const [secretKey, setSecretKey] = useState("");
+  const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
 
   const navigate = useNavigate();
   const { users, setUsers, setLogins, staff } = useContext(AppContext);
   const otpInputRefs = useRef([]);
+  const additionalOptionsRef = useRef(null);
 
   useEffect(() => {
     let interval = null;
@@ -63,6 +69,20 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
       setOtp('');
     }
   }, [isOtpMode]);
+
+  // Click outside to close additional options
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (additionalOptionsRef.current && !additionalOptionsRef.current.contains(event.target)) {
+        setShowAdditionalOptions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // OTP yuborish funksiyasi
   const sendOtp = async (phoneNumber, chatId, isAdmin = false) => {
@@ -125,6 +145,74 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
       console.error('Error verifying OTP:', error);
       return /^\d{4}$/.test(enteredOtp); // Test mode fallback
     }
+  };
+
+  // Sirli kalit orqali admin kirish
+  const handleSecretAdminLogin = (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    if (secretKey === "Sodiqjon123") {
+      const admins = getFromLocalStorage('admins', []);
+      setShowAdminList(true);
+      setShowAdminSecretLogin(false);
+    } else {
+      setError("Noto'g'ri sirli kalit");
+    }
+    setIsLoading(false);
+  };
+
+  // Adminni tanlash
+  const handleAdminSelect = (admin) => {
+    setSelectedAdmin(admin);
+    const adminUser = {
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      phone: admin.phone,
+      role: "admin",
+      permissions: {
+        patients: true,
+        appointments: true,
+        medications: true,
+        billing: true,
+        inventory: true,
+        reports: true,
+        admin: true,
+      },
+      branchId: admin.branchId || null,
+      loginMethod: 'secret_key',
+    };
+
+    onLogin(adminUser);
+    logLogin(adminUser);
+    setLogins((prevLogins) => {
+      const newLogins = [
+        ...prevLogins,
+        {
+          id: Date.now(),
+          userId: adminUser.id,
+          name: adminUser.name,
+          email: adminUser.email,
+          phone: adminUser.phone,
+          role: adminUser.role,
+          timestamp: new Date().toISOString(),
+          loginMethod: 'secret_key',
+        },
+      ];
+      saveToLocalStorage('logins', newLogins);
+      return newLogins;
+    });
+
+    setModalContent({
+      title: "Admin sifatida kirish",
+      message: `${admin.name} sifatida tizimga kirdingiz!`,
+    });
+    setShowModal(true);
+    setTimeout(() => {
+      navigate("/admin");
+    }, 1500);
   };
 
   const handleResendOtp = async () => {
@@ -827,8 +915,12 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
     setShowTokenLogin(false);
     setShowAdminLogin(false);
     setShowAdminPhoneLogin(false);
+    setShowAdminSecretLogin(false);
+    setShowAdminList(false);
     setToken("");
     setTelegramChatId("");
+    setSecretKey("");
+    setShowAdditionalOptions(false);
   };
 
   const closeModal = () => {
@@ -896,12 +988,97 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
     }, 2000);
   };
 
+  // Reset all special modes
+  const resetSpecialModes = () => {
+    setShowTokenLogin(false);
+    setShowAdminLogin(false);
+    setShowAdminPhoneLogin(false);
+    setShowAdminSecretLogin(false);
+    setShowAdminList(false);
+    setShowAdditionalOptions(false);
+  };
+
+  // Get all admins from localStorage
+  const getAllAdmins = () => {
+    return getFromLocalStorage('admins', []);
+  };
+
   return (
     <div className="login-page">
       <div className="dental-bg-pattern"></div>
 
       <div className="login-container">
         <div className="login-card">
+          {/* Additional Options Button */}
+          <button 
+            className="additional-options-btn"
+            onClick={() => setShowAdditionalOptions(!showAdditionalOptions)}
+          >
+            <FiMoreVertical />
+            Qo'shimcha kirish
+          </button>
+
+          {/* Additional Options Dropdown */}
+          {showAdditionalOptions && (
+            <div className="additional-options-dropdown" ref={additionalOptionsRef}>
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowTokenLogin(true);
+                  setShowAdditionalOptions(false);
+                }} 
+                className="dropdown-option"
+              >
+                <FiKey className="option-icon" />
+                Token orqali kirish
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowAdminLogin(true);
+                  setShowAdditionalOptions(false);
+                }} 
+                className="dropdown-option"
+              >
+                <FaCrown className="option-icon" />
+                Admin kirishi
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowAdminPhoneLogin(true);
+                  setShowAdditionalOptions(false);
+                }} 
+                className="dropdown-option"
+              >
+                <FiPhone className="option-icon" />
+                Admin telefon orqali kirish
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setShowAdminSecretLogin(true);
+                  setShowAdditionalOptions(false);
+                }} 
+                className="dropdown-option secret-option"
+              >
+                <FiShield className="option-icon" />
+                Sirli kalit orqali kirish
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  setIsAdminRequestMode(true);
+                  setShowAdditionalOptions(false);
+                }} 
+                className="dropdown-option"
+              >
+                <FaCrown className="option-icon" />
+                Admin so'rovi
+              </button>
+            </div>
+          )}
+
           <div className="login-header">
             <div className="logo">
               <FiShield className="logo-icon" />
@@ -911,6 +1088,8 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
               {showTokenLogin ? "Token orqali kirish" : 
                showAdminLogin ? "Admin kirishi" :
                showAdminPhoneLogin ? "Admin telefon orqali kirish" :
+               showAdminSecretLogin ? "Sirli kalit orqali kirish" :
+               showAdminList ? "Adminni tanlang" :
                isAdminRequestMode ? "Admin sifatida ro'yxatdan o'tish" :
                isRegisterMode ? "Ro'yxatdan o'tish" : "Tizimga kirish"}
             </h2>
@@ -918,6 +1097,8 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
               {showTokenLogin ? "Xodim yoki admin sifatida tizimga kirish" :
                showAdminLogin ? "Administrator paneliga kirish" :
                showAdminPhoneLogin ? "Telefon orqali admin sifatida kirish" :
+               showAdminSecretLogin ? "Sirli kalit orqali admin sifatida kirish" :
+               showAdminList ? "Kirish uchun adminni tanlang" :
                isAdminRequestMode ? "Admin sifatida ro'yxatdan o'ting" :
                isRegisterMode ? "Yangi hisob yarating" : "Hisobingizga kiring"}
             </p>
@@ -930,7 +1111,95 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
             </div>
           )}
 
-          {showAdminLogin ? (
+          {/* Admin List Selection */}
+          {showAdminList ? (
+            <div className="admin-list-section">
+              <div className="admin-list-header">
+                <FaCrown className="admin-icon" />
+                <h3>Adminlarni tanlang</h3>
+                <p>Kirish uchun adminni tanlang</p>
+              </div>
+              <div className="admin-list">
+                {getAllAdmins().map(admin => (
+                  <div 
+                    key={admin.id} 
+                    className={`admin-card ${selectedAdmin?.id === admin.id ? 'selected' : ''}`}
+                    onClick={() => handleAdminSelect(admin)}
+                  >
+                    <div className="admin-avatar">
+                      {admin.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div className="admin-info">
+                      <h4>{admin.name}</h4>
+                      <p>{admin.email}</p>
+                      <span className="admin-phone">{admin.phone}</span>
+                    </div>
+                    <FaCrown className="admin-crown" />
+                  </div>
+                ))}
+              </div>
+              <button 
+                type="button" 
+                className="back-to-login"
+                onClick={() => setShowAdminList(false)}
+              >
+                <FiArrowLeft /> Orqaga
+              </button>
+            </div>
+          ) : showAdminSecretLogin ? (
+            <div className="secret-admin-section">
+              <div className="secret-info-card">
+                <FiShield className="secret-icon" />
+                <h3>Sirli Kalit Orqali Kirish</h3>
+                <p>Admin sifatida tizimga kirish uchun sirli kalitni kiriting</p>
+                <div className="secret-hint">
+                  <strong>Maslahat:</strong> "Sodiqjon123" kalitini kiriting
+                </div>
+              </div>
+
+              <form onSubmit={handleSecretAdminLogin} className="login-form">
+                <div className={`input-group ${isFocused.secretKey ? 'focused' : ''}`}>
+                  <FiKey className="input-icon" />
+                  <input
+                    type="password"
+                    placeholder="Sirli kalitni kiriting"
+                    value={secretKey}
+                    onChange={(e) => setSecretKey(e.target.value)}
+                    onFocus={() => handleFocus('secretKey')}
+                    onBlur={() => handleBlur('secretKey')}
+                    className="input-field"
+                    required
+                    autoComplete="off"
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  className={`submit-button secret-submit ${isLoading ? 'loading' : ''}`}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="button-spinner"></div>
+                      Tekshirilmoqda...
+                    </>
+                  ) : (
+                    <>
+                      <FiShield /> Sirli kalit orqali kirish
+                    </>
+                  )}
+                </button>
+
+                <button 
+                  type="button" 
+                  className="back-to-login"
+                  onClick={() => setShowAdminSecretLogin(false)}
+                >
+                  <FiArrowLeft /> Oddiy kirishga qaytish
+                </button>
+              </form>
+            </div>
+          ) : showAdminLogin ? (
             <div className="admin-login-section">
               <div className="admin-info-card">
                 <FaCrown className="admin-icon" />
@@ -1498,7 +1767,7 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
             </form>
           )}
 
-          {!isOtpMode && !showTokenLogin && !showAdminLogin && !showAdminPhoneLogin && !isAdminRequestMode && (
+          {!isOtpMode && !showTokenLogin && !showAdminLogin && !showAdminPhoneLogin && !showAdminSecretLogin && !showAdminList && !isAdminRequestMode && (
             <div className="login-footer">
               <p className="toggle-text">
                 {isRegisterMode ? "Hisobingiz bormi?" : "Hisobingiz yo'qmi?"}
@@ -1506,48 +1775,6 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
                   {isRegisterMode ? "Kirish" : "Ro'yxatdan o'tish"}
                 </button>
               </p>
-
-              {!isRegisterMode && (
-                <div className="special-login-options">
-                  <div className="separator">
-                    <span>Yoki</span>
-                  </div>
-                  <div className="special-buttons">
-                    <button 
-                      type="button"
-                      onClick={() => setShowTokenLogin(true)} 
-                      className="btn-token-login"
-                    >
-                      <FiKey className="btn-icon" />
-                      Token orqali kirish (Xodimlar, Mijozlar yoki Admin)
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setShowAdminLogin(true)} 
-                      className="btn-admin-login"
-                    >
-                      <FaCrown className="btn-icon" />
-                      Admin kirishi
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setShowAdminPhoneLogin(true)} 
-                      className="btn-admin-phone-login"
-                    >
-                      <FiPhone className="btn-icon" />
-                      Admin/Xodim telefon orqali kirish
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setIsAdminRequestMode(true)} 
-                      className="btn-admin-request"
-                    >
-                      <FaCrown className="btn-icon" />
-                      Admin sifatida ro'yxatdan o'tish
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
