@@ -1,14 +1,5 @@
 /* Reports.css - Professional, beautiful, responsive design */
-
-/* General styles */
-.reports {
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: #333;
-  background-color: #f8f9fa;
-  max-width: 1400px;
-  margin: 0 auto;
-}
+ 
 
 .reports.dark-mode {
   color: #e0e0e0;

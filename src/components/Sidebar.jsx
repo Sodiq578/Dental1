@@ -43,13 +43,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
     { path: "/xodimlar", icon: <FiBriefcase />, label: "Xodimlar" },
     { path: "/davolashda-yordam", icon: <FiHelpCircle />, label: "Davolashda Yordam" },
     { path: "/tooth", icon: <FiSmile />, label: "Tishlar" },
-    { path: "/foydalanuvchi", icon: <FiUser />, label: "Foydalanuvchi" },
+    
     { path: "/kirganlar", icon: <FiUsers />, label: "Kirganlar" },
     {
       path: "/mijozlar-kabinet",
       icon: <FiUsers />,
       label: "Mijozlar (Kabinet)",
-      restricted: true, // Restricted to users with 'patients' permission
+      restricted: true,
     },
     { path: "/mijozlar", icon: <FiUsers />, label: "Mijozlar" },
   ];
@@ -57,7 +57,6 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
   // Admin-specific menu items
   const adminMenu = [
     { path: "/admin", icon: <FiSettings />, label: "Admin Panel" },
- 
     { path: "/admin/xodimlar", icon: <FiUsers />, label: "Xodim Ruxsatlari" },
   ];
 
@@ -83,7 +82,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
     <>
       {/* Overlay for mobile sidebar */}
       <div
-        className={`sidebar-overlay ${isOpen ? "active" : ""}`}
+        className={`dental-sidebar-overlay ${isOpen ? "dental-active" : ""}`}
         onClick={toggleSidebar}
         onKeyDown={(e) => e.key === "Enter" && toggleSidebar()}
         role="button"
@@ -92,14 +91,14 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
       />
 
       {/* Sidebar */}
-      <aside className={`sidebar ${isOpen ? "open" : ""}`}>
-        <div className="sidebar-header">
+      <aside className={`dental-sidebar ${isOpen ? "dental-open" : ""}`}>
+        <div className="dental-sidebar-header">
           <h2>Tish Shifoxonasi</h2>
-          <div className="user-info">
-            <FiUser className="user-icon" aria-hidden="true" />
-            <div className="user-details">
-              <span className="user-name">{currentUser?.name || "Foydalanuvchi"}</span>
-              <span className="user-role">
+          <div className="dental-user-info">
+            <FiUser className="dental-user-icon" aria-hidden="true" />
+            <div className="dental-user-details">
+              <span className="dental-user-name">{currentUser?.name || "Foydalanuvchi"}</span>
+              <span className="dental-user-role">
                 {currentUser?.role === "admin"
                   ? "Administrator"
                   : currentUser?.role === "doctor"
@@ -114,13 +113,13 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
           </div>
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className="dental-sidebar-nav">
           <ul>
             {getMenuItems().map((item) => (
               <li key={item.path}>
                 <Link
                   to={item.path}
-                  className={isActivePath(item.path) ? "active" : ""}
+                  className={isActivePath(item.path) ? "dental-active" : ""}
                   onClick={() => {
                     handleNavClick();
                     if (window.innerWidth <= 768) toggleSidebar();
@@ -132,9 +131,9 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
                 </Link>
               </li>
             ))}
-            <li className="logout-item">
+            <li className="dental-logout-item">
               <button
-                className="sidebar-logout-btn"
+                className="dental-sidebar-logout-btn"
                 onClick={onLogout}
                 aria-label="Log out"
               >

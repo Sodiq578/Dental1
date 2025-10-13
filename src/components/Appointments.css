@@ -1,14 +1,5 @@
 /* Main container */
-.app-container {
-  padding: 1rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-  background: linear-gradient(180deg, #f9fafb, #f1f5f9);
-  min-height: 100vh;
-  box-sizing: border-box;
-  max-width: 1440px;
-  margin: 0 auto;
-}
-
+ 
 /* Header */
 .app-header {
   display: flex;

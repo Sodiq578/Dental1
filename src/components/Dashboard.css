@@ -23,13 +23,7 @@ body {
   background-color: var(--background-color);
   color: var(--text-color);
 }
-
-.dashboard {
-  max-width: 1400px;
-  margin: 20px auto;
-  padding: 20px;
-}
-
+ 
 /* Header */
 .dashboard-header {
   display: flex;

@@ -1,354 +1,247 @@
-/* CSS Variables */
-:root {
-  --sidebar-width: 280px;
-  --primary-color: #007bff; /* Asosiy rang */
-  --accent-color: #28a745; /* Aksent rang */
-  --white: #ffffff;
-  --gray-100: #f8f9fa;
-  --gray-200: #e9ecef;
-  --gray-300: #dee2e6;
-  --gray-400: #ced4da;
-  --gray-600: #6c757d;
-  --gray-700: #495057;
-  --gray-800: #343a40;
-  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --transition: all 0.3s ease;
-  --border-radius: 8px; /* Yumshoq burchaklar */
+/* Sidebar umumiy stillari */
+.dental-sidebar {
+  width: 260px;
+  height: 100vh; /* To‘liq ekran balandligi */
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); /* Silliq gradient fon */
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08); /* Yumshoq soya */
+  position: fixed;
+  top: 0;
+  left: -260px; /* Yopiq holatda yashirin */
+  transition: left 0.3s ease-in-out, transform 0.3s ease-in-out; /* Silliq animatsiya */
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif; /* Zamonaviy font */
+  overflow: hidden; /* Ichki kontentni cheklash */
 }
 
-/* === OVERLAY === */
-.sidebar-overlay {
+/* Sidebar ochiq holatda */
+.dental-sidebar.dental-open {
+  left: 0;
+  transform: translateX(0); /* Animatsiya uchun qo‘shimcha */
+}
+
+/* Overlay stillari */
+.dental-sidebar-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 998;
+  background: rgba(0, 0, 0, 0.6); /* Tiniqroq overlay */
   opacity: 0;
   visibility: hidden;
-  transition: var(--transition);
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  z-index: 999;
 }
 
-.sidebar-overlay.active {
+/* Overlay ochiq holatda */
+.dental-sidebar-overlay.dental-active {
   opacity: 1;
   visibility: visible;
 }
 
-/* === SIDEBAR === */
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: var(--sidebar-width);
-  height: 100%;
-  background-color: var(--white);
-  box-shadow: var(--box-shadow);
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  transform: translateX(-100%);
-  transition: var(--transition);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.sidebar::-webkit-scrollbar {
-  display: none;
-}
-
-.sidebar.open {
-  transform: translateX(0);
-}
-
-.sidebar.dark {
-  background-color: var(--gray-800);
-  color: var(--gray-200);
-}
-
-.sidebar-header {
+/* Sidebar header stillari */
+.dental-sidebar-header {
   padding: 24px 20px;
-  border-bottom: 1px solid var(--gray-200);
-  text-align: center;
-  color: var(--gray-700);
-  position: relative;
+  border-bottom: 1px solid #e2e8f0; /* Yumshoq chegara */
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
-.sidebar-header h2 {
-  font-size: 26px;
+/* Header sarlavhasi */
+.dental-sidebar-header h2 {
+  font-size: 1.6rem;
   font-weight: 700;
+  color: #1e293b; /* To‘q kulrang rang */
+  letter-spacing: -0.02em; /* Harf oralig‘i */
+  text-align: center;
   margin: 0;
 }
 
-.sidebar.dark .sidebar-header {
-  border-bottom-color: var(--gray-700);
-  background-color: var(--gray-700);
+/* Foydalanuvchi ma'lumotlari */
+.dental-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f1f5f9; /* Engil fon */
+  padding: 10px 14px;
+  border-radius: 10px; /* Yumaloq burchaklar */
+  width: 100%;
+  transition: background 0.2s ease;
 }
 
-/* Close button */
-.sidebar-close-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
+/* Foydalanuvchi ikonkasi */
+.dental-user-icon {
+  width: 36px;
+  height: 36px;
+  color: #3b82f6; /* Zamonaviy ko‘k rang */
+  background: #dbeafe; /* Ikonka foni */
   padding: 8px;
-  border-radius: var(--border-radius);
-  transition: var(--transition);
+  border-radius: 50%; /* Dumaloq ikonka */
 }
 
-.sidebar-close-btn .sidebar-icon {
-  font-size: 24px;
-  color: var(--gray-700);
+/* Foydalanuvchi ma'lumotlari konteyneri */
+.dental-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.sidebar.dark .sidebar-close-btn .sidebar-icon {
-  color: var(--gray-200);
+/* Foydalanuvchi ismi */
+.dental-user-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
 }
 
-.sidebar-close-btn:hover .sidebar-icon {
-  color: var(--primary-color);
-  transform: scale(1.1);
+/* Foydalanuvchi roli */
+.dental-user-role {
+  font-size: 0.85rem;
+  color: #64748b; /* Yumshoq kulrang */
+  font-weight: 400;
 }
 
-.sidebar.dark .sidebar-close-btn:hover .sidebar-icon {
-  background-color: var(--gray-700);
+/* Navigatsiya stillari */
+.dental-sidebar-nav {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto; /* Skroll faqat navigatsiya uchun */
+  scrollbar-width: thin; /* Firefox uchun nozik skroll */
+  scrollbar-color: #cbd5e1 #f1f5f9; /* Skroll ranglari */
 }
 
-/* Icons */
-.sidebar-icon {
-  font-size: 20px;
-  color: var(--gray-700);
-  flex-shrink: 0;
+/* Chrome, Edge va Safari uchun skrollbar stillari */
+.dental-sidebar-nav::-webkit-scrollbar {
+  width: 6px;
 }
 
-.sidebar.dark .sidebar-icon {
-  color: var(--gray-300);
+.dental-sidebar-nav::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
 }
 
-.sidebar-nav a:hover .sidebar-icon,
-.sidebar-logout-btn:hover .sidebar-icon {
-  color: var(--primary-color);
+.dental-sidebar-nav::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
 }
 
-.sidebar-nav a.active .sidebar-icon {
-  color: var(--white);
+.dental-sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
-/* === NAVIGATION === */
-.sidebar-nav {
-  flex: 1;
-  padding: 24px 0;
+/* Navigatsiya ro‘yxati */
+.dental-sidebar-nav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.sidebar-nav ul {
+/* Har bir ro‘yxat elementi */
+.dental-sidebar-nav li {
   list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
-.sidebar-nav li {
-  margin-bottom: 12px;
-}
-
-.sidebar-nav a {
+/* Navigatsiya havolalari */
+.dental-sidebar-nav a {
   display: flex;
   align-items: center;
-  padding: 14px 24px;
-  color: var(--gray-700);
+  gap: 12px;
+  padding: 12px 16px;
+  color: #475569; /* Kulrang matn */
   text-decoration: none;
-  transition: var(--transition);
-  gap: 14px;
-  border-radius: var(--border-radius);
-  margin: 0 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease; /* Silliq o‘tish */
 }
 
-.sidebar.dark .sidebar-nav a {
-  color: var(--gray-300);
+/* Havola hover holati */
+.dental-sidebar-nav a:hover {
+  background: #eff6ff; /* Engil ko‘k fon */
+  color: #1e40af; /* To‘q ko‘k matn */
+  transform: translateX(4px); /* Engil siljish animatsiyasi */
 }
 
-.sidebar-nav a:hover {
-  background-color: var(--gray-100);
-  color: var(--primary-color);
-  transform: scale(1.02);
-}
-
-.sidebar.dark .sidebar-nav a:hover {
-  background-color: var(--gray-700);
-}
-
-.sidebar-nav a.active {
-  background-color: var(--accent-color);
-  color: var(--white);
+/* Faol havola */
+.dental-sidebar-nav a.dental-active {
+  background: #dbeafe; /* Faol holatda ko‘k fon */
+  color: #1e40af;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 3px 0 0 #3b82f6; /* Chapda ko‘k chiziq */
 }
 
-/* === USER INFO === */
-.user-info {
+/* Havola ichidagi ikonka */
+.dental-sidebar-nav a svg {
+  width: 22px;
+  height: 22px;
+  color: #64748b; /* Ikonka rangi */
+  transition: color 0.2s ease;
+}
+
+.dental-sidebar-nav a.dental-active svg {
+  color: #1e40af; /* Faol holatda ikonka rangi */
+}
+
+/* Chiqish tugmasi konteyneri */
+.dental-logout-item {
+  margin-top: auto; /* Pastga surish */
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0; /* Yuqorida chegara */
+}
+
+/* Chiqish tugmasi */
+.dental-sidebar-logout-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 16px;
-  justify-content: center;
-}
-
-.user-icon {
-  font-size: 24px;
-  color: var(--gray-700);
-}
-
-.sidebar.dark .user-icon {
-  color: var(--gray-200);
-}
-
-.user-details {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-name {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.user-role {
-  font-size: 14px;
-  color: var(--gray-600);
-}
-
-.sidebar.dark .user-role {
-  color: var(--gray-400);
-}
-
-/* === LOGOUT BUTTON === */
-.sidebar-logout-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
-  padding: 12px 24px;
+  padding: 12px 16px;
   background: none;
   border: none;
-  border-radius: var(--border-radius);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--gray-700);
-  cursor: pointer;
-  transition: var(--transition);
+  color: #dc2626; /* Qizil rang */
   text-align: left;
-  margin: 0 12px;
-}
-
-.dark .sidebar-logout-btn {
-  color: var(--gray-300);
-}
-
-.sidebar-logout-btn:hover {
-  background-color: var(--primary-color);
-  color: var(--white);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.sidebar-logout-btn .sidebar-icon {
-  font-size: 20px;
-}
-
-.sidebar-logout-btn span {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* === MODAL === */
-.token-login-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--white);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-  overflow-y: auto;
-}
-
-.token-login-modal .modal-close-btn {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background: none;
-  border: none;
   cursor: pointer;
-  padding: 8px;
-  border-radius: var(--border-radius);
-  transition: var(--transition);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
-.token-login-modal .modal-close-btn .sidebar-icon {
-  font-size: 24px;
-  color: var(--gray-700);
+/* Chiqish tugmasi hover holati */
+.dental-sidebar-logout-btn:hover {
+  background: #fef2f2; /* Engil qizil fon */
+  color: #b91c1c; /* To‘q qizil */
+  transform: translateX(4px); /* Siljish animatsiyasi */
 }
 
-.token-login-modal.dark .modal-close-btn .sidebar-icon {
-  color: var(--gray-200);
+/* Chiqish tugmasi ikonka */
+.dental-sidebar-logout-btn svg {
+  width: 22px;
+  height: 22px;
 }
 
-.token-login-modal .modal-close-btn:hover .sidebar-icon {
-  color: var(--primary-color);
-  transform: scale(1.1);
-}
-
-.token-login-modal.dark .modal-close-btn:hover .sidebar-icon {
-  background-color: var(--gray-700);
-}
-
-/* === RESPONSIVE === */
-@media (max-width: 768px) {
-  .sidebar-logout-btn {
-    padding: 10px 16px;
-    font-size: 15px;
-  }
-
-  .sidebar-logout-btn .sidebar-icon {
-    font-size: 18px;
-  }
-
-  .sidebar-logout-btn span {
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 480px) {
-  .sidebar-logout-btn {
-    padding: 8px 12px;
-    font-size: 14px;
-  }
-
-  .sidebar-logout-btn .sidebar-icon {
-    font-size: 16px;
-  }
-
-  .sidebar-logout-btn span {
-    font-size: 12px;
-  }
-}
-
-@media (min-width: 768px) {
-  .sidebar {
+/* Desktop qurilmalar uchun */
+@media (min-width: 769px) {
+  .dental-sidebar {
+    left: 0; /* Doimiy ko‘rinadi */
     transform: translateX(0);
   }
-
-  .sidebar-overlay {
-    display: none;
+  .dental-sidebar-overlay {
+    display: none; /* Overlay desktopda kerak emas */
   }
+}
 
-  .menu-btn {
-    display: none;
+/* Mobil qurilmalar uchun */
+@media (max-width: 768px) {
+  .dental-sidebar {
+    width: 80%;
+    max-width: 260px;
+  }
+  .dental-sidebar.dental-open {
+    left: 0;
   }
 }

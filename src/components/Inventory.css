@@ -1,14 +1,4 @@
-/* Main container */
-.inventory-container {
-  padding: 1.5rem;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(180deg, #f9fafb, #e5e7eb);
-  min-height: 100vh;
-  box-sizing: border-box;
-  max-width: 1440px;
-  margin: 0 auto;
-}
-
+ 
 .inventory-container.dark-mode {
   background: linear-gradient(180deg, #1e293b, #334155);
   color: #f3f4f6;
