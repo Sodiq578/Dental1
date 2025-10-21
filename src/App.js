@@ -17,16 +17,19 @@ import PatientPortal from './components/PatientPortal';
 import Charting from './components/Charting';
 import DentalAssistance from './components/DentalAssistance';
 import Tooth from './components/ToothCard';
-import Login from './components/Login';
+import UserLogin from './login/UserLogin';
+import AdminLogin from './login/AdminLogin';
+import StaffLogin from './login/StaffLogin';
 import UserDashboard from './components/UserDashboard';
 import Spinner from './adds/Spinner';
 import LoggedInUsers from './components/LoggedInUsers';
 import TokenLogin from './components/TokenLogin';
+import ChooseLoginType from './components/ChooseLoginType';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import BranchManagement from './components/Admin/BranchManagement';
-import StaffPermissions from './components/Admin/StaffPermissions';
-import AdminFor from './components/Admin/AdminFor';
-import PatientsWithAccount from './components/PatientsWithAccount';
+import StaffPermissions from './login/StaffLogin';
+import AdminFor from './login/AdminLogin';
+import PatientsWithAccount from './login/UserLogin';
 
 // Utils
 import {
@@ -95,7 +98,7 @@ const App = () => {
 
         setDataLoaded(true);
       } catch (error) {
-        console.error('Ma\'lumotlarni yuklashda xato:', error);
+        console.error("Ma'lumotlarni yuklashda xato:", error);
         setStorageStatus('unavailable');
         setDataLoaded(true);
       }
@@ -220,17 +223,12 @@ const App = () => {
 
           {!isLoggedIn ? (
             <Routes>
-              <Route
-                path="/login"
-                element={
-                  <Login
-                    onLogin={handleLogin}
-                    onOpenTokenLogin={() => setTokenLoginOpen(true)}
-                  />
-                }
-              />
+              <Route path="/" element={<ChooseLoginType />} />
+              <Route path="/user-login" element={<UserLogin onLogin={handleLogin} />} />
+              <Route path="/admin-login" element={<AdminLogin onLogin={handleLogin} />} />
+              <Route path="/staff-login" element={<StaffLogin onLogin={handleLogin} />} />
               <Route path="/bemor-portali" element={<PatientPortal />} />
-              <Route path="*" element={<Navigate to="/login" />} />
+              <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           ) : currentUser.role === 'patient' ? (
             <main className="patient-main">
