@@ -1,3 +1,5 @@
+// utils.js - Keksri Dental Utilities
+
 // Telegram bot tokenini sozlash
 let TELEGRAM_BOT_TOKEN = '8446018868:AAGMBw9ZFI2gDP3a_XA7qpVDX4_ar76IxlU';
 
@@ -407,7 +409,50 @@ export const initializeData = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       },
-      // ... boshqa bemorlar (oldingi kodda bor)
+      {
+        id: 2,
+        name: 'Sitora Karimova',
+        phone: '+998901112233',
+        gender: 'Ayol',
+        address: 'Samarqand shahri, Temuriy ko\'cha',
+        dob: '1985-08-22',
+        telegram: '234567890',
+        note: 'Homilador, 6 oy',
+        prescriptions: [
+          {
+            id: 2,
+            date: '2024-02-10',
+            medication: 'Calcium D3',
+            dosage: '1 tabletka, kuniga 1 marta',
+            notes: 'Tishlar uchun kalsiy'
+          }
+        ],
+        lastVisit: '2024-02-10',
+        toothChart: [
+          { tooth: 11, status: 'sog', color: '#4CAF50' },
+          { tooth: 21, status: 'plomba', color: '#2196F3' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 3,
+        name: 'Javohir Tursunov',
+        phone: '+998902223344',
+        gender: 'Erkak',
+        address: 'Buxoro shahri',
+        dob: '1978-12-03',
+        telegram: '345678901',
+        note: 'Protez tishlari bor',
+        prescriptions: [],
+        lastVisit: '2024-01-20',
+        toothChart: [
+          { tooth: 46, status: 'protez', color: '#607D8B' },
+          { tooth: 31, status: 'koronka', color: '#9C27B0' }
+        ],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
     ],
     appointments: [
       {
@@ -427,7 +472,38 @@ export const initializeData = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       },
-      // ... boshqa uchrashuvlar
+      {
+        id: 2,
+        patientId: 2,
+        patientName: 'Sitora Karimova',
+        date: '2024-09-05',
+        time: '14:30',
+        procedure: 'Tish plombalash',
+        status: 'kutilmoqda',
+        notes: 'Karies davolash',
+        duration: '60',
+        doctor: 'Dr. Jamshid',
+        cost: '200000',
+        nextVisit: '2024-10-05',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      },
+      {
+        id: 3,
+        patientId: 3,
+        patientName: 'Javohir Tursunov',
+        date: '2024-09-10',
+        time: '11:15',
+        procedure: 'Protez tekshiruvi',
+        status: 'kutilmoqda',
+        notes: 'Protezni moslashtirish',
+        duration: '30',
+        doctor: 'Dr. Aziza',
+        cost: '80000',
+        nextVisit: '2024-12-10',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
     ],
     medications: [
       {
@@ -442,7 +518,30 @@ export const initializeData = () => {
         sideEffects: 'Ko\'ngil aynishi, allergiya',
         contraindications: 'Penitsillin allergiyasi'
       },
-      // ... boshqa dori vositalari
+      {
+        id: 2,
+        name: 'Ibuprofen 400mg',
+        type: 'og\'riq qoldiruvchi',
+        dosage: '400mg',
+        form: 'tabletka',
+        stock: 200,
+        price: 1800,
+        description: 'Og\'riq qoldiruvchi va yallig\'lanishga qarshi',
+        sideEffects: 'Me\'da shilliq qavatiga ta\'sir',
+        contraindications: 'Me\'da yarasi'
+      },
+      {
+        id: 3,
+        name: 'Lidocaine 2%',
+        type: 'mahsus',
+        dosage: '2%',
+        form: 'in\'ektsiya',
+        stock: 50,
+        price: 8500,
+        description: 'Mahalliy behushlik',
+        sideEffects: 'Yurak urishi o\'zgarishi',
+        contraindications: 'Yurak kasalliklari'
+      }
     ],
     users: [
       {
@@ -456,7 +555,28 @@ export const initializeData = () => {
         bio: '15 yillik tajriba, implantologiya mutaxassisi',
         createdAt: new Date().toISOString()
       },
-      // ... boshqa foydalanuvchilar
+      {
+        id: 2,
+        name: 'Dr. Aziza',
+        email: 'aziza@keksri.uz',
+        password: 'doctor123',
+        role: 'doctor',
+        phone: '+998902223344',
+        specialty: 'Ortodont',
+        bio: '10 yillik tajriba, ortodontiya mutaxassisi',
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 3,
+        name: 'Dilobar',
+        email: 'dilobar@keksri.uz',
+        password: 'nurse123',
+        role: 'nurse',
+        phone: '+998903334455',
+        specialty: 'Hamshira',
+        bio: '5 yillik tajriba',
+        createdAt: new Date().toISOString()
+      }
     ],
     billings: [
       {
@@ -474,7 +594,36 @@ export const initializeData = () => {
         paymentMethod: 'naqd',
         notes: 'To\'liq to\'langan'
       },
-      // ... boshqa hisob-kitoblar
+      {
+        id: 2,
+        patientId: 2,
+        patientName: 'Sitora Karimova',
+        date: '2024-08-15',
+        services: [
+          { name: 'Plombalash', cost: 120000 },
+          { name: 'Rentgen', cost: 30000 }
+        ],
+        total: 150000,
+        paid: 100000,
+        status: 'to\'lanmagan',
+        paymentMethod: 'karta',
+        notes: '50000 UZS qarz'
+      },
+      {
+        id: 3,
+        patientId: 3,
+        patientName: 'Javohir Tursunov',
+        date: '2024-08-20',
+        services: [
+          { name: 'Protez tekshiruvi', cost: 80000 },
+          { name: 'Tish tozalash', cost: 150000 }
+        ],
+        total: 230000,
+        paid: 230000,
+        status: 'to\'langan',
+        paymentMethod: 'naqd',
+        notes: 'To\'liq to\'langan'
+      }
     ],
     inventory: [
       {
@@ -486,7 +635,33 @@ export const initializeData = () => {
         price: 15000,
         supplier: "Medtex Group"
       },
-      // ... boshqa inventar
+      {
+        id: 2,
+        name: "Oral-B tish cho'tkasi",
+        category: "gigiyena",
+        stock: 32,
+        minStock: 15,
+        price: 35000,
+        supplier: "Medtex Group"
+      },
+      {
+        id: 3,
+        name: "Tish ipi",
+        category: "gigiyena",
+        stock: 120,
+        minStock: 50,
+        price: 8000,
+        supplier: "Dental Supplies"
+      },
+      {
+        id: 4,
+        name: "Amalgam plomba materiali",
+        category: "material",
+        stock: 25,
+        minStock: 10,
+        price: 45000,
+        supplier: "Dental Pro"
+      }
     ],
     staff: [
       {

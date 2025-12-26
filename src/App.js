@@ -140,6 +140,54 @@ const App = () => {
     pendingAdmins,
   ]);
 
+  // Ctrl + Alt + T — Admin paneliga maxfiy o'tish
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.altKey && event.key.toLowerCase() === 't') {
+        event.preventDefault();
+
+        // Agar allaqachon admin bo'lsa — to'g'ridan admin dashboardga
+        if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'superadmin')) {
+          window.location.href = '/admin';
+        } else {
+          // Aks holda — admin login sahifasiga yo'naltirish (xavfsiz variant)
+          window.location.href = '/admin-login';
+        }
+
+        // === TEST UCHUN MAXFIY ADMIN LOGIN (FAKAT DEVELOPMENTDA ISHLATING!) ===
+        // Quyidagi qismni faqat lokal testda qoldiring, productionda o'chirib qo'ying!
+        /*
+        const secretAdmin = {
+          id: 'superadmin-001',
+          name: 'Super Administrator',
+          role: 'superadmin',
+          branch: 'main',
+          permissions: {
+            patients: true,
+            appointments: true,
+            billing: true,
+            inventory: true,
+            staff: true,
+            reports: true,
+            admin: true,
+            // boshqa kerakli ruxsatlar...
+          },
+        };
+        handleLogin(secretAdmin);
+        setTimeout(() => {
+          window.location.href = '/admin';
+        }, 100);
+        */
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentUser]); // currentUser o'zgarsa ham yangilansin
+
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const handleLogin = (userData) => {

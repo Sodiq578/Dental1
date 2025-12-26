@@ -31,6 +31,9 @@ const UserLogin = ({ onLogin }) => {
   const navigate = useNavigate();
   const { users, setUsers, setLogins } = useContext(AppContext);
 
+  // Test rejimi uchun telefon raqamlar (o‘zgartirishingiz mumkin)
+  const TEST_PHONES = ['+998901234567', '+998999999999', '+998123456789'];
+
   useEffect(() => {
     let interval = null;
     if (isOtpMode && timer > 0) {
@@ -306,12 +309,78 @@ const UserLogin = ({ onLogin }) => {
       } else {
         setError("Noto'g'ri email yoki parol");
       }
+      setIsLoading(false);
     } else {
+      // TELEFON AUTH
       if (!/^\+998\d{9}$/.test(phone)) {
         setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
         setIsLoading(false);
         return;
       }
+
+      // *** YANGI: TEST REJIMI - OTP SO‘RAMASDAN TO‘G‘RIDAN KIRISH ***
+      if (TEST_PHONES.includes(phone)) {
+        let testUser = users.find((u) => u.phone === phone);
+
+        // Agar baza da yo‘q bo‘lsa, avtomatik yaratib qo‘yamiz (test uchun)
+        if (!testUser) {
+          testUser = {
+            id: Date.now(),
+            name: 'Test Foydalanuvchi',
+            email: 'test@example.com',
+            phone: phone,
+            password: 'test123',
+            role: 'patient',
+          };
+          const updatedUsers = [...users, testUser];
+          setUsers(updatedUsers);
+          saveToLocalStorage('users', updatedUsers);
+        }
+
+        const userData = {
+          id: testUser.id,
+          name: testUser.name,
+          email: testUser.email || '',
+          phone: testUser.phone,
+          role: 'patient',
+          loginMethod: 'phone_direct_test',
+        };
+
+        onLogin(userData);
+        logLogin(userData);
+
+        setLogins((prevLogins) => {
+          const newLogins = [
+            ...prevLogins,
+            {
+              id: Date.now(),
+              userId: userData.id,
+              name: userData.name,
+              email: userData.email,
+              phone: userData.phone,
+              role: userData.role,
+              timestamp: new Date().toISOString(),
+              loginMethod: 'phone_direct_test',
+            },
+          ];
+          saveToLocalStorage('logins', newLogins);
+          return newLogins;
+        });
+
+        setModalContent({
+          title: 'Test rejimida kirish',
+          message: 'Bemor portaliga xush kelibsiz! (OTP siz)',
+        });
+        setShowModal(true);
+        setTimeout(() => {
+          navigate('/foydalanuvchi');
+        }, 1500);
+
+        setIsLoading(false);
+        return;
+      }
+      // *** TEST REJIMI TUGADI ***
+
       if (!telegramChatId || !/^\d+$/.test(telegramChatId)) {
         setError("Telegram Chat ID faqat raqamlardan iborat bo'lishi kerak");
         setIsLoading(false);
@@ -335,13 +404,14 @@ const UserLogin = ({ onLogin }) => {
             setCanResend(false);
           } else {
             setError("OTP yuborishda xatolik. Iltimos, qayta urinib ko'ring.");
+            setIsLoading(false);
           }
         });
       } else {
         setError("Bu telefon raqami ro'yxatdan o'tmagan.");
+        setIsLoading(false);
       }
     }
-    setIsLoading(false);
   };
 
   const handleRegister = (e) => {
@@ -393,6 +463,7 @@ const UserLogin = ({ onLogin }) => {
           setCanResend(false);
         } else {
           setError("OTP yuborishda xatolik. Iltimos, qayta urinib ko'ring.");
+          setIsLoading(false);
         }
       });
     } else {
@@ -416,7 +487,6 @@ const UserLogin = ({ onLogin }) => {
         setShowModal(false);
       }, 2000);
     }
-    setIsLoading(false);
   };
 
   const closeModal = () => {
@@ -456,6 +526,7 @@ const UserLogin = ({ onLogin }) => {
             </div>
           )}
 
+          {/* Qolgan JSX qismi o‘zgarmadi – to‘liq kodni saqlab qoldim */}
           {isOtpMode ? (
             <form onSubmit={(e) => { e.preventDefault(); handleOtpVerify(otp); }} className="login-form">
               <div className="otp-info">
@@ -834,10 +905,7 @@ const UserLogin = ({ onLogin }) => {
             </form>
           )}
 
-          <div className="login-options">
-            
-            
-          </div>
+          <div className="login-options"></div>
         </div>
       </div>
 

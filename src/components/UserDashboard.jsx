@@ -1,12 +1,15 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FiUser, FiCalendar, FiActivity, FiClock, FiDollarSign, 
+  FiUser, FiCalendar, FiActivity, FiClock, FiDollarSign,
   FiDownload, FiLogOut, FiPhone, FiPlus, FiSearch,
-  FiHome, FiCreditCard, FiBarChart2, FiBell, FiMenu, FiX
+  FiHome, FiCreditCard, FiBarChart2, FiBell, FiMenu, 
+  FiX, FiCheckCircle, FiAlertCircle, FiCheck, FiTrash2,
+  FiMessageSquare
 } from "react-icons/fi";
+import { AiOutlineClose } from "react-icons/ai";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
 import { CSVLink } from "react-csv";
@@ -14,7 +17,7 @@ import { AppContext } from "../App";
 import { addNewPatient, sendTelegramMessage } from "../utils";
 import "./UserDashboard.css";
 
-const COLORS = ['#FF6B6B', '#4ECDC4', '#FFD166', '#FF9F43', '#6AB04C', '#1A535C'];
+const COLORS = ['#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#7209b7', '#f72585'];
 
 const UserDashboard = () => {
   const { currentUser, appointments, billings, setAppointments, setBillings, handleLogout } = useContext(AppContext);
@@ -24,16 +27,9 @@ const UserDashboard = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Patient Portal States
+  // Patient registration states
   const [newPatient, setNewPatient] = useState({
-    name: '',
-    phone: '',
-    gender: '',
-    address: '',
-    dob: '',
-    note: '',
-    telegram: '',
-    prescriptions: []
+    name: '', phone: '', gender: '', address: '', dob: '', note: '', telegram: '', prescriptions: []
   });
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [error, setError] = useState('');
@@ -43,12 +39,70 @@ const UserDashboard = () => {
   const [selectedTime, setSelectedTime] = useState('');
   const [procedure, setProcedure] = useState('');
 
-  // Foydalanuvchi yo'q bo'lsa, login sahifasiga yo'naltirish
+  // Notification states
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: "Yangi uchrashuv band qilindi",
+      message: "Siz 15-dekabr kuni soat 14:30 da stomatologik tekshiruvga yozildingiz",
+      type: "appointment",
+      time: "5 daqiqa oldin",
+      read: false,
+      date: new Date().toISOString(),
+      action: { type: "view", appointmentId: 1 }
+    },
+    {
+      id: 2,
+      title: "To'lov tasdiqlandi",
+      message: "200,000 UZS miqdoridagi to'lovingiz muvaffaqiyatli amalga oshirildi",
+      type: "billing",
+      time: "1 soat oldin",
+      read: false,
+      date: new Date(Date.now() - 3600000).toISOString(),
+      action: { type: "view", billId: 1 }
+    },
+    {
+      id: 3,
+      title: "Eslatma",
+      message: "Ertaga 10:00 da sizning davolashingiz yakunlanadi",
+      type: "reminder",
+      time: "2 soat oldin",
+      read: true,
+      date: new Date(Date.now() - 7200000).toISOString(),
+      action: { type: "reminder" }
+    },
+    {
+      id: 4,
+      title: "Tizim yangilanishi",
+      message: "Telegram orqali eslatmalar qo'shildi. Sozlamalardan faollashtiring",
+      type: "system",
+      time: "1 kun oldin",
+      read: true,
+      date: new Date(Date.now() - 86400000).toISOString(),
+      action: { type: "settings" }
+    },
+    {
+      id: 5,
+      title: "Yangilik: Yangi xizmatlar",
+      message: "Endi implantatsiya va ortopedik davolash xizmatlari mavjud",
+      type: "system",
+      time: "2 kun oldin",
+      read: true,
+      date: new Date(Date.now() - 172800000).toISOString(),
+      action: { type: "info" }
+    }
+  ]);
+  
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationBadgeCount, setNotificationBadgeCount] = useState(2);
+
+  // Redirect if not logged in
   useEffect(() => {
     if (!currentUser) navigate("/login");
   }, [currentUser, navigate]);
 
-  // Foydalanuvchi uchrashuvlari
+  // Get user-specific data
   const userAppointments = useMemo(() =>
     appointments.filter(apt => apt.patientId === currentUser?.id),
     [appointments, currentUser]
@@ -59,6 +113,7 @@ const UserDashboard = () => {
     [billings, currentUser]
   );
 
+  // Filter appointments based on selected filter
   const filteredAppointments = useMemo(() => {
     const now = new Date();
     return userAppointments.filter(apt => {
@@ -69,12 +124,13 @@ const UserDashboard = () => {
     });
   }, [userAppointments, filter]);
 
-  // Statistikalar
+  // Calculate statistics
   const totalAppointments = userAppointments.length;
   const totalCost = userBillings.reduce((sum, bill) => sum + (bill.total || 0), 0);
   const upcomingCount = userAppointments.filter(apt => new Date(apt.date) > new Date()).length;
   const lastBilling = userBillings[userBillings.length - 1];
 
+  // Prepare chart data
   const treatmentsByMonth = useMemo(() => {
     const monthly = {};
     filteredAppointments.forEach(apt => {
@@ -95,58 +151,31 @@ const UserDashboard = () => {
     return Object.entries(types).map(([name, value]) => ({ name, value }));
   }, [filteredAppointments]);
 
-  // CSV eksport ma'lumotlari
+  // CSV data for export
   const appointmentCSVData = filteredAppointments.map(apt => ({
     Sana: new Date(apt.date).toLocaleDateString('uz-UZ'),
-    Muolaja: apt.procedure
+    Vaqt: apt.time,
+    Muolaja: apt.procedure,
+    Holat: apt.status
   }));
 
   const billingCSVData = userBillings.map(bill => ({
     Sana: new Date(bill.date).toLocaleDateString('uz-UZ'),
     Jami: bill.total,
     Xizmatlar: bill.services.map(s => s.name).join(", "),
-    Holat: bill.status || "Noma'lum"
+    Holat: bill.status
   }));
 
-  // Chiqish
+  // Logout handler
   const handleLogoutClick = () => {
     setIsLoading(true);
     setTimeout(() => {
       handleLogout();
       navigate("/login");
-    }, 1000);
+    }, 800);
   };
 
-  // Yangiliklar
-  const newsItems = [
-    {
-      title: "O'zbekiston Stomatologiyasi 2025",
-      description: "Toshkentda stomatologiya ko'rgazmasi, 15-17 aprel, 2025",
-      image: "https://images.pexels.com/photos/6812583/pexels-photo-6812583.jpeg"
-    },
-    {
-      title: "UzMedExpo 2025",
-      description: "Toshkentda 17-xalqaro sog'liqni saqlash ko'rgazmasi, 4-6 noyabr",
-      image: "https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-9054.jpg"
-    },
-    {
-      title: "IDECA Toshkent 2025",
-      description: "Stomatologiya ta'limi tadbirlari, 8 mamlakatdan 26 ta ma'ruzachi",
-      image: "https://images.pexels.com/photos/4226263/pexels-photo-4226263.jpeg"
-    },
-    {
-      title: "Stomatologiyada AI",
-      description: "Sun'iy intellekt diagnostika va ta'limda o'zgarishlar keltirmoqda",
-      image: "https://images.pexels.com/photos/804009/pexels-photo-804009.jpeg"
-    },
-    {
-      title: "2025 yilda stomatologiyadagi 10 ta trend",
-      description: "Minimal invaziv vinirlar, 3D bosib chiqarish va boshqalar",
-      image: "https://images.pexels.com/photos/6628600/pexels-photo-6628600.jpeg"
-    }
-  ];
-
-  // Vaqt slotlarini generatsiya qilish (9:00 dan 18:00 gacha, 30 daqiqa intervallar)
+  // Time slot generation
   const generateTimeSlots = () => {
     const slots = [];
     for (let hour = 9; hour < 18; hour++) {
@@ -158,14 +187,12 @@ const UserDashboard = () => {
     return slots;
   };
 
-  // Tanlangan sana uchun bo'sh slotlarni olish
   const getSlotsForDate = (date) => {
     const timeSlots = generateTimeSlots();
     const booked = appointments
-      .filter((app) => app.date === date && app.status !== 'bekor qilindi')
-      .map((app) => app.time);
-
-    return timeSlots.map((slot) => ({
+      .filter(app => app.date === date && app.status !== 'bekor qilindi')
+      .map(app => app.time);
+    return timeSlots.map(slot => ({
       time: slot,
       isBooked: booked.includes(slot),
     }));
@@ -173,38 +200,54 @@ const UserDashboard = () => {
 
   const slots = getSlotsForDate(selectedDate);
 
-  // Keyingi bo'sh slotni topish
   const findNextAvailableSlot = () => {
-    const today = new Date();
     let currentDate = new Date(selectedDate);
-    let foundSlot = null;
-
     for (let i = 0; i < 30; i++) {
-      const dateString = currentDate.toISOString().split('T')[0];
-      const availableSlots = getSlotsForDate(dateString).filter(slot => !slot.isBooked);
-      if (availableSlots.length > 0) {
-        foundSlot = { date: dateString, time: availableSlots[0].time };
-        break;
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const available = getSlotsForDate(dateStr).filter(s => !s.isBooked);
+      if (available.length > 0) {
+        return { date: dateStr, time: available[0].time };
       }
       currentDate.setDate(currentDate.getDate() + 1);
     }
-
-    return foundSlot;
+    return null;
   };
 
-  // Bemor ro'yxatdan o'tishi
+  // Patient registration
   const handleRegister = (e) => {
     e.preventDefault();
     setError('');
     setSuccessMessage('');
+    
+    // Validate phone number
+    if (!newPatient.phone.match(/^\+998[0-9]{9}$/)) {
+      setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
+      return;
+    }
 
+    // In a real app, this would be an API call
     addNewPatient(newPatient, (success, message, data) => {
       if (success) {
         setPatientId(data.id);
         setShowRegistration(false);
-        setSuccessMessage('Muvaffaqiyatli ro\'yxatdan o\'tdingiz! Endi uchrashuv band qilishingiz mumkin.');
+        setSuccessMessage("Muvaffaqiyatli ro'yxatdan o'tdingiz!");
+        
+        // Add notification
+        const newNotification = {
+          id: Date.now(),
+          title: "Ro'yxatdan o'tish muvaffaqiyatli",
+          message: `Hurmatli ${newPatient.name}, siz muvaffaqiyatli ro'yxatdan o'tdingiz`,
+          type: "system",
+          time: "Hozir",
+          read: false,
+          date: new Date().toISOString(),
+          action: { type: "welcome" }
+        };
+        setNotifications([newNotification, ...notifications]);
+        
+        // Send Telegram notification if provided
         if (newPatient.telegram) {
-          sendTelegramMessage(newPatient.telegram, `Hurmatli ${newPatient.name}, siz muvaffaqiyatli ro'yxatdan o'tdingiz.`);
+          sendTelegramMessage(newPatient.telegram, `Hurmatli ${newPatient.name}, ro'yxatdan o'tdingiz!`);
         }
       } else {
         setError(message);
@@ -212,761 +255,740 @@ const UserDashboard = () => {
     });
   };
 
-  // Uchrashuv band qilish
+  // Book appointment
   const handleBookAppointment = (e) => {
     e.preventDefault();
-
-    // 🔄 Xabarlarni tozalash
     setError('');
     setSuccessMessage('');
+    
+    if (!patientId) return setError("Avval ro'yxatdan o'ting");
+    if (!selectedTime) return setError("Vaqt tanlang");
+    if (!procedure.trim()) return setError("Muolaja nomini kiriting");
 
-    // ✅ Validatsiya
-    if (!patientId) {
-      setError('Iltimos, avval ro\'yxatdan o\'ting.');
-      return;
-    }
-
-    if (!selectedTime) {
-      setError('Iltimos, vaqtni tanlang.');
-      return;
-    }
-
-    if (!procedure.trim()) {
-      setError('Iltimos, muolaja nomini kiriting.');
-      return;
-    }
-
-    // 🆕 Uchrashuv obyektini yaratish
-    const newAppointment = {
+    const cost = 100000;
+    const newApt = {
       id: Date.now(),
       patientId,
       date: selectedDate,
       time: selectedTime,
       procedure,
       status: 'kutilmoqda',
-      notes: '',
-      prescription: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      createdAt: new Date().toISOString()
     };
-
-    // 📋 Uchrashuvni holatga saqlash
-    setAppointments([...appointments, newAppointment]);
     
-    // 🆕 To'lov hisobini yaratish
-    const appointmentCost = 100000;
-    const newBilling = {
+    const newBill = {
       id: Date.now() + 1,
       patientId,
       patientName: newPatient.name,
       date: selectedDate,
-      services: [
-        { name: procedure, cost: appointmentCost }
-      ],
-      total: appointmentCost,
+      services: [{ name: procedure, cost }],
+      total: cost,
       paid: 0,
-      status: 'to\'lanmagan',
-      paymentMethod: '',
-      notes: 'Yangi uchrashuv uchun hisob'
+      status: 'to\'lanmagan'
     };
-    setBillings([...billings, newBilling]);
 
-    setSuccessMessage('✅ Uchrashuv muvaffaqiyatli band qilindi!');
+    // Update state
+    setAppointments([...appointments, newApt]);
+    setBillings([...billings, newBill]);
+    
+    setSuccessMessage("Uchrashuv muvaffaqiyatli band qilindi!");
+    setSelectedTime('');
+    setProcedure('');
 
-    // 📲 Telegram xabari — Bemor uchun
-    const patientMessage = `
-Hurmatli ${newPatient.name},
+    // Add notification
+    const newNotification = {
+      id: Date.now() + 2,
+      title: "Yangi uchrashuv band qilindi",
+      message: `${selectedDate} ${selectedTime} da ${procedure} muolajasi uchun uchrashuv band qilindi`,
+      type: "appointment",
+      time: "Hozir",
+      read: false,
+      date: new Date().toISOString(),
+      action: { type: "view", appointmentId: newApt.id }
+    };
+    setNotifications([newNotification, ...notifications]);
 
-✅ Sizning uchrashuvingiz ${selectedDate} kuni, soat ${selectedTime} da rejalashtirildi.
-🔹 Muolaja: ${procedure}
-💰 Hisob: ${appointmentCost} UZS (to\'lanmagan)
-
-📍 SDK DENTAL klinikasi
-📞 Qo'shimcha ma'lumot uchun bog'laning: +998 ***
-
-🦷 Sog'lig'ingiz biz uchun muhim!
-    `.trim();
-
-    if (newPatient.telegram) {
-      sendTelegramMessage(newPatient.telegram, patientMessage);
-    }
-
-    // 🛎️ Telegram xabari — Admin uchun
-    const adminMessage = `
-📢 Yangi uchrashuv band qilindi:
-
-👤 Bemor: ${newPatient.name}
-📅 Sana: ${selectedDate}
-🕒 Vaqt: ${selectedTime}
-🔹 Muolaja: ${procedure}
-💰 Hisob: ${appointmentCost} UZS (to\'lanmagan)
-
-🦷 SDK DENTAL tizimi
-    `.trim();
-
-    sendTelegramMessage('5838205785', adminMessage);
-
-    // 🧹 Formani tozalash
-    setTimeout(() => {
-      setSuccessMessage('');
-      setSelectedTime('');
-      setProcedure('');
-    }, 3000);
+    // Send notifications
+    const msg = `✅ ${newPatient.name}, ${selectedDate} ${selectedTime} da uchrashuv band qilindi!\nMuolaja: ${procedure}\nNarxi: ${cost} UZS`;
+    if (newPatient.telegram) sendTelegramMessage(newPatient.telegram, msg);
+    sendTelegramMessage('5838205785', `Yangi band: ${newPatient.name} - ${selectedDate} ${selectedTime}`);
   };
 
-  // To'lov qilish funksiyasi
+  // Pay bill
   const handlePayBill = (billId) => {
-    const bill = userBillings.find(b => b.id === billId);
-    if (!bill || bill.status !== 'to\'lanmagan') {
-      setError('To\'lov allaqachon amalga oshirilgan yoki topilmadi.');
-      return;
-    }
-
-    // To'lovni yangilash
-    setBillings(billings.map(b => 
-      b.id === billId 
-        ? { ...b, paid: b.total, status: 'to\'langan', paymentMethod: 'naqd', updatedAt: new Date().toISOString() } 
-        : b
-    ));
-
-    setSuccessMessage('✅ To\'lov muvaffaqiyatli amalga oshirildi!');
-
-    // Telegram xabari — Bemor uchun
-    const patientMessage = `
-Hurmatli ${currentUser.name},
-
-✅ To'lov amalga oshirildi: ${bill.total} UZS
-📅 Sana: ${bill.date}
-🔹 Xizmatlar: ${bill.services.map(s => s.name).join(', ')}
-
-🦷 SDK DENTAL tizimi
-    `.trim();
-
-    if (newPatient.telegram) {
-      sendTelegramMessage(newPatient.telegram, patientMessage);
-    }
-
-    // Telegram xabari — Admin uchun
-    const adminMessage = `
-📢 To'lov qilindi:
-
-👤 Bemor: ${currentUser.name}
-💰 Miqdor: ${bill.total} UZS
-📅 Sana: ${bill.date}
-🔹 Xizmatlar: ${bill.services.map(s => s.name).join(', ')}
-
-🦷 SDK DENTAL tizimi
-    `.trim();
-
-    sendTelegramMessage('5838205785', adminMessage);
-
-    setTimeout(() => {
-      setSuccessMessage('');
-    }, 3000);
+    const updatedBillings = billings.map(b => 
+      b.id === billId ? { ...b, paid: b.total, status: 'to\'langan' } : b
+    );
+    setBillings(updatedBillings);
+    
+    const bill = billings.find(b => b.id === billId);
+    setSuccessMessage("To'lov muvaffaqiyatli amalga oshirildi!");
+    
+    // Add notification
+    const newNotification = {
+      id: Date.now(),
+      title: "To'lov muvaffaqiyatli amalga oshirildi",
+      message: `${bill.total.toLocaleString()} UZS miqdoridagi to'lovingiz tasdiqlandi`,
+      type: "billing",
+      time: "Hozir",
+      read: false,
+      date: new Date().toISOString(),
+      action: { type: "view", billId }
+    };
+    setNotifications([newNotification, ...notifications]);
   };
 
-  // Keyingi bo'sh slotni so'rish
+  // Request next available slot
   const handleRequestNextSlot = () => {
-    setError('');
-    setSuccessMessage('');
-
-    if (!patientId) {
-      setError('Iltimos, avval ro\'yxatdan o\'ting.');
-      return;
-    }
-
-    const nextSlot = findNextAvailableSlot();
-    if (nextSlot) {
-      const message = `Keyingi bo'sh vaqt: ${nextSlot.date} kuni soat ${nextSlot.time}`;
-      setSuccessMessage(message);
-      if (newPatient.telegram) {
-        sendTelegramMessage(newPatient.telegram, `Hurmatli ${newPatient.name}, ${message}`);
-      }
-      sendTelegramMessage('5838205785', `Bemor ${newPatient.name} keyingi bo'sh vaqtni so'radi: ${nextSlot.date} ${nextSlot.time}`);
+    const next = findNextAvailableSlot();
+    if (next) {
+      setSuccessMessage(`Keyingi bo'sh vaqt: ${next.date} ${next.time}`);
+      
+      // Add notification
+      const newNotification = {
+        id: Date.now(),
+        title: "Bo'sh vaqt topildi",
+        message: `${next.date} ${next.time} da bo'sh vaqt mavjud`,
+        type: "reminder",
+        time: "Hozir",
+        read: false,
+        date: new Date().toISOString(),
+        action: { type: "book", date: next.date, time: next.time }
+      };
+      setNotifications([newNotification, ...notifications]);
     } else {
-      setError('Keyingi 30 kun ichida bo\'sh vaqt topilmadi.');
-      if (newPatient.telegram) {
-        sendTelegramMessage(newPatient.telegram, `Hurmatli ${newPatient.name}, hozircha bo'sh vaqt yo'q. Keyinroq urinib ko'ring.`);
-      }
+      setError("Yaqin 30 kun ichida bo'sh vaqt yo'q");
     }
   };
 
-  // Xabarlar vaqtinchalik ko'rsatiladi
+  // Notification functions
+  const toggleNotifications = () => {
+    if (window.innerWidth >= 1024) {
+      setShowNotifications(!showNotifications);
+    } else {
+      setShowNotificationModal(true);
+    }
+  };
+
+  const markAsRead = (id) => {
+    setNotifications(notifications.map(notif => 
+      notif.id === id ? { ...notif, read: true } : notif
+    ));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(notif => ({ ...notif, read: true })));
+  };
+
+  const deleteNotification = (id) => {
+    setNotifications(notifications.filter(notif => notif.id !== id));
+  };
+
+  const getNotificationIcon = (type) => {
+    switch(type) {
+      case 'appointment': return <FiCalendar size={18} />;
+      case 'billing': return <FiCreditCard size={18} />;
+      case 'system': return <FiMessageSquare size={18} />;
+      case 'reminder': return <FiClock size={18} />;
+      default: return <FiBell size={18} />;
+    }
+  };
+
+  const handleNotificationAction = (notification) => {
+    markAsRead(notification.id);
+    
+    switch(notification.action?.type) {
+      case 'view':
+        if (notification.action.appointmentId) {
+          setActiveTab('appointments');
+          setShowNotifications(false);
+          setShowNotificationModal(false);
+        } else if (notification.action.billId) {
+          setActiveTab('billing');
+          setShowNotifications(false);
+          setShowNotificationModal(false);
+        }
+        break;
+      case 'book':
+        if (notification.action.date && notification.action.time) {
+          setSelectedDate(notification.action.date);
+          setSelectedTime(notification.action.time);
+          setShowNotificationModal(false);
+          setActiveTab('dashboard');
+        }
+        break;
+      case 'settings':
+        // Settings page ga o'tish
+        setSuccessMessage("Sozlamalar bo'limi tez orada qo'shiladi");
+        setShowNotifications(false);
+        setShowNotificationModal(false);
+        break;
+      default:
+        // Do nothing
+    }
+  };
+
+  // Auto-update badge count when notifications change
+  useEffect(() => {
+    const unreadCount = notifications.filter(n => !n.read).length;
+    setNotificationBadgeCount(unreadCount);
+  }, [notifications]);
+
+  // Close notifications when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showNotifications && !event.target.closest('.notification-dropdown') && !event.target.closest('.header-notification')) {
+        setShowNotifications(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showNotifications]);
+
+  // Clear messages after 4 seconds
   useEffect(() => {
     if (successMessage || error) {
       const timer = setTimeout(() => {
         setSuccessMessage('');
         setError('');
-      }, 3000);
+      }, 4000);
       return () => clearTimeout(timer);
     }
   }, [successMessage, error]);
 
   if (!currentUser) return null;
 
-  // Desktop Sidebar Navigation
-  const DesktopSidebar = () => (
-    <div className="desktop-sidebar">
-      <div className="sidebar-header">
-        <div className="avatar">
-          <FiUser />
-        </div>
-        <div className="user-details">
-          <h3>{currentUser.name}</h3>
-          <p>SDK DENTAL</p>
-        </div>
-      </div>
-      
-      <nav className="sidebar-nav">
-        <button 
-          className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
-          onClick={() => setActiveTab("dashboard")}
-        >
-          <FiHome />
-          <span>Asosiy</span>
-        </button>
-        <button 
-          className={`nav-item ${activeTab === "appointments" ? "active" : ""}`}
-          onClick={() => setActiveTab("appointments")}
-        >
-          <FiCalendar />
-          <span>Uchrashuvlar</span>
-        </button>
-        <button 
-          className={`nav-item ${activeTab === "billing" ? "active" : ""}`}
-          onClick={() => setActiveTab("billing")}
-        >
-          <FiCreditCard />
-          <span>To'lovlar</span>
-        </button>
-        <button 
-          className={`nav-item ${activeTab === "stats" ? "active" : ""}`}
-          onClick={() => setActiveTab("stats")}
-        >
-          <FiBarChart2 />
-          <span>Statistika</span>
-        </button>
-      </nav>
-      
-      <div className="sidebar-footer">
-        <button className="logout-btn" onClick={handleLogoutClick} disabled={isLoading}>
-          <FiLogOut />
-          <span>Chiqish</span>
-        </button>
-      </div>
-    </div>
-  );
-
-  // Mobile Navigation
-  const MobileNav = () => (
-    <div className="mobile-nav">
-      <button 
-        className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
-        onClick={() => setActiveTab("dashboard")}
-      >
-        <FiHome />
-        <span>Asosiy</span>
-      </button>
-      <button 
-        className={`nav-item ${activeTab === "appointments" ? "active" : ""}`}
-        onClick={() => setActiveTab("appointments")}
-      >
-        <FiCalendar />
-        <span>Uchrashuvlar</span>
-      </button>
-      <button 
-        className={`nav-item ${activeTab === "billing" ? "active" : ""}`}
-        onClick={() => setActiveTab("billing")}
-      >
-        <FiCreditCard />
-        <span>To'lovlar</span>
-      </button>
-      <button 
-        className={`nav-item ${activeTab === "stats" ? "active" : ""}`}
-        onClick={() => setActiveTab("stats")}
-      >
-        <FiBarChart2 />
-        <span>Statistika</span>
-      </button>
-    </div>
-  );
+  // News items
+  const newsItems = [
+    { title: "O'zbekiston Stomatologiyasi 2025", desc: "Toshkentda stomatologiya ko'rgazmasi, 15-17 aprel", img: "https://images.pexels.com/photos/6812583/pexels-photo-6812583.jpeg" },
+    { title: "UzMedExpo 2025", desc: "17-xalqaro sog'liqni saqlash ko'rgazmasi", img: "https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-9054.jpg" },
+    { title: "IDECA Toshkent 2025", desc: "Stomatologiya ta'limi tadbirlari", img: "https://images.pexels.com/photos/4226263/pexels-photo-4226263.jpeg" },
+    { title: "Stomatologiyada AI", desc: "Sun'iy intellekt yangi imkoniyatlar", img: "https://images.pexels.com/photos/804009/pexels-photo-804009.jpeg" },
+    { title: "2025 Trendlar", desc: "Minimal invaziv va 3D texnologiyalar", img: "https://images.pexels.com/photos/6628600/pexels-photo-6628600.jpeg" }
+  ];
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-wrapper">
       {/* Desktop Sidebar */}
-      <DesktopSidebar />
-
-      {/* Main Content Area */}
-      <div className="main-content">
-        {/* Header */}
-        <div className="dashboard-header">
-          <div className="header-left">
-            <button 
-              className="mobile-menu-btn"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <FiX /> : <FiMenu />}
-            </button>
-            <div className="page-title">
-              <h1>
-                {activeTab === "dashboard" && "Asosiy"}
-                {activeTab === "appointments" && "Uchrashuvlar"}
-                {activeTab === "billing" && "To'lovlar"}
-                {activeTab === "stats" && "Statistika"}
-              </h1>
-              <p>SDK DENTAL klinikasi</p>
-            </div>
-          </div>
-          
-          <div className="header-actions">
-            <button className="notification-btn">
-              <FiBell />
-              <span className="notification-badge">3</span>
-            </button>
-            <div className="user-profile">
-              <div className="avatar">
-                <FiUser />
-              </div>
-              <div className="user-info">
-                <span className="user-name">{currentUser.name}</span>
-                <span className="user-role">Mijoz</span>
-              </div>
-            </div>
+      <div className="desktop-sidebar">
+        <div className="sidebar-profile">
+          <div className="profile-avatar"><FiUser size={32} /></div>
+          <div>
+            <h3>{currentUser.name}</h3>
+            <p>Mijoz</p>
           </div>
         </div>
+        <nav className="sidebar-nav">
+          {["dashboard", "appointments", "billing", "stats"].map(tab => (
+            <button 
+              key={tab} 
+              className={`nav-link ${activeTab === tab ? "active" : ""}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === "dashboard" && <FiHome />}
+              {tab === "appointments" && <FiCalendar />}
+              {tab === "billing" && <FiCreditCard />}
+              {tab === "stats" && <FiBarChart2 />}
+              <span>{
+                tab === "dashboard" ? "Asosiy" :
+                tab === "appointments" ? "Uchrashuvlar" :
+                tab === "billing" ? "To'lovlar" : "Statistika"
+              }</span>
+            </button>
+          ))}
+        </nav>
+        <button className="logout-button" onClick={handleLogoutClick}>
+          <FiLogOut /> Chiqish
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className="main-content">
+        {/* Mobile Header */}
+        <header className="mobile-header">
+          <button className="menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+          </button>
+          <h1 className="header-title">SDK DENTAL</h1>
+          <div className="header-notification" onClick={toggleNotifications}>
+            <FiBell size={22} />
+            {notificationBadgeCount > 0 && (
+              <span className="notif-badge">{notificationBadgeCount}</span>
+            )}
+            
+            {/* Desktop Dropdown */}
+            {showNotifications && (
+              <div className="notification-dropdown show">
+                <div className="notification-dropdown-header">
+                  <h3>Xabarlar</h3>
+                  <a 
+                    href="#" 
+                    className="view-all-notifications"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowNotifications(false);
+                      setShowNotificationModal(true);
+                    }}
+                  >
+                    Hammasini ko'rish
+                  </a>
+                </div>
+                <div className="notification-dropdown-list">
+                  {notifications.slice(0, 4).map(notification => (
+                    <div 
+                      key={notification.id} 
+                      className={`notification-dropdown-item ${notification.read ? '' : 'unread'}`}
+                      onClick={() => handleNotificationAction(notification)}
+                    >
+                      <div className={`notification-dropdown-icon ${notification.type}`}>
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="notification-dropdown-content">
+                        <h4>{notification.title}</h4>
+                        <p>{notification.message}</p>
+                        <div className="notification-dropdown-time">
+                          {notification.time}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {notifications.length === 0 && (
+                    <div className="notification-dropdown-item">
+                      <div className="notification-dropdown-content">
+                        <h4>Xabarlar yo'q</h4>
+                        <p>Hozircha yangi xabarlar mavjud emas</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </header>
 
         {/* Mobile Menu Overlay */}
         {mobileMenuOpen && (
-          <div className="mobile-menu-overlay active">
-            <div className="mobile-menu">
-              <div className="mobile-menu-header">
-                <div className="avatar">
-                  <FiUser />
-                </div>
-                <div className="user-details">
+          <div className="mobile-overlay" onClick={() => setMobileMenuOpen(false)}>
+            <div className="mobile-sidebar" onClick={e => e.stopPropagation()}>
+              <div className="sidebar-profile">
+                <div className="profile-avatar"><FiUser size={32} /></div>
+                <div>
                   <h3>{currentUser.name}</h3>
-                  <p>SDK DENTAL</p>
+                  <p>Mijoz</p>
                 </div>
-                <button 
-                  className="close-menu"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <FiX />
-                </button>
               </div>
-              
-              <nav className="mobile-nav-menu">
-                <button 
-                  className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveTab("dashboard");
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  <FiHome />
-                  <span>Asosiy</span>
-                </button>
-                <button 
-                  className={`nav-item ${activeTab === "appointments" ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveTab("appointments");
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  <FiCalendar />
-                  <span>Uchrashuvlar</span>
-                </button>
-                <button 
-                  className={`nav-item ${activeTab === "billing" ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveTab("billing");
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  <FiCreditCard />
-                  <span>To'lovlar</span>
-                </button>
-                <button 
-                  className={`nav-item ${activeTab === "stats" ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveTab("stats");
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  <FiBarChart2 />
-                  <span>Statistika</span>
-                </button>
+              <nav className="sidebar-nav">
+                {["dashboard", "appointments", "billing", "stats"].map(tab => (
+                  <button 
+                    key={tab} 
+                    className={`nav-link ${activeTab === tab ? "active" : ""}`}
+                    onClick={() => { 
+                      setActiveTab(tab); 
+                      setMobileMenuOpen(false); 
+                    }}
+                  >
+                    {tab === "dashboard" && <FiHome />}
+                    {tab === "appointments" && <FiCalendar />}
+                    {tab === "billing" && <FiCreditCard />}
+                    {tab === "stats" && <FiBarChart2 />}
+                    <span>{
+                      tab === "dashboard" ? "Asosiy" :
+                      tab === "appointments" ? "Uchrashuvlar" :
+                      tab === "billing" ? "To'lovlar" : "Statistika"
+                    }</span>
+                  </button>
+                ))}
               </nav>
-              
-              <div className="mobile-menu-footer">
-                <button className="logout-btn" onClick={handleLogoutClick} disabled={isLoading}>
-                  <FiLogOut />
-                  <span>Chiqish</span>
-                </button>
-              </div>
+              <button className="logout-button" onClick={handleLogoutClick}>
+                <FiLogOut /> Chiqish
+              </button>
             </div>
           </div>
         )}
 
-        {/* Dashboard Content */}
-        <div className="dashboard-content">
-          {/* Statistikalar */}
+        {/* Main Container */}
+        <main className="main-container">
+          {/* Alerts */}
+          {successMessage && (
+            <div className="alert success">
+              <FiCheckCircle /> {successMessage}
+            </div>
+          )}
+          {error && (
+            <div className="alert error">
+              <FiAlertCircle /> {error}
+            </div>
+          )}
+
+          {/* Stats Cards */}
           {(activeTab === "dashboard" || activeTab === "stats") && (
             <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon primary">
-                  <FiCalendar />
-                </div>
-                <div className="stat-info">
+              <div className="stat-card gradient-blue">
+                <FiCalendar size={28} />
+                <div>
                   <h3>{totalAppointments}</h3>
-                  <p>Jami Uchrashuvlar</p>
+                  <p>Jami uchrashuvlar</p>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="stat-icon success">
-                  <FiDollarSign />
-                </div>
-                <div className="stat-info">
+              <div className="stat-card gradient-purple">
+                <FiDollarSign size={28} />
+                <div>
                   <h3>{totalCost.toLocaleString()} UZS</h3>
-                  <p>Jami Xarajatlar</p>
+                  <p>Jami xarajat</p>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="stat-icon warning">
-                  <FiClock />
-                </div>
-                <div className="stat-info">
+              <div className="stat-card gradient-teal">
+                <FiClock size={28} />
+                <div>
                   <h3>{upcomingCount}</h3>
-                  <p>Kelgusi Uchrashuvlar</p>
+                  <p>Kelgusi</p>
                 </div>
               </div>
-              <div className="stat-card">
-                <div className="stat-icon danger">
-                  <FiActivity />
-                </div>
-                <div className="stat-info">
+              <div className="stat-card gradient-pink">
+                <FiActivity size={28} />
+                <div>
                   <h3>{lastBilling ? `${lastBilling.total.toLocaleString()} UZS` : "0 UZS"}</h3>
-                  <p>Oxirgi To'lov</p>
+                  <p>Oxirgi to'lov</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Diagrammalar */}
+          {/* Charts */}
           {activeTab === "stats" && (
-            <div className="charts-section">
-              <div className="chart-card">
-                <h3>Oylar Bo'yicha Uchrashuvlar</h3>
-                <ResponsiveContainer width="100%" height={250}>
+            <div className="charts-wrapper">
+              <div className="chart-box">
+                <h3>Oylar bo'yicha</h3>
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={treatmentsByMonth}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" stroke="#666" />
-                    <YAxis stroke="#666" />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "white", 
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-                      }} 
-                    />
-                    <Bar dataKey="count" fill="#4ECDC4" radius={[4, 4, 0, 0]} />
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#4361ee" radius={8} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="chart-card">
-                <h3>Muolaja Turlari</h3>
-                <ResponsiveContainer width="100%" height={250}>
+              <div className="chart-box">
+                <h3>Muolaja turlari</h3>
+                <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
-                    <Pie
-                      data={treatmentTypes}
-                      cx="50%" cy="50%" outerRadius={80} dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    <Pie 
+                      data={treatmentTypes} 
+                      dataKey="value" 
+                      outerRadius={90} 
+                      label={({name, percent}) => `${name} ${(percent*100).toFixed(0)}%`}
                     >
-                      {treatmentTypes.map((_, index) => (
-                        <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                      {treatmentTypes.map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: "white", 
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-                      }} 
-                    />
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
           )}
 
-          {/* Uchrashuvlar */}
+          {/* Appointments List */}
           {(activeTab === "dashboard" || activeTab === "appointments") && (
-            <div className="section">
-              <div className="section-header">
+            <section className="section-block">
+              <div className="section-title">
                 <h3>Uchrashuvlar</h3>
-                <div className="filter-tabs">
-                  {["hamma", "o'tgan", "kelgusi"].map((type) => (
-                    <button
-                      key={type}
-                      className={`filter-tab ${filter === type ? "active" : ""}`}
-                      onClick={() => setFilter(type)}
+                <div className="filter-buttons">
+                  {["hamma", "kelgusi", "o'tgan"].map(f => (
+                    <button 
+                      key={f} 
+                      className={filter === f ? "filter-active" : "filter-inactive"} 
+                      onClick={() => setFilter(f)}
                     >
-                      {type === "hamma" ? "Hammasi" : type === "o'tgan" ? "O'tgan" : "Kelgusi"}
+                      {f === "hamma" ? "Hammasi" : f === "kelgusi" ? "Kelgusi" : "O'tgan"}
                     </button>
                   ))}
                 </div>
               </div>
-              
-              <div className="appointments-list">
+              <div className="list-container">
                 {filteredAppointments.length > 0 ? (
                   filteredAppointments.map(apt => (
-                    <div key={apt.id} className="appointment-card">
-                      <div className="appointment-date">
-                        <span className="date">{new Date(apt.date).toLocaleDateString('uz-UZ')}</span>
-                        <span className="time">{apt.time}</span>
+                    <div key={apt.id} className="item-card">
+                      <div>
+                        <div className="item-date">
+                          {new Date(apt.date).toLocaleDateString('uz-UZ')}
+                        </div>
+                        <div className="item-time">{apt.time}</div>
                       </div>
-                      <div className="appointment-details">
+                      <div className="item-info">
                         <h4>{apt.procedure}</h4>
-                        <p className={`status ${apt.status}`}>{apt.status}</p>
-                      </div>
-                      <div className="appointment-actions">
-                        <CSVLink
-                          data={appointmentCSVData}
-                          filename={`${filter}_uchrashuvlar.csv`}
-                          className="btn-icon"
-                        >
-                          <FiDownload />
-                        </CSVLink>
+                        <span className={`status-badge ${apt.status}`}>
+                          {apt.status}
+                        </span>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="empty-state">
-                    <FiCalendar size={48} />
-                    <p>Uchrashuvlar topilmadi</p>
-                  </div>
+                  <div className="empty-placeholder">Uchrashuvlar yo'q</div>
                 )}
               </div>
-            </div>
+            </section>
           )}
 
-          {/* To'lovlar */}
+          {/* Billing Section */}
           {(activeTab === "dashboard" || activeTab === "billing") && (
-            <div className="section">
-              <div className="section-header">
-                <h3>To'lovlar Tarixi</h3>
-                <CSVLink
-                  data={billingCSVData}
-                  filename="tolovlar_tarixi.csv"
-                  className="btn btn-outline"
+            <section className="section-block">
+              <div className="section-title">
+                <h3>To'lovlar</h3>
+                <CSVLink 
+                  data={billingCSVData} 
+                  filename="tolovlar.csv" 
+                  className="download-btn"
                 >
-                  <FiDownload /> Yuklab Olish
+                  <FiDownload /> Yuklab olish
                 </CSVLink>
               </div>
-              
-              <div className="billing-list">
+              <div className="list-container">
                 {userBillings.length > 0 ? (
                   userBillings.map(bill => (
-                    <div key={bill.id} className="billing-card">
-                      <div className="billing-info">
+                    <div key={bill.id} className="billing-item">
+                      <div>
                         <div className="billing-date">
                           {new Date(bill.date).toLocaleDateString('uz-UZ')}
                         </div>
-                        <div className="billing-details">
-                          <h4>{bill.total.toLocaleString()} UZS</h4>
-                          <p>{bill.services.map(s => s.name).join(", ")}</p>
+                        <div className="billing-amount">
+                          {bill.total.toLocaleString()} UZS
                         </div>
-                        <div className={`billing-status ${bill.status}`}>
-                          {bill.status}
+                        <div className="billing-services">
+                          {bill.services.map(s => s.name).join(", ")}
                         </div>
                       </div>
-                      {bill.status === 'to\'lanmagan' && (
-                        <button 
-                          className="btn btn-primary pay-btn"
-                          onClick={() => handlePayBill(bill.id)}
-                        >
-                          To'lov qilish
-                        </button>
-                      )}
+                      <div className="billing-actions">
+                        <span className={`status-badge ${bill.status}`}>
+                          {bill.status}
+                        </span>
+                        {bill.status === "to'lanmagan" && (
+                          <button 
+                            className="pay-button" 
+                            onClick={() => handlePayBill(bill.id)}
+                          >
+                            To'lash
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))
                 ) : (
-                  <div className="empty-state">
-                    <FiCreditCard size={48} />
-                    <p>To'lov yozuvlari topilmadi</p>
-                  </div>
+                  <div className="empty-placeholder">To'lovlar yo'q</div>
                 )}
               </div>
-            </div>
+            </section>
           )}
 
-          {/* Mijoz Portali */}
+          {/* Patient Portal */}
           {activeTab === "dashboard" && (
-            <div className="section">
-              <div className="section-header">
-                <h3>Mijoz Portali</h3>
-              </div>
-              
-              {successMessage && (
-                <div className="alert alert-success">{successMessage}</div>
-              )}
-              {error && (
-                <div className="alert alert-error">{error}</div>
-              )}
-              
-              <div className="portal-card">
+            <section className="section-block">
+              <h3 className="section-title">Mijoz Portali</h3>
+              <div className="portal-container">
                 {showRegistration ? (
-                  <div className="registration-form">
-                    <h4>Ro'yxatdan O'tish</h4>
-                    <form onSubmit={handleRegister}>
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label>
-                            <FiUser /> Ism *
-                          </label>
-                          <input
-                            type="text"
-                            value={newPatient.name}
-                            onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                            required
-                            placeholder="Ismingizni kiriting"
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label>
-                            <FiPhone /> Telefon *
-                          </label>
-                          <input
-                            type="tel"
-                            value={newPatient.phone}
-                            onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                            placeholder="+998901234567"
-                            required
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Telegram Chat ID (majburiy emas)</label>
-                        <input
-                          type="text"
-                          value={newPatient.telegram}
-                          onChange={(e) => setNewPatient({ ...newPatient, telegram: e.target.value })}
-                          placeholder="Telegram Chat ID (masalan: 5838205785)"
-                        />
-                        <p className="form-hint">Botga /start buyrug'ini yuboring va Chat ID ni kiriting.</p>
-                      </div>
-                      
-                      <button type="submit" className="btn btn-primary full-width">
-                        <FiPlus /> Ro'yxatdan O'tish
-                      </button>
-                    </form>
-                  </div>
+                  <form onSubmit={handleRegister} className="form-card">
+                    <h4>Ro'yxatdan o'tish</h4>
+                    <input 
+                      type="text" 
+                      placeholder="Ismingiz" 
+                      required 
+                      value={newPatient.name} 
+                      onChange={e => setNewPatient({...newPatient, name: e.target.value})} 
+                    />
+                    <input 
+                      type="tel" 
+                      placeholder="Telefon +998XXXXXXXXX" 
+                      required 
+                      value={newPatient.phone} 
+                      onChange={e => setNewPatient({...newPatient, phone: e.target.value})} 
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Telegram Chat ID (ixtiyoriy)" 
+                      value={newPatient.telegram} 
+                      onChange={e => setNewPatient({...newPatient, telegram: e.target.value})} 
+                    />
+                    <button type="submit" className="primary-button full">
+                      Ro'yxatdan o'tish
+                    </button>
+                  </form>
                 ) : (
-                  <div className="booking-form">
-                    <h4>Uchrashuv Band Qilish</h4>
-                    
-                    <div className="form-group">
-                      <label><FiCalendar /> Sana</label>
-                      <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <h5>Bo'sh Vaqtlar</h5>
-                      <div className="time-slots-grid">
-                        {slots.map((slot) => (
-                          <button
-                            key={slot.time}
-                            type="button"
-                            className={`time-slot ${slot.isBooked ? 'booked' : selectedTime === slot.time ? 'selected' : ''}`}
-                            onClick={() => !slot.isBooked && setSelectedTime(slot.time)}
-                            disabled={slot.isBooked}
-                          >
-                            {slot.time}
-                            {slot.isBooked && <span className="slot-badge">Band</span>}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <form onSubmit={handleBookAppointment}>
-                      <div className="form-group">
-                        <label>Tanlangan Vaqt</label>
-                        <input
-                          type="text"
-                          value={selectedTime}
-                          readOnly
-                          placeholder="Vaqtni yuqoridan tanlang"
-                          className="selected-time"
-                        />
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Muolaja *</label>
-                        <input
-                          type="text"
-                          value={procedure}
-                          onChange={(e) => setProcedure(e.target.value)}
-                          placeholder="Masalan: Tish tekshiruvi"
-                          required
-                        />
-                      </div>
-                      
-                      <div className="form-actions">
-                        <button type="submit" className="btn btn-primary">
-                          <FiPlus /> Uchrashuv Band Qilish
-                        </button>
-                        <button
+                  <div className="booking-card">
+                    <h4>Yangi uchrashuv</h4>
+                    <input 
+                      type="date" 
+                      value={selectedDate} 
+                      onChange={e => setSelectedDate(e.target.value)} 
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                    <div className="time-grid">
+                      {slots.map(s => (
+                        <button 
+                          key={s.time} 
                           type="button"
-                          className="btn btn-outline"
+                          disabled={s.isBooked} 
+                          className={`time-btn ${s.isBooked ? 'booked' : selectedTime === s.time ? 'selected' : ''}`}
+                          onClick={() => setSelectedTime(s.time)}
+                        >
+                          {s.time} {s.isBooked && "●"}
+                        </button>
+                      ))}
+                    </div>
+                    <form onSubmit={handleBookAppointment}>
+                      <input 
+                        type="text" 
+                        placeholder="Muolaja nomi" 
+                        required 
+                        value={procedure} 
+                        onChange={e => setProcedure(e.target.value)} 
+                      />
+                      <div className="button-group">
+                        <button type="submit" className="primary-button">
+                          Band qilish
+                        </button>
+                        <button 
+                          type="button" 
+                          className="secondary-button" 
                           onClick={handleRequestNextSlot}
                         >
-                          <FiSearch /> Keyingi Bo'sh Vaqt
+                          Bo'sh vaqt
                         </button>
                       </div>
                     </form>
                   </div>
                 )}
               </div>
-            </div>
+            </section>
           )}
 
-          {/* Yangiliklar */}
+          {/* News Section */}
           {activeTab === "dashboard" && (
-            <div className="section">
-              <h3>So'nggi Yangiliklar</h3>
+            <section className="section-block">
+              <h3 className="section-title">Yangiliklar</h3>
               <div className="news-grid">
-                {newsItems.map((news, i) => (
-                  <div key={i} className="news-card">
-                    <div className="news-image">
-                      <img src={news.image} alt={news.title} loading="lazy" />
-                    </div>
-                    <div className="news-content">
-                      <h4>{news.title}</h4>
-                      <p>{news.description}</p>
+                {newsItems.map((n, i) => (
+                  <div key={i} className="news-item">
+                    <img src={n.img} alt={n.title} loading="lazy" />
+                    <div className="news-text">
+                      <h4>{n.title}</h4>
+                      <p>{n.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
-        </div>
+        </main>
 
-        {/* Mobile Navigation */}
-        <MobileNav />
+        {/* Bottom Navigation (Mobile Only) */}
+        <nav className="bottom-nav">
+          {["dashboard", "appointments", "billing", "stats"].map(tab => (
+            <button 
+              key={tab} 
+              className={activeTab === tab ? "nav-active" : ""} 
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === "dashboard" && <FiHome size={22} />}
+              {tab === "appointments" && <FiCalendar size={22} />}
+              {tab === "billing" && <FiCreditCard size={22} />}
+              {tab === "stats" && <FiBarChart2 size={22} />}
+              <span>{
+                tab === "dashboard" ? "Asosiy" :
+                tab === "appointments" ? "Uchrashuv" :
+                tab === "billing" ? "To'lov" : "Stat"
+              }</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* Notification Modal */}
+        {showNotificationModal && (
+          <div className="notification-modal" onClick={() => setShowNotificationModal(false)}>
+            <div className="notification-modal-content" onClick={e => e.stopPropagation()}>
+              <div className="notification-modal-header">
+                <h3>Xabarlar</h3>
+                <button 
+                  className="close-notification-modal"
+                  onClick={() => setShowNotificationModal(false)}
+                >
+                  <AiOutlineClose size={20} />
+                </button>
+              </div>
+              
+              <div className="notification-list">
+                {notifications.length > 0 ? (
+                  notifications.map(notification => (
+                    <div 
+                      key={notification.id} 
+                      className={`notification-item ${notification.read ? '' : 'unread'}`}
+                      onClick={() => handleNotificationAction(notification)}
+                    >
+                      <div className={`notification-icon ${notification.type}`}>
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="notification-content">
+                        <h4>{notification.title}</h4>
+                        <p>{notification.message}</p>
+                        <div className="notification-time">
+                          {!notification.read && <span className="notification-dot"></span>}
+                          {notification.time}
+                        </div>
+                        <div className="notification-actions">
+                          <button 
+                            className="notification-action-btn primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(notification.id);
+                            }}
+                          >
+                            <FiCheck /> O'qildi
+                          </button>
+                          <button 
+                            className="notification-action-btn secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notification.id);
+                            }}
+                          >
+                            <FiTrash2 /> O'chirish
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="notification-empty">
+                    <FiBell size={48} />
+                    <h4>Xabarlar yo'q</h4>
+                    <p>Hozircha yangi xabarlar mavjud emas</p>
+                  </div>
+                )}
+              </div>
+              
+              {notifications.length > 0 && (
+                <div className="notification-actions-bar">
+                  <button className="mark-all-read-btn" onClick={markAllAsRead}>
+                    <FiCheck /> Hammasini o'qilgan qilish
+                  </button>
+                  <div className="notification-count">
+                    {notificationBadgeCount} ta o'qilmagan
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className="loading-screen">
+            <div className="loader"></div>
+          </div>
+        )}
       </div>
-
-      {/* Yuklanish oynasi */}
-      {isLoading && (
-        <div className="loading-overlay">
-          <div className="spinner"></div>
-          <p>Yuklanmoqda...</p>
-        </div>
-      )}
     </div>
   );
 };
