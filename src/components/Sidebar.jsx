@@ -16,6 +16,13 @@ import {
   FiSmile,
   FiLogOut,
   FiUser,
+  FiFolder, // Yangi icon: Hujjatlar uchun
+  FiActivity, // Yangi icon: Ish vaqti / Attendance uchun
+  FiFileText, // Yangi icon: Audit Log uchun
+  FiShield, // Yangi icon: Xavfsizlik uchun
+  FiGrid, // FiQrcode o'rniga alternativa (grid kvadratlar QR kodga o'xshaydi)
+  FiDownload, // Yangi icon: Elektron karta (PDF export) uchun
+  FiCpu, // Yangi icon: AI yordamchi uchun
 } from "react-icons/fi";
 import { AppContext } from "../App";
 import "./Sidebar.css";
@@ -42,8 +49,7 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
     { path: "/ombor", icon: <FiBox />, label: "Ombor" },
     { path: "/xodimlar", icon: <FiBriefcase />, label: "Xodimlar" },
     { path: "/davolashda-yordam", icon: <FiHelpCircle />, label: "Davolashda Yordam" },
-    { path: "/tooth", icon: <FiSmile />, label: "Tishlar" },
-    
+    { path: "/tooth", icon: <FiSmile />, label: "Tishlar" }, // Mavjud Tish Kartasi
     { path: "/kirganlar", icon: <FiUsers />, label: "Kirganlar" },
     {
       path: "/mijozlar-kabinet",
@@ -52,12 +58,29 @@ const Sidebar = ({ isOpen, toggleSidebar, onLogout }) => {
       restricted: true,
     },
     { path: "/mijozlar", icon: <FiUsers />, label: "Mijozlar" },
+    // Yangi qo'shimchalar: Hujjatlar
+    { path: "/hujjatlar", icon: <FiFolder />, label: "Hujjatlar" }, // Rentgen, Tahlil, Shartnomalar, Bemor fayllari
+    // Yangi qo'shimchalar: Tish Kartasi (kengaytirilgan)
+    { path: "/tish-kartasi", icon: <FiSmile />, label: "Tish Kartasi" }, // 32 tish interaktiv, ranglar, tarix
+    // Yangi qo'shimchalar: Ish vaqti / Attendance
+    { path: "/ish-vaqti", icon: <FiActivity />, label: "Ish Vaqti" }, // Kirish-chiqish, kechikishlar, jadval
+    // Yangi qo'shimchalar: Audit Log
+    { path: "/audit-log", icon: <FiFileText />, label: "Audit Log" }, // Kim nima o'zgartirdi, qachon
+    // Yangi qo'shimchalar: Xavfsizlik
+    { path: "/xavfsizlik", icon: <FiShield />, label: "Xavfsizlik" }, // 2FA va boshqalar
+    // Yangi qo'shimchalar: QR-kod bilan bemor chaqirish
+    { path: "/bemor-chaqirish", icon: <FiGrid />, label: "Bemor Chaqirish (QR)" },
+    // Yangi qo'shimchalar: Elektron karta (PDF export)
+    { path: "/elektron-karta", icon: <FiDownload />, label: "Elektron Karta" },
+    // Yangi qo'shimchalar: AI yordamchi
+    { path: "/ai-yordamchi", icon: <FiCpu />, label: "AI Yordamchi" }, // Tashxis tavsiyasi
   ];
 
   // Admin-specific menu items
   const adminMenu = [
     { path: "/admin", icon: <FiSettings />, label: "Admin Panel" },
     { path: "/admin/xodimlar", icon: <FiUsers />, label: "Xodim Ruxsatlari" },
+    // Admin uchun majburiy 2FA ni xavfsizlik bo'limida boshqarish mumkin
   ];
 
   // Determine menu items based on user role and permissions

@@ -86,37 +86,59 @@ const Login = ({ onLogin, onOpenTokenLogin }) => {
 
   // OTP yuborish funksiyasi
   const sendOtp = async (phoneNumber, chatId, isAdmin = false) => {
-    try {
-      const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
-      const otpData = {
-        phone: phoneNumber,
-        otp: generatedOtp,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-      };
+  try {
+    // 4 xonali OTP generatsiya qilish
+    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
-      const currentOtps = getFromLocalStorage('otpCodes', []);
-      const filteredOtps = currentOtps.filter(o => o.phone !== phoneNumber);
-      filteredOtps.push(otpData);
-      saveToLocalStorage('otpCodes', filteredOtps);
+    // OTP ma'lumotlari
+    const otpData = {
+      phone: phoneNumber,
+      otp: generatedOtp,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 daqiqa
+      createdAt: new Date().toISOString(),
+    };
 
-      const message = isAdmin
-        ? `🦷 KEKSRI Admin Login OTP\n\nYour verification code is: ${generatedOtp}\nThis code will expire in 10 minutes.\n\nDo not share this code with anyone.`
-        : `🦷 KEKSRI Tizimiga kirish kodi\n\nSizning tasdiqlash kodingiz: ${generatedOtp}\nBu kod 10 daqiqa amal qiladi.\n\nHech kimga bu kodni bermang.`;
+    // LocalStorage'dan eski OTPlarni olish
+    const currentOtps = getFromLocalStorage('otpCodes', []);
 
-      const success = await sendTelegramMessage(chatId, message);
-      if (success) {
-        console.log(`OTP ${generatedOtp} sent to ${phoneNumber}`);
-        return true;
-      } else {
-        console.error('Failed to send OTP via Telegram');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error sending OTP:', error);
+    // Shu telefon raqamiga tegishli eski OTPni o‘chirish
+    const filteredOtps = currentOtps.filter(o => o.phone !== phoneNumber);
+
+    // Yangi OTPni qo‘shish
+    filteredOtps.push(otpData);
+    saveToLocalStorage('otpCodes', filteredOtps);
+
+    // Xabar matni
+    const message = isAdmin
+      ? `🦷 SDK Dental — Admin kirish kodi
+
+Tasdiqlash kodingiz: ${generatedOtp}
+Kod 10 daqiqa amal qiladi.
+
+❗ Iltimos, bu kodni hech kimga bermang.`
+      : `🦷 SDK Dental tizimiga kirish kodi
+
+Sizning tasdiqlash kodingiz: ${generatedOtp}
+Kod 10 daqiqa davomida amal qiladi.
+
+❗ Hech kimga bu kodni bermang.`;
+
+    // Telegram orqali yuborish
+    const success = await sendTelegramMessage(chatId, message);
+
+    if (success) {
+      console.log(`OTP (${generatedOtp}) ${phoneNumber} raqamiga yuborildi`);
+      return true;
+    } else {
+      console.error('Telegram orqali OTP yuborilmadi');
       return false;
     }
-  };
+  } catch (error) {
+    console.error('OTP yuborishda xatolik:', error);
+    return false;
+  }
+};
+
 
   // OTP tekshirish funksiyasi
   const verifyOtp = (phoneNumber, enteredOtp) => {

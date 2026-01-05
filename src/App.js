@@ -31,6 +31,16 @@ import StaffPermissions from './login/StaffLogin';
 import AdminFor from './login/AdminLogin';
 import PatientsWithAccount from './login/UserLogin';
 
+// Yangi komponentlar (placeholder sifatida qo'shildi, keyin batafsil ishlab chiqing)
+import Documents from './components/Documents'; // Hujjatlar (Rentgen, Tahlil, Shartnomalar, Bemor fayllari)
+import DentalChart from './components/DentalChart'; // Tish Kartasi (32 tish interaktiv, ranglar, tarix)
+import Attendance from './components/Attendance'; // Ish vaqti / Attendance
+import AuditLog from './components/AuditLog'; // Audit Log
+import Security from './components/Security'; // Xavfsizlik (2FA va boshqalar)
+import PatientQRCall from './components/PatientQRCall'; // QR-kod bilan bemor chaqirish
+import ElectronicCard from './components/ElectronicCard'; // Elektron karta (PDF export)
+import AIAssistant from './components/AIAssistant'; // AI yordamchi (tashxis tavsiyasi)
+
 // Utils
 import {
   getFromLocalStorage,
@@ -63,6 +73,12 @@ const App = () => {
   const [logins, setLogins] = useState(getFromLocalStorage('logins', []));
   const [pendingAdmins, setPendingAdmins] = useState(getFromLocalStorage('pendingAdmins', []));
 
+  // Yangi state'lar qo'shildi
+  const [documents, setDocuments] = useState([]); // Hujjatlar uchun (Rentgen, Tahlil va h.k.)
+  const [dentalCharts, setDentalCharts] = useState([]); // Tish Kartasi ma'lumotlari
+  const [attendanceRecords, setAttendanceRecords] = useState([]); // Ish vaqti / Attendance
+  const [auditLogs, setAuditLogs] = useState([]); // Audit Log ma'lumotlari
+
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -79,6 +95,12 @@ const App = () => {
         setUsers(getFromLocalStorage('users', []));
         setLogins(getFromLocalStorage('logins', []));
         setPendingAdmins(getFromLocalStorage('pendingAdmins', []));
+
+        // Yangi state'lar uchun localStorage'dan yuklash
+        setDocuments(getFromLocalStorage('documents', []));
+        setDentalCharts(getFromLocalStorage('dentalCharts', []));
+        setAttendanceRecords(getFromLocalStorage('attendanceRecords', []));
+        setAuditLogs(getFromLocalStorage('auditLogs', []));
 
         const savedUser = getFromLocalStorage('currentUser', null);
         if (savedUser) {
@@ -123,6 +145,12 @@ const App = () => {
     saveToLocalStorage('currentUser', currentUser);
     saveToLocalStorage('logins', logins);
     saveToLocalStorage('pendingAdmins', pendingAdmins);
+
+    // Yangi state'lar uchun saqlash
+    saveToLocalStorage('documents', documents);
+    saveToLocalStorage('dentalCharts', dentalCharts);
+    saveToLocalStorage('attendanceRecords', attendanceRecords);
+    saveToLocalStorage('auditLogs', auditLogs);
   }, [
     sidebarOpen,
     fontSize,
@@ -138,6 +166,10 @@ const App = () => {
     currentUser,
     logins,
     pendingAdmins,
+    documents,
+    dentalCharts,
+    attendanceRecords,
+    auditLogs,
   ]);
 
   // Ctrl + Alt + T — Admin paneliga maxfiy o'tish
@@ -258,6 +290,15 @@ const App = () => {
         setLogins,
         pendingAdmins,
         setPendingAdmins,
+        // Yangi state'lar va setter'lar
+        documents,
+        setDocuments,
+        dentalCharts,
+        setDentalCharts,
+        attendanceRecords,
+        setAttendanceRecords,
+        auditLogs,
+        setAuditLogs,
       }}
     >
       <Router>
@@ -333,6 +374,15 @@ const App = () => {
                   <Route path="/admin/filiallar" element={<BranchManagement />} />
                   <Route path="/admin/xodimlar" element={<StaffPermissions />} />
                   <Route path="/branch/:branchId" element={<AdminFor />} />
+                  {/* Yangi routelar qo'shildi */}
+                  <Route path="/hujjatlar" element={<Documents />} /> {/* Hujjatlar */}
+                  <Route path="/tish-kartasi" element={<DentalChart />} /> {/* Tish Kartasi */}
+                  <Route path="/ish-vaqti" element={<Attendance />} /> {/* Ish vaqti */}
+                  <Route path="/audit-log" element={<AuditLog />} /> {/* Audit Log */}
+                  <Route path="/xavfsizlik" element={<Security />} /> {/* Xavfsizlik (2FA) */}
+                  <Route path="/bemor-chaqirish" element={<PatientQRCall />} /> {/* QR chaqirish */}
+                  <Route path="/elektron-karta" element={<ElectronicCard />} /> {/* PDF export */}
+                  <Route path="/ai-yordamchi" element={<AIAssistant />} /> {/* AI yordamchi */}
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </main>

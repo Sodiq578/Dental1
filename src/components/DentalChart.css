@@ -1,0 +1,1548 @@
+/* DentalChart.css */
+
+/* ===== BASE STYLES ===== */
+.dental-chart-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 1.5rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== HEADER ===== */
+.dental-header {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e0f2ff;
+}
+
+.header-left h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e40af;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon {
+  font-size: 2.5rem;
+  color: #3b82f6;
+}
+
+.subtitle {
+  color: #64748b;
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.header-stats {
+  display: flex;
+  gap: 2rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.stat-item svg {
+  color: #3b82f6;
+  font-size: 1.25rem;
+}
+
+/* ===== LAYOUT ===== */
+.dental-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 1.5rem;
+  height: calc(100vh - 200px);
+}
+
+.history-sidebar.visible {
+  grid-template-columns: 300px 1fr 300px;
+}
+
+/* ===== SIDEBARS ===== */
+.patients-sidebar,
+.history-sidebar {
+  background: white;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+}
+
+.sidebar-header {
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Search Box */
+.search-box {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  position: relative;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  color: #475569;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  left: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+/* Patients List */
+.patients-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.patient-card {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.patient-card:hover {
+  background: #f1f5f9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.patient-card.active {
+  background: #dbeafe;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.patient-avatar {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.patient-info {
+  flex: 1;
+}
+
+.patient-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.patient-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.detail {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.next-appointment {
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.calendar-icon {
+  font-size: 0.75rem;
+}
+
+/* ===== MAIN CHART AREA ===== */
+.chart-main {
+  background: white;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e2e8f0;
+}
+
+/* Toolbar */
+.chart-toolbar {
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.toolbar-left,
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.view-toggle,
+.view-mode,
+.rotation-control,
+.btn-guide,
+.btn-history,
+.btn-print,
+.btn-save {
+  padding: 0.625rem 1.25rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.view-toggle:hover,
+.view-mode:hover,
+.rotation-control:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.view-toggle.active,
+.view-mode.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.5rem;
+}
+
+.zoom-controls button {
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.zoom-controls button:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.zoom-controls span {
+  min-width: 50px;
+  text-align: center;
+  font-weight: 600;
+  color: #475569;
+}
+
+.btn-guide,
+.btn-history,
+.btn-print {
+  background: #f1f5f9;
+}
+
+.btn-guide:hover,
+.btn-history:hover,
+.btn-print:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.btn-guide.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Patient Header */
+.patient-header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f7ff 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.patient-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.patient-main-info h2 {
+  margin: 0 0 1rem 0;
+  color: #1e40af;
+  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.patient-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.tag {
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.tag.doctor {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+
+.patient-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-action {
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  color: #3b82f6;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Chart Area */
+.chart-area {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Color Guide */
+.color-guide {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 1.25rem;
+  border: 1px solid #e2e8f0;
+}
+
+.color-guide h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.guide-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.guide-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.color-box {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.condition-name {
+  flex: 1;
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.condition-count {
+  background: #f1f5f9;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+/* Dental Chart */
+.dental-chart-wrapper {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  border: 2px solid #e2e8f0;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teeth-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.jaw-section {
+  margin: 2rem 0;
+}
+
+.jaw-label {
+  text-align: center;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.teeth-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* 3D Tooth */
+.tooth-3d {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: 
+    rotateY(var(--rotation, 0deg))
+    scale(var(--zoom, 1));
+  transition: all 0.3s ease;
+  cursor: pointer;
+  animation: float 3s ease-in-out infinite;
+  animation-delay: var(--animation-delay, 0s);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotateY(var(--rotation, 0deg)) scale(var(--zoom, 1)); }
+  50% { transform: translateY(-10px) rotateY(var(--rotation, 0deg)) scale(var(--zoom, 1)); }
+}
+
+.tooth-3d .tooth-front,
+.tooth-3d .tooth-back,
+.tooth-3d .tooth-top,
+.tooth-3d .tooth-bottom,
+.tooth-3d .tooth-right,
+.tooth-3d .tooth-left {
+  position: absolute;
+  background: var(--tooth-color, #10B981);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    inset 0 0 10px rgba(255, 255, 255, 0.5),
+    0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tooth-3d .tooth-front {
+  width: 100%;
+  height: 100%;
+  transform: translateZ(15px);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  overflow: hidden;
+}
+
+.tooth-3d .tooth-back {
+  width: 100%;
+  height: 100%;
+  transform: translateZ(-15px) rotateY(180deg);
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 80%, black));
+}
+
+.tooth-3d .tooth-right {
+  width: 30px;
+  height: 100%;
+  transform: rotateY(90deg) translateZ(15px);
+  left: 15px;
+  background: linear-gradient(to left, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 70%, black));
+}
+
+.tooth-3d .tooth-left {
+  width: 30px;
+  height: 100%;
+  transform: rotateY(-90deg) translateZ(15px);
+  right: 15px;
+  background: linear-gradient(to right, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 70%, black));
+}
+
+.tooth-3d .tooth-top {
+  width: 100%;
+  height: 30px;
+  transform: rotateX(90deg) translateZ(15px);
+  top: 15px;
+  background: linear-gradient(to bottom, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 70%, white));
+  border-radius: 8px 8px 0 0;
+}
+
+.tooth-3d .tooth-bottom {
+  width: 100%;
+  height: 30px;
+  transform: rotateX(-90deg) translateZ(15px);
+  bottom: 15px;
+  background: linear-gradient(to top, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 70%, black));
+  border-radius: 0 0 8px 8px;
+}
+
+.tooth-number {
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.tooth-icon {
+  font-size: 1.5rem;
+  margin-top: 0.25rem;
+}
+
+.tooth-badge,
+.tooth-sensitivity {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  z-index: 10;
+  border: 2px solid white;
+  animation: pulse 2s infinite;
+}
+
+.tooth-sensitivity {
+  background: #f59e0b;
+  bottom: -8px;
+  top: auto;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.tooth-3d.selected {
+  animation: selected-pulse 1s ease-in-out infinite;
+  z-index: 100;
+}
+
+@keyframes selected-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% { 
+    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
+  }
+}
+
+/* Tooth conditions */
+.tooth-3d.healthy { --tooth-color: #10B981; }
+.tooth-3d.cavity { --tooth-color: #EF4444; }
+.tooth-3d.filled { --tooth-color: #3B82F6; }
+.tooth-3d.crown { --tooth-color: #F59E0B; }
+.tooth-3d.missing { --tooth-color: #6B7280; opacity: 0.5; }
+.tooth-3d.implant { --tooth-color: #8B5CF6; }
+.tooth-3d.rootCanal { --tooth-color: #EC4899; }
+.tooth-3d.wisdom { --tooth-color: #6366F1; }
+.tooth-3d.deciduous { --tooth-color: #60A5FA; }
+
+/* Quadrant colors */
+.tooth-3d.quadrant-1 .tooth-front { background: linear-gradient(135deg, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 70%, #fbbf24)); }
+.tooth-3d.quadrant-2 .tooth-front { background: linear-gradient(135deg, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 70%, #f87171)); }
+.tooth-3d.quadrant-3 .tooth-front { background: linear-gradient(135deg, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 70%, #34d399)); }
+.tooth-3d.quadrant-4 .tooth-front { background: linear-gradient(135deg, var(--tooth-color), color-mix(in srgb, var(--tooth-color) 70%, #60a5fa)); }
+
+/* Center Line */
+.center-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, #3b82f6, transparent);
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+/* Condition Controls */
+.condition-controls {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.condition-controls h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.condition-buttons-large {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.condition-btn-large {
+  padding: 1rem;
+  border: 3px solid transparent;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.condition-btn-large:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.condition-btn-large.active {
+  border-color: #1e293b;
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+.condition-icon {
+  font-size: 1.75rem;
+}
+
+.condition-text {
+  font-size: 0.95rem;
+}
+
+/* Selected Teeth Info */
+.selected-teeth-info {
+  background: #dbeafe;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid #93c5fd;
+}
+
+.selected-teeth-info h4 {
+  margin: 0 0 1rem 0;
+  color: #1e40af;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.selected-teeth-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.selected-tooth {
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.selected-tooth:hover {
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.tooth-number-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.tooth-info {
+  flex: 1;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.btn-tooth-details {
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-tooth-details:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Patient Notes */
+.patient-notes-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.patient-notes-section h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notes-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  color: #475569;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Quick Stats */
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.stat-icon.healthy { background: linear-gradient(135deg, #10B981, #34D399); }
+.stat-icon.cavity { background: linear-gradient(135deg, #EF4444, #F87171); }
+.stat-icon.filled { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+.stat-icon.missing { background: linear-gradient(135deg, #6B7280, #9CA3AF); }
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.95rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dental-modal {
+  background: white;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 2px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #1e40af;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-header button {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-header button:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.modal-body {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.treatment-info {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row .label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.treatment-options h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+}
+
+.condition-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.condition-btn {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.condition-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.condition-btn.active {
+  border: 3px solid #1e293b;
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+.treatment-notes textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  color: #475569;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.treatment-notes textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.treatment-surfaces h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.surface-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.surface-btn {
+  padding: 0.5rem 1rem;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.surface-btn:hover {
+  background: #e2e8f0;
+}
+
+.surface-btn.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.modal-actions {
+  padding: 1.5rem 2rem;
+  border-top: 2px solid #f1f5f9;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary {
+  background: #f8fafc;
+  color: #475569;
+  border-color: #e2e8f0;
+}
+
+.btn-secondary:hover {
+  background: #f1f5f9;
+  color: #374151;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* ===== HISTORY SIDEBAR ===== */
+.history-sidebar {
+  display: none;
+}
+
+.history-sidebar.visible {
+  display: flex;
+}
+
+.history-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-item {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.history-item:hover {
+  background: #f1f5f9;
+  transform: translateX(5px);
+}
+
+.history-date {
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.history-action {
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.history-teeth {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.history-doctor {
+  color: #475569;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.empty-history,
+.no-patient-selected {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-history p,
+.no-patient-selected p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.sub-text {
+  font-size: 0.9rem !important;
+  margin-top: 0.5rem !important;
+  opacity: 0.7;
+}
+
+.treatment-history {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.treatment-history h4 {
+  margin: 0 0 1rem 0;
+  color: #1e293b;
+  font-size: 1.1rem;
+}
+
+.tooth-treatment {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tooth-treatment:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.tooth-treatment strong {
+  color: #1e40af;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.tooth-treatment ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #475569;
+}
+
+.tooth-treatment li {
+  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+}
+
+/* ===== FOOTER ===== */
+.dental-footer {
+  background: white;
+  border-radius: 20px;
+  padding: 1.25rem 2rem;
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.footer-info {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.footer-info p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.footer-info strong {
+  color: #1e293b;
+  margin-right: 0.5rem;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-footer {
+  padding: 0.75rem 1.25rem;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  color: #475569;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.btn-footer:hover {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1400px) {
+  .dental-layout {
+    grid-template-columns: 280px 1fr;
+  }
+  
+  .history-sidebar.visible {
+    grid-template-columns: 280px 1fr 280px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .dental-layout {
+    grid-template-columns: 250px 1fr;
+    height: auto;
+    min-height: calc(100vh - 200px);
+  }
+  
+  .history-sidebar.visible {
+    position: fixed;
+    right: 1.5rem;
+    top: 1.5rem;
+    bottom: 1.5rem;
+    width: 350px;
+    z-index: 100;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@media (max-width: 992px) {
+  .dental-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .header-stats {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .dental-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .patients-sidebar {
+    height: 300px;
+  }
+  
+  .history-sidebar.visible {
+    width: 100%;
+    right: 0;
+    left: 0;
+    margin: 1.5rem;
+    width: calc(100% - 3rem);
+  }
+  
+  .chart-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .toolbar-left,
+  .toolbar-right {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .dental-chart-container {
+    padding: 1rem;
+  }
+  
+  .header-left h1 {
+    font-size: 1.75rem;
+  }
+  
+  .patient-header-info {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .patient-actions {
+    justify-content: center;
+  }
+  
+  .guide-items {
+    grid-template-columns: 1fr;
+  }
+  
+  .condition-buttons-large {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .quick-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .footer-info,
+  .footer-actions {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .footer-info {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .tooth-3d {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-left h1 {
+    font-size: 1.5rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .header-icon {
+    font-size: 2rem;
+  }
+  
+  .stat-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .condition-buttons-large {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .tooth-3d {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+}

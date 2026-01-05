@@ -1,0 +1,22 @@
+/* AuditLog.module.css */
+
+.container {
+  @apply p-6 bg-white rounded-xl shadow-sm;
+}
+
+.title {
+  @apply text-2xl font-bold text-gray-800 mb-8;
+}
+
+.log-item {
+  @apply bg-gray-50 border border-gray-200 rounded-lg p-5 shadow-sm 
+         hover:bg-gray-100 transition-colors duration-150;
+}
+
+.user {
+  @apply font-semibold text-gray-800;
+}
+
+.time {
+  @apply text-sm text-gray-500 mt-1 block;
+}

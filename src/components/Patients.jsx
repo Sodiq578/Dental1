@@ -15,32 +15,237 @@ import * as XLSX from 'xlsx';
 import './Patients.css';
 
 // Region and district data for Uzbekistan
-const regions = {
-  "Toshkent shahri": {
+  const regions = {
+  "Qoraqalpogʻiston Respublikasi": {
     "tumanlar": {
-      "Yunusobod tumani": { "markazi": "Yunusobod" },
-      "Mirzo Ulug'bek tumani": { "markazi": "Mirzo Ulug'bek" },
-      "Yashnobod tumani": { "markazi": "Yashnobod" },
-      "Chilonzor tumani": { "markazi": "Chilonzor" },
-      "Shayxontohur tumani": { "markazi": "Shayxontohur" },
-      "Olmazor tumani": { "markazi": "Olmazor" },
-      "Bektemir tumani": { "markazi": "Bektemir" },
-      "Mirobod tumani": { "markazi": "Mirobod" },
-      "Sergeli tumani": { "markazi": "Sergeli" },
-      "Uchtepa tumani": { "markazi": "Uchtepa" },
-      "Yakkasaroy tumani": { "markazi": "Yakkasaroy" }
+      "Amudaryo tumani": {"Tuman markazi": "Mangʻit"},
+      "Beruniy tumani": {"Tuman markazi": "Beruniy"},
+      "Chimboy tumani": {"Tuman markazi": "Chimboy"},
+      "Ellikqalʼa tumani": {"Tuman markazi": "Boʻston"},
+      "Kegeyli tumani": {"Tuman markazi": "Kegeyli"},
+      "Moʻynoq tumani": {"Tuman markazi": "Moʻynoq"},
+      "Nukus tumani": {"Tuman markazi": "Oqmangʻit"},
+      "Qanlikoʻl tumani": {"Tuman markazi": "Qanlikoʻl"},
+      "Qoʻngʻirot tumani": {"Tuman markazi": "Qoʻngʻirot"},
+      "Qoraoʻzak tumani": {"Tuman markazi": "Qoraoʻzak"},
+      "Shumanay tumani": {"Tuman markazi": "Shumanay"},
+      "Taxtakoʻpir tumani": {"Tuman markazi": "Taxtakoʻpir"},
+      "Toʻrtkoʻl tumani": {"Tuman markazi": "Toʻrtkoʻl"},
+      "Xoʻjayli tumani": {"Tuman markazi": "Xoʻjayli"},
+      "Taxiatosh tumani": {"Tuman markazi": "Taxiatosh"},
+      "Boʻzatov tumani": {"Tuman markazi": "Boʻzatov"}
     }
   },
+
+  "Andijon viloyati": {
+    "tumanlar": {
+      "Andijon tumani": {"Tuman markazi": "Kuyganyor"},
+      "Asaka tumani": {"Tuman markazi": "Asaka"},
+      "Baliqchi tumani": {"Tuman markazi": "Baliqchi"},
+      "Boʻston tumani": {"Tuman markazi": "Boʻston"},
+      "Buloqboshi tumani": {"Tuman markazi": "Buloqboshi"},
+      "Izboskan tumani": {"Tuman markazi": "Poytugʻ"},
+      "Jalaquduq tumani": {"Tuman markazi": "Jalaquduq"},
+      "Xoʻjaobod tumani": {"Tuman markazi": "Xoʻjaobod"},
+      "Qoʻrgʻontepa tumani": {"Tuman markazi": "Qoʻrgʻontepa"},
+      "Marhamat tumani": {"Tuman markazi": "Marhamat"},
+      "Oltinkoʻl tumani": {"Tuman markazi": "Oltinkoʻl"},
+      "Paxtaobod tumani": {"Tuman markazi": "Paxtaobod"},
+      "Shahrixon tumani": {"Tuman markazi": "Shahrixon"},
+      "Ulugʻnor tumani": {"Tuman markazi": "Oqoltin"}
+    }
+  },
+
+  "Buxoro viloyati": {
+    "tumanlar": {
+      "Buxoro tumani": {"Tuman markazi": "Galaosiyo"},
+      "Gʻijduvon tumani": {"Tuman markazi": "Gʻijduvon"},
+      "Jondor tumani": {"Tuman markazi": "Jondor"},
+      "Kogon tumani": {"Tuman markazi": "Kogon"},
+      "Olot tumani": {"Tuman markazi": "Olot"},
+      "Peshku tumani": {"Tuman markazi": "Yangibozor"},
+      "Qorakoʻl tumani": {"Tuman markazi": "Qorakoʻl"},
+      "Qorovulbozor tumani": {"Tuman markazi": "Qorovulbozor"},
+      "Romitan tumani": {"Tuman markazi": "Romitan"},
+      "Shofirkon tumani": {"Tuman markazi": "Shofirkon"},
+      "Vobkent tumani": {"Tuman markazi": "Vobkent"}
+    }
+  },
+
+  "Fargʻona viloyati": {
+    "tumanlar": {
+      "Beshariq tumani": {"Tuman markazi": "Beshariq"},
+      "Bogʻdod tumani": {"Tuman markazi": "Bogʻdod"},
+      "Dangʻara tumani": {"Tuman markazi": "Dangʻara"},
+      "Fargʻona tumani": {"Tuman markazi": "Fargʻona"},
+      "Furqat tumani": {"Tuman markazi": "Furqat"},
+      "Oltiariq tumani": {"Tuman markazi": "Oltiariq"},
+      "Quva tumani": {"Tuman markazi": "Quva"},
+      "Rishton tumani": {"Tuman markazi": "Rishton"},
+      "Soʻx tumani": {"Tuman markazi": "Ravon"},
+      "Toshloq tumani": {"Tuman markazi": "Toshloq"},
+      "Uchkoʻprik tumani": {"Tuman markazi": "Uchkoʻprik"},
+      "Yozyovon tumani": {"Tuman markazi": "Yozyovon"},
+      "Oʻzbekiston tumani": {"Tuman markazi": "Yangi Margʻilon"}
+    }
+  },
+
+  "Jizzax viloyati": {
+    "tumanlar": {
+      "Arnasoy tumani": {"Tuman markazi": "Arnasoy"},
+      "Baxmal tumani": {"Tuman markazi": "Baxmal"},
+      "Doʻstlik tumani": {"Tuman markazi": "Doʻstlik"},
+      "Forish tumani": {"Tuman markazi": "Forish"},
+      "Gʻallaorol tumani": {"Tuman markazi": "Gʻallaorol"},
+      "Mirzachoʻl tumani": {"Tuman markazi": "Gagarin"},
+      "Paxtakor tumani": {"Tuman markazi": "Paxtakor"},
+      "Yangiobod tumani": {"Tuman markazi": "Yangiobod"},
+      "Zafarobod tumani": {"Tuman markazi": "Zafarobod"}
+    }
+  },
+
+  "Qashqadaryo viloyati": {
+    "tumanlar": {
+      "Chiroqchi tumani": {"Tuman markazi": "Chiroqchi"},
+      "Dehqonobod tumani": {"Tuman markazi": "Qorashina"},
+      "Gʻuzor tumani": {"Tuman markazi": "Gʻuzor"},
+      "Kasbi tumani": {"Tuman markazi": "Mugʻlon"},
+      "Kitob tumani": {"Tuman markazi": "Kitob"},
+      "Koson tumani": {"Tuman markazi": "Koson"},
+      "Mirishkor tumani": {"Tuman markazi": "Yangi Mirishkor"},
+      "Muborak tumani": {"Tuman markazi": "Muborak"},
+      "Nishon tumani": {"Tuman markazi": "Yangi Nishon"},
+      "Qamashi tumani": {"Tuman markazi": "Langar"},
+      "Qarshi tumani": {"Tuman markazi": "Beshkent"},
+      "Shahrisabz tumani": {"Tuman markazi": "Shahrisabz"},
+      "Yakkabogʻ tumani": {"Tuman markazi": "Yakkabogʻ"}
+    }
+  },
+
+  "Namangan viloyati": {
+    "tumanlar": {
+      "Chortoq tumani": {"Tuman markazi": "Chortoq"},
+      "Chust tumani": {"Tuman markazi": "Chust"},
+      "Kosonsoy tumani": {"Tuman markazi": "Kosonsoy"},
+      "Mingbuloq tumani": {"Tuman markazi": "Jomashoʻy"},
+      "Namangan tumani": {"Tuman markazi": "Namangan"},
+      "Norin tumani": {"Tuman markazi": "Haqqoʻrgʻon"},
+      "Pop tumani": {"Tuman markazi": "Pop"},
+      "Toʻraqoʻrgʻon tumani": {"Tuman markazi": "Toʻraqoʻrgʻon"},
+      "Uchqoʻrgʻon tumani": {"Tuman markazi": "Uchqoʻrgʻon"},
+      "Uychi tumani": {"Tuman markazi": "Uychi"},
+      "Yangiqoʻrgʻon tumani": {"Tuman markazi": "Yangiqoʻrgʻon"}
+    }
+  },
+
+  "Navoiy viloyati": {
+    "tumanlar": {
+      "Karmana tumani": {"Tuman markazi": "Karmana"},
+      "Konimex tumani": {"Tuman markazi": "Konimex"},
+      "Navbahor tumani": {"Tuman markazi": "Beshrabot"},
+      "Nurota tumani": {"Tuman markazi": "Nurota"},
+      "Qiziltepa tumani": {"Tuman markazi": "Qiziltepa"},
+      "Tomdi tumani": {"Tuman markazi": "Tomdibuloq"},
+      "Uchquduq tumani": {"Tuman markazi": "Uchquduq"},
+      "Xatirchi tumani": {"Tuman markazi": "Yangirabot"}
+    }
+  },
+
+  "Samarqand viloyati": {
+    "tumanlar": {
+      "Bulungʻur tumani": {"Tuman markazi": "Bulungʻur"},
+      "Ishtixon tumani": {"Tuman markazi": "Ishtixon"},
+      "Jomboy tumani": {"Tuman markazi": "Jomboy"},
+      "Kattaqoʻrgʻon tumani": {"Tuman markazi": "Kattaqoʻrgʻon"},
+      "Narpay tumani": {"Tuman markazi": "Narpay"},
+      "Oqdaryo tumani": {"Tuman markazi": "Loyish"},
+      "Paxtachi tumani": {"Tuman markazi": "Paxtachi"},
+      "Pastdargʻom tumani": {"Tuman markazi": "Juma"},
+      "Payariq tumani": {"Tuman markazi": "Chelak"},
+      "Samarqand tumani": {"Tuman markazi": "Samarqand"},
+      "Toyloq tumani": {"Tuman markazi": "Toyloq"},
+      "Urgut tumani": {"Tuman markazi": "Urgut"}
+    }
+  },
+
+  "Sirdaryo viloyati": {
+    "tumanlar": {
+      "Boyovut tumani": {"Tuman markazi": "Boyovut"},
+      "Guliston tumani": {"Tuman markazi": "Guliston"},
+      "Mirzaobod tumani": {"Tuman markazi": "Mirzaobod"},
+      "Oqoltin tumani": {"Tuman markazi": "Oqoltin"},
+      "Sayxunobod tumani": {"Tuman markazi": "Sayxun"},
+      "Sirdaryo tumani": {"Tuman markazi": "Sirdaryo"},
+      "Xovos tumani": {"Tuman markazi": "Xovos"}
+    }
+  },
+
+  "Surxondaryo viloyati": {
+    "tumanlar": {
+      "Angor tumani": {"Tuman markazi": "Angor"},
+      "Boysun tumani": {"Tuman markazi": "Boysun"},
+      "Denov tumani": {"Tuman markazi": "Denov"},
+      "Jarqoʻrgʻon tumani": {"Tuman markazi": "Jarqoʻrgʻon"},
+      "Muzrabot tumani": {"Tuman markazi": "Muzrabot"},
+      "Oltinsoy tumani": {"Tuman markazi": "Oltinsoy"},
+      "Qiziriq tumani": {"Tuman markazi": "Qiziriq"},
+      "Qumqoʻrgʻon tumani": {"Tuman markazi": "Qumqoʻrgʻon"},
+      "Sariosiyo tumani": {"Tuman markazi": "Sariosiyo"},
+      "Sherobod tumani": {"Tuman markazi": "Sherobod"},
+      "Shoʻrchi tumani": {"Tuman markazi": "Shoʻrchi"},
+      "Uzun tumani": {"Tuman markazi": "Uzun"}
+    }
+  },
+
   "Toshkent viloyati": {
     "tumanlar": {
-      "Olmaliq shahri": { "markazi": "Olmaliq" },
-      "Angren shahri": { "markazi": "Angren" },
-      "Bekobod shahri": { "markazi": "Bekobod" },
-      "Chirchiq shahri": { "markazi": "Chirchiq" },
-      "Yangiyol shahri": { "markazi": "Yangiyol" }
+      "Bekobod tumani": {"Tuman markazi": "Bekobod"},
+      "Boʻka tumani": {"Tuman markazi": "Boʻka"},
+      "Boʻstonliq tumani": {"Tuman markazi": "Gʻazalkent"},
+      "Chinoz tumani": {"Tuman markazi": "Chinoz"},
+      "Ohangaron tumani": {"Tuman markazi": "Ohangaron"},
+      "Oqqoʻrgʻon tumani": {"Tuman markazi": "Oqqoʻrgʻon"},
+      "Parkent tumani": {"Tuman markazi": "Parkent"},
+      "Piskent tumani": {"Tuman markazi": "Piskent"},
+      "Quyichirchiq tumani": {"Tuman markazi": "Doʻstobod"},
+      "Yangiyoʻl tumani": {"Tuman markazi": "Yangiyoʻl"},
+      "Yuqorichirchiq tumani": {"Tuman markazi": "Yangibozor"},
+      "Zangiota tumani": {"Tuman markazi": "Eshonguzar"}
+    }
+  },
+
+  "Xorazm viloyati": {
+    "tumanlar": {
+      "Bogʻot tumani": {"Tuman markazi": "Bogʻot"},
+      "Gurlan tumani": {"Tuman markazi": "Gurlan"},
+      "Hazorasp tumani": {"Tuman markazi": "Hazorasp"},
+      "Xiva tumani": {"Tuman markazi": "Xiva"},
+      "Qoʻshkoʻpir tumani": {"Tuman markazi": "Qoʻshkoʻpir"},
+      "Shovot tumani": {"Tuman markazi": "Shovot"},
+      "Urganch tumani": {"Tuman markazi": "Urganch"},
+      "Yangiariq tumani": {"Tuman markazi": "Yangiariq"},
+      "Yangibozor tumani": {"Tuman markazi": "Yangibozor"}
+    }
+  },
+
+  "Toshkent shahri": {
+    "tumanlar": {
+      "Bektemir": {},
+      "Chilonzor": {},
+      "Hamza (Yashnobod)": {},
+      "Mirobod": {},
+      "Mirzo Ulugʻbek": {},
+      "Olmazor": {},
+      "Sergeli": {},
+      "Shayxontohur": {},
+      "Uchtepa": {},
+      "Yakkasaroy": {},
+      "Yunusobod": {}
     }
   }
 };
+
+
 
 const Patients = () => {
   const { patients, setPatients, appointments, darkMode } = useContext(AppContext);

@@ -5,12 +5,12 @@ import {
   FiDownload, FiLogOut, FiPhone, FiPlus, FiSearch,
   FiHome, FiCreditCard, FiBarChart2, FiBell, FiMenu, 
   FiX, FiCheckCircle, FiAlertCircle, FiCheck, FiTrash2,
-  FiMessageSquare
+  FiMessageSquare, FiEye, FiPrinter, FiCopy, FiChevronRight
 } from "react-icons/fi";
 import { AiOutlineClose } from "react-icons/ai";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell
+  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
 } from "recharts";
 import { CSVLink } from "react-csv";
 import { AppContext } from "../App";
@@ -18,6 +18,23 @@ import { addNewPatient, sendTelegramMessage } from "../utils";
 import "./UserDashboard.css";
 
 const COLORS = ['#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#7209b7', '#f72585'];
+
+const PAYMENT_METHODS = [
+  { id: 'cash', name: 'Naqd pul', icon: '💰', fee: 0 },
+  { id: 'card', name: 'Plastik karta', icon: '💳', fee: 1.5 },
+  { id: 'click', name: 'Click', icon: '🟢', fee: 1.2 },
+  { id: 'payme', name: 'Payme', icon: '🟣', fee: 1.0 },
+  { id: 'uzum', name: 'Uzum Bank', icon: '🟡', fee: 0.8 },
+  { id: 'transfer', name: 'Bank o\'tkazmasi', icon: '🏦', fee: 0.5 }
+];
+
+const PAYMENT_STATUS = {
+  PENDING: "kutilmoqda",
+  PROCESSING: "jarayonda",
+  SUCCESS: "muvaffaqiyatli",
+  FAILED: "muvaffaqiyatsiz",
+  REFUNDED: "qaytarilgan"
+};
 
 const UserDashboard = () => {
   const { currentUser, appointments, billings, setAppointments, setBillings, handleLogout } = useContext(AppContext);
@@ -97,6 +114,21 @@ const UserDashboard = () => {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notificationBadgeCount, setNotificationBadgeCount] = useState(2);
 
+  // Payment states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  
+  // Logout confirmation
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [logoutTimer, setLogoutTimer] = useState(30);
+  const [logoutReason, setLogoutReason] = useState('');
+
   // Redirect if not logged in
   useEffect(() => {
     if (!currentUser) navigate("/login");
@@ -127,8 +159,39 @@ const UserDashboard = () => {
   // Calculate statistics
   const totalAppointments = userAppointments.length;
   const totalCost = userBillings.reduce((sum, bill) => sum + (bill.total || 0), 0);
+  const totalPaid = userBillings.reduce((sum, bill) => sum + (bill.paid || 0), 0);
   const upcomingCount = userAppointments.filter(apt => new Date(apt.date) > new Date()).length;
   const lastBilling = userBillings[userBillings.length - 1];
+
+  // Calculate payment statistics
+  const paymentStats = useMemo(() => {
+    const stats = {
+      totalPaid: 0,
+      pendingAmount: 0,
+      lastPaymentDate: null,
+      paymentMethods: {}
+    };
+    
+    userBillings.forEach(bill => {
+      stats.totalPaid += bill.paid || 0;
+      stats.pendingAmount += (bill.total - (bill.paid || 0));
+      
+      if (bill.paymentHistory) {
+        bill.paymentHistory.forEach(payment => {
+          if (!stats.paymentMethods[payment.method]) {
+            stats.paymentMethods[payment.method] = 0;
+          }
+          stats.paymentMethods[payment.method] += payment.amount;
+          
+          if (!stats.lastPaymentDate || new Date(payment.date) > new Date(stats.lastPaymentDate)) {
+            stats.lastPaymentDate = payment.date;
+          }
+        });
+      }
+    });
+    
+    return stats;
+  }, [userBillings]);
 
   // Prepare chart data
   const treatmentsByMonth = useMemo(() => {
@@ -151,6 +214,22 @@ const UserDashboard = () => {
     return Object.entries(types).map(([name, value]) => ({ name, value }));
   }, [filteredAppointments]);
 
+  const paymentTimeline = useMemo(() => {
+    const timeline = [];
+    userBillings.forEach(bill => {
+      if (bill.paymentHistory) {
+        bill.paymentHistory.forEach(payment => {
+          timeline.push({
+            date: new Date(payment.date).toLocaleDateString('uz-UZ'),
+            amount: payment.amount,
+            method: payment.method
+          });
+        });
+      }
+    });
+    return timeline.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
+  }, [userBillings]);
+
   // CSV data for export
   const appointmentCSVData = filteredAppointments.map(apt => ({
     Sana: new Date(apt.date).toLocaleDateString('uz-UZ'),
@@ -162,6 +241,8 @@ const UserDashboard = () => {
   const billingCSVData = userBillings.map(bill => ({
     Sana: new Date(bill.date).toLocaleDateString('uz-UZ'),
     Jami: bill.total,
+    Tolangan: bill.paid || 0,
+    Qoldiq: bill.total - (bill.paid || 0),
     Xizmatlar: bill.services.map(s => s.name).join(", "),
     Holat: bill.status
   }));
@@ -169,11 +250,62 @@ const UserDashboard = () => {
   // Logout handler
   const handleLogoutClick = () => {
     setIsLoading(true);
+    
+    // Log logout reason if provided
+    if (logoutReason) {
+      console.log(`Chiqish sababi: ${logoutReason}`);
+    }
+    
     setTimeout(() => {
       handleLogout();
       navigate("/login");
     }, 800);
   };
+
+  // Logout confirmation
+  const handleLogoutConfirm = () => {
+    setShowLogoutConfirm(true);
+    setLogoutTimer(30);
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutConfirm(false);
+    setLogoutTimer(30);
+    setLogoutReason('');
+  };
+
+  // Auto logout timer
+  useEffect(() => {
+    let timer;
+    if (showLogoutConfirm && logoutTimer > 0) {
+      timer = setInterval(() => {
+        setLogoutTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (logoutTimer === 0 && showLogoutConfirm) {
+      handleLogoutClick();
+    }
+    return () => clearInterval(timer);
+  }, [showLogoutConfirm, logoutTimer]);
+
+  // Reset timer on user activity
+  useEffect(() => {
+    const resetTimer = () => {
+      if (showLogoutConfirm) {
+        setLogoutTimer(30);
+      }
+    };
+
+    const events = ['mousemove', 'keypress', 'click', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [showLogoutConfirm]);
 
   // Time slot generation
   const generateTimeSlots = () => {
@@ -284,7 +416,8 @@ const UserDashboard = () => {
       services: [{ name: procedure, cost }],
       total: cost,
       paid: 0,
-      status: 'to\'lanmagan'
+      status: 'to\'lanmagan',
+      paymentHistory: []
     };
 
     // Update state
@@ -314,28 +447,150 @@ const UserDashboard = () => {
     sendTelegramMessage('5838205785', `Yangi band: ${newPatient.name} - ${selectedDate} ${selectedTime}`);
   };
 
-  // Pay bill
-  const handlePayBill = (billId) => {
-    const updatedBillings = billings.map(b => 
-      b.id === billId ? { ...b, paid: b.total, status: 'to\'langan' } : b
-    );
-    setBillings(updatedBillings);
+  // Payment functions
+  const handlePayBill = (bill) => {
+    setSelectedBill(bill);
+    setPaymentAmount(bill.total - (bill.paid || 0));
+    setPaymentMethod('card');
+    setShowPaymentModal(true);
+  };
+
+  const processPayment = async () => {
+    if (!selectedBill || paymentAmount <= 0) return;
     
-    const bill = billings.find(b => b.id === billId);
-    setSuccessMessage("To'lov muvaffaqiyatli amalga oshirildi!");
+    setPaymentProcessing(true);
     
-    // Add notification
-    const newNotification = {
-      id: Date.now(),
-      title: "To'lov muvaffaqiyatli amalga oshirildi",
-      message: `${bill.total.toLocaleString()} UZS miqdoridagi to'lovingiz tasdiqlandi`,
-      type: "billing",
-      time: "Hozir",
-      read: false,
-      date: new Date().toISOString(),
-      action: { type: "view", billId }
-    };
-    setNotifications([newNotification, ...notifications]);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const updatedBillings = billings.map(b => 
+        b.id === selectedBill.id ? { 
+          ...b, 
+          paid: (b.paid || 0) + paymentAmount,
+          status: paymentAmount >= (b.total - (b.paid || 0)) ? 'to\'langan' : 'qisman to\'langan',
+          paymentHistory: [...(b.paymentHistory || []), {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            amount: paymentAmount,
+            method: paymentMethod,
+            methodName: PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name,
+            status: 'success',
+            receiptNo: `SDK-${Date.now()}`
+          }]
+        } : b
+      );
+      
+      setBillings(updatedBillings);
+      
+      // Add to payment history
+      const newPaymentRecord = {
+        billId: selectedBill.id,
+        patientName: selectedBill.patientName,
+        date: new Date().toISOString(),
+        amount: paymentAmount,
+        method: paymentMethod,
+        methodName: PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name,
+        status: 'success',
+        receiptNo: `SDK-${Date.now()}`
+      };
+      
+      setPaymentHistory([newPaymentRecord, ...paymentHistory]);
+      
+      // Generate and show receipt
+      const receiptData = {
+        ...selectedBill,
+        payment: newPaymentRecord,
+        remaining: selectedBill.total - (selectedBill.paid || 0) - paymentAmount
+      };
+      
+      setSelectedReceipt(receiptData);
+      
+      setSuccessMessage(`To'lov muvaffaqiyatli amalga oshirildi! ${paymentAmount.toLocaleString()} UZS`);
+      setShowPaymentModal(false);
+      
+      // Add notification
+      const newNotification = {
+        id: Date.now(),
+        title: "To'lov muvaffaqiyatli amalga oshirildi",
+        message: `${paymentAmount.toLocaleString()} UZS miqdoridagi to'lov ${PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name} orqali tasdiqlandi`,
+        type: "billing",
+        time: "Hozir",
+        read: false,
+        date: new Date().toISOString(),
+        action: { type: "receipt", billId: selectedBill.id }
+      };
+      setNotifications([newNotification, ...notifications]);
+      
+      // Auto-show receipt after 1 second
+      setTimeout(() => {
+        setShowReceiptModal(true);
+      }, 1000);
+      
+    } catch (error) {
+      setError("To'lov amalga oshirishda xatolik yuz berdi");
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  // Simple text-based receipt generation (no jsPDF required)
+  const generateReceipt = (receiptData) => {
+    const receiptContent = `
+SDK DENTAL - TO'LOV KVITANSIYASI
+================================
+Kvitanciya raqami: ${receiptData.payment.receiptNo}
+Sana: ${new Date(receiptData.payment.date).toLocaleDateString('uz-UZ')}
+Vaqt: ${new Date(receiptData.payment.date).toLocaleTimeString('uz-UZ')}
+Mijoz: ${receiptData.patientName}
+To'lov usuli: ${receiptData.payment.methodName}
+================================
+XIZMATLAR:
+${receiptData.services.map((service, index) => 
+  `${index + 1}. ${service.name}: ${service.cost.toLocaleString()} UZS`
+).join('\n')}
+================================
+Umumiy summa: ${receiptData.total.toLocaleString()} UZS
+To'langan: ${receiptData.payment.amount.toLocaleString()} UZS
+Komissiya: ${(receiptData.payment.amount * (PAYMENT_METHODS.find(m => m.id === receiptData.payment.method)?.fee || 0) / 100).toLocaleString()} UZS
+Qoldiq summa: ${receiptData.remaining.toLocaleString()} UZS
+================================
+To'lov holati: TO'LANDI
+================================
+Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
+© SDK DENTAL 2024
+    `;
+    
+    // Create a Blob and download as text file
+    const blob = new Blob([receiptContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kvitanciya-${receiptData.payment.receiptNo}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setSuccessMessage("Kvitanciya yuklab olindi!");
+  };
+
+  const copyReceiptNumber = (receiptNo) => {
+    navigator.clipboard.writeText(receiptNo);
+    setSuccessMessage("Kvitanciya raqami nusxalandi!");
+  };
+
+  const getPaymentStatusColor = (status) => {
+    switch(status) {
+      case 'to\'langan': return '#10b981';
+      case 'qisman to\'langan': return '#f59e0b';
+      case 'to\'lanmagan': return '#ef4444';
+      default: return '#6b7280';
+    }
+  };
+
+  const calculateRemainingAmount = (bill) => {
+    return bill.total - (bill.paid || 0);
   };
 
   // Request next available slot
@@ -418,10 +673,20 @@ const UserDashboard = () => {
         }
         break;
       case 'settings':
-        // Settings page ga o'tish
         setSuccessMessage("Sozlamalar bo'limi tez orada qo'shiladi");
         setShowNotifications(false);
         setShowNotificationModal(false);
+        break;
+      case 'receipt':
+        const bill = userBillings.find(b => b.id === notification.action.billId);
+        if (bill && bill.paymentHistory && bill.paymentHistory.length > 0) {
+          setSelectedReceipt({
+            ...bill,
+            payment: bill.paymentHistory[bill.paymentHistory.length - 1],
+            remaining: bill.total - bill.paid
+          });
+          setShowReceiptModal(true);
+        }
         break;
       default:
         // Do nothing
@@ -477,10 +742,14 @@ const UserDashboard = () => {
           <div>
             <h3>{currentUser.name}</h3>
             <p>Mijoz</p>
+            <div className="profile-balance">
+              <FiCreditCard size={14} />
+              <span>To'langan: {totalPaid.toLocaleString()} UZS</span>
+            </div>
           </div>
         </div>
         <nav className="sidebar-nav">
-          {["dashboard", "appointments", "billing", "stats"].map(tab => (
+          {["dashboard", "appointments", "billing", "stats", "payments"].map(tab => (
             <button 
               key={tab} 
               className={`nav-link ${activeTab === tab ? "active" : ""}`}
@@ -490,17 +759,24 @@ const UserDashboard = () => {
               {tab === "appointments" && <FiCalendar />}
               {tab === "billing" && <FiCreditCard />}
               {tab === "stats" && <FiBarChart2 />}
+              {tab === "payments" && <FiDollarSign />}
               <span>{
                 tab === "dashboard" ? "Asosiy" :
                 tab === "appointments" ? "Uchrashuvlar" :
-                tab === "billing" ? "To'lovlar" : "Statistika"
+                tab === "billing" ? "To'lovlar" :
+                tab === "payments" ? "To'lov tarixi" : "Statistika"
               }</span>
             </button>
           ))}
         </nav>
-        <button className="logout-button" onClick={handleLogoutClick}>
-          <FiLogOut /> Chiqish
-        </button>
+        <div className="sidebar-footer">
+          <button className="logout-button" onClick={handleLogoutConfirm}>
+            <FiLogOut /> Chiqish
+          </button>
+          <div className="sidebar-help">
+            <a href="tel:+998901234567">📞 Qo'llab-quvvatlash</a>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -576,10 +852,14 @@ const UserDashboard = () => {
                 <div>
                   <h3>{currentUser.name}</h3>
                   <p>Mijoz</p>
+                  <div className="profile-balance">
+                    <FiCreditCard size={14} />
+                    <span>To'langan: {totalPaid.toLocaleString()} UZS</span>
+                  </div>
                 </div>
               </div>
               <nav className="sidebar-nav">
-                {["dashboard", "appointments", "billing", "stats"].map(tab => (
+                {["dashboard", "appointments", "billing", "stats", "payments"].map(tab => (
                   <button 
                     key={tab} 
                     className={`nav-link ${activeTab === tab ? "active" : ""}`}
@@ -592,17 +872,24 @@ const UserDashboard = () => {
                     {tab === "appointments" && <FiCalendar />}
                     {tab === "billing" && <FiCreditCard />}
                     {tab === "stats" && <FiBarChart2 />}
+                    {tab === "payments" && <FiDollarSign />}
                     <span>{
                       tab === "dashboard" ? "Asosiy" :
                       tab === "appointments" ? "Uchrashuvlar" :
-                      tab === "billing" ? "To'lovlar" : "Statistika"
+                      tab === "billing" ? "To'lovlar" :
+                      tab === "payments" ? "To'lov tarixi" : "Statistika"
                     }</span>
                   </button>
                 ))}
               </nav>
-              <button className="logout-button" onClick={handleLogoutClick}>
-                <FiLogOut /> Chiqish
-              </button>
+              <div className="sidebar-footer">
+                <button className="logout-button" onClick={handleLogoutConfirm}>
+                  <FiLogOut /> Chiqish
+                </button>
+                <div className="sidebar-help">
+                  <a href="tel:+998901234567">📞 Qo'llab-quvvatlash</a>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -648,8 +935,22 @@ const UserDashboard = () => {
               <div className="stat-card gradient-pink">
                 <FiActivity size={28} />
                 <div>
-                  <h3>{lastBilling ? `${lastBilling.total.toLocaleString()} UZS` : "0 UZS"}</h3>
-                  <p>Oxirgi to'lov</p>
+                  <h3>{paymentStats.totalPaid.toLocaleString()} UZS</h3>
+                  <p>To'langan</p>
+                </div>
+              </div>
+              <div className="stat-card gradient-orange">
+                <FiCreditCard size={28} />
+                <div>
+                  <h3>{paymentStats.pendingAmount.toLocaleString()} UZS</h3>
+                  <p>Qoldiq</p>
+                </div>
+              </div>
+              <div className="stat-card gradient-green">
+                <FiUser size={28} />
+                <div>
+                  <h3>{userBillings.filter(b => b.status === 'to\'langan').length}</h3>
+                  <p>To'langanlar</p>
                 </div>
               </div>
             </div>
@@ -659,14 +960,14 @@ const UserDashboard = () => {
           {activeTab === "stats" && (
             <div className="charts-wrapper">
               <div className="chart-box">
-                <h3>Oylar bo'yicha</h3>
+                <h3>Oylar bo'yicha uchrashuvlar</h3>
                 <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={treatmentsByMonth}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#4361ee" radius={8} />
+                    <Tooltip formatter={(value) => [`${value} ta`, 'Soni']} />
+                    <Bar dataKey="count" fill="#4361ee" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -684,8 +985,27 @@ const UserDashboard = () => {
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip formatter={(value) => [`${value} ta`, 'Soni']} />
                   </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="chart-box full-width">
+                <h3>To'lovlar tarixi</h3>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={paymentTimeline}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`${value.toLocaleString()} UZS`, 'Summa']} />
+                    <Line 
+                      type="monotone" 
+                      dataKey="amount" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
@@ -712,7 +1032,7 @@ const UserDashboard = () => {
                 {filteredAppointments.length > 0 ? (
                   filteredAppointments.map(apt => (
                     <div key={apt.id} className="item-card">
-                      <div>
+                      <div className="item-date-time">
                         <div className="item-date">
                           {new Date(apt.date).toLocaleDateString('uz-UZ')}
                         </div>
@@ -724,10 +1044,16 @@ const UserDashboard = () => {
                           {apt.status}
                         </span>
                       </div>
+                      <button className="item-action">
+                        <FiChevronRight size={20} />
+                      </button>
                     </div>
                   ))
                 ) : (
-                  <div className="empty-placeholder">Uchrashuvlar yo'q</div>
+                  <div className="empty-placeholder">
+                    <FiCalendar size={48} />
+                    <p>Uchrashuvlar yo'q</p>
+                  </div>
                 )}
               </div>
             </section>
@@ -738,46 +1064,217 @@ const UserDashboard = () => {
             <section className="section-block">
               <div className="section-title">
                 <h3>To'lovlar</h3>
-                <CSVLink 
-                  data={billingCSVData} 
-                  filename="tolovlar.csv" 
-                  className="download-btn"
-                >
-                  <FiDownload /> Yuklab olish
-                </CSVLink>
+                <div className="section-actions">
+                  <CSVLink 
+                    data={billingCSVData} 
+                    filename="tolovlar.csv" 
+                    className="download-btn"
+                  >
+                    <FiDownload /> Yuklab olish
+                  </CSVLink>
+                  <button 
+                    className="generate-report-btn"
+                    onClick={() => {
+                      if (userBillings.length > 0) {
+                        const bill = userBillings[0];
+                        const receiptData = {
+                          ...bill,
+                          payment: {
+                            amount: bill.paid || 0,
+                            methodName: 'Naqd pul',
+                            date: new Date().toISOString(),
+                            receiptNo: `SDK-${Date.now()}`,
+                            method: 'cash'
+                          },
+                          remaining: bill.total - (bill.paid || 0)
+                        };
+                        generateReceipt(receiptData);
+                      }
+                    }}
+                  >
+                    <FiPrinter /> Hisobot
+                  </button>
+                </div>
               </div>
               <div className="list-container">
                 {userBillings.length > 0 ? (
-                  userBillings.map(bill => (
-                    <div key={bill.id} className="billing-item">
-                      <div>
-                        <div className="billing-date">
-                          {new Date(bill.date).toLocaleDateString('uz-UZ')}
+                  userBillings.map(bill => {
+                    const remaining = calculateRemainingAmount(bill);
+                    const paidPercentage = ((bill.paid || 0) / bill.total * 100).toFixed(0);
+                    
+                    return (
+                      <div key={bill.id} className="billing-item">
+                        <div className="billing-info">
+                          <div className="billing-header">
+                            <div className="billing-date">
+                              {new Date(bill.date).toLocaleDateString('uz-UZ')}
+                            </div>
+                            <div className="billing-patient">
+                              {bill.patientName}
+                            </div>
+                          </div>
+                          <div className="billing-amount">
+                            <span className="amount-label">Jami:</span>
+                            <strong>{bill.total.toLocaleString()} UZS</strong>
+                          </div>
+                          <div className="billing-progress">
+                            <div className="progress-bar">
+                              <div 
+                                className="progress-fill"
+                                style={{ width: `${paidPercentage}%` }}
+                              />
+                            </div>
+                            <div className="progress-labels">
+                              <span>To'langan: {(bill.paid || 0).toLocaleString()} UZS</span>
+                              <span>Qoldiq: {remaining.toLocaleString()} UZS</span>
+                            </div>
+                          </div>
+                          <div className="billing-services">
+                            <span>Xizmatlar:</span>
+                            <div className="services-list">
+                              {bill.services.map((s, idx) => (
+                                <span key={idx} className="service-tag">
+                                  {s.name} - {s.cost.toLocaleString()} UZS
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                        <div className="billing-amount">
-                          {bill.total.toLocaleString()} UZS
-                        </div>
-                        <div className="billing-services">
-                          {bill.services.map(s => s.name).join(", ")}
+                        <div className="billing-actions">
+                          <span 
+                            className="status-badge"
+                            style={{ backgroundColor: getPaymentStatusColor(bill.status) }}
+                          >
+                            {bill.status}
+                          </span>
+                          {remaining > 0 && (
+                            <button 
+                              className="pay-button" 
+                              onClick={() => handlePayBill(bill)}
+                            >
+                              <FiCreditCard /> To'lash
+                            </button>
+                          )}
+                          {bill.paymentHistory && bill.paymentHistory.length > 0 && (
+                            <button 
+                              className="history-button"
+                              onClick={() => {
+                                const lastPayment = bill.paymentHistory[bill.paymentHistory.length - 1];
+                                setSelectedReceipt({
+                                  ...bill,
+                                  payment: lastPayment,
+                                  remaining: bill.total - bill.paid
+                                });
+                                setShowReceiptModal(true);
+                              }}
+                            >
+                              <FiEye /> Kvitanciya
+                            </button>
+                          )}
                         </div>
                       </div>
-                      <div className="billing-actions">
-                        <span className={`status-badge ${bill.status}`}>
-                          {bill.status}
-                        </span>
-                        {bill.status === "to'lanmagan" && (
-                          <button 
-                            className="pay-button" 
-                            onClick={() => handlePayBill(bill.id)}
-                          >
-                            To'lash
-                          </button>
-                        )}
+                    );
+                  })
+                ) : (
+                  <div className="empty-placeholder">
+                    <FiCreditCard size={48} />
+                    <p>To'lovlar yo'q</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Payment History */}
+          {activeTab === "payments" && (
+            <section className="section-block">
+              <div className="section-title">
+                <h3>To'lovlar tarixi</h3>
+                <div className="payment-stats">
+                  <div className="payment-stat-card">
+                    <span>Jami to'langan</span>
+                    <h3>{paymentStats.totalPaid.toLocaleString()} UZS</h3>
+                  </div>
+                  <div className="payment-stat-card">
+                    <span>O'rtacha to'lov</span>
+                    <h3>
+                      {paymentHistory.length > 0 
+                        ? (paymentStats.totalPaid / paymentHistory.length).toLocaleString(undefined, {maximumFractionDigits: 0})
+                        : 0
+                      } UZS
+                    </h3>
+                  </div>
+                  <div className="payment-stat-card">
+                    <span>So'nggi to'lov</span>
+                    <h3>
+                      {paymentStats.lastPaymentDate 
+                        ? new Date(paymentStats.lastPaymentDate).toLocaleDateString('uz-UZ')
+                        : 'Mavjud emas'
+                      }
+                    </h3>
+                  </div>
+                </div>
+              </div>
+              <div className="list-container">
+                {paymentHistory.length > 0 ? (
+                  paymentHistory.map((payment, index) => (
+                    <div key={index} className="payment-history-item">
+                      <div className="payment-icon">
+                        {PAYMENT_METHODS.find(m => m.id === payment.method)?.icon || '💰'}
+                      </div>
+                      <div className="payment-details">
+                        <div className="payment-header">
+                          <h4>{payment.patientName}</h4>
+                          <span className="payment-date">
+                            {new Date(payment.date).toLocaleDateString('uz-UZ')}
+                          </span>
+                        </div>
+                        <div className="payment-info">
+                          <span className="payment-method">
+                            {payment.methodName}
+                          </span>
+                          <span className="payment-receipt">
+                            № {payment.receiptNo}
+                          </span>
+                        </div>
+                        <div className="payment-amount">
+                          <strong>{payment.amount.toLocaleString()} UZS</strong>
+                          <span className={`payment-status ${payment.status}`}>
+                            {payment.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="payment-actions">
+                        <button 
+                          className="receipt-button"
+                          onClick={() => {
+                            const bill = userBillings.find(b => b.id === payment.billId);
+                            if (bill) {
+                              setSelectedReceipt({
+                                ...bill,
+                                payment: payment,
+                                remaining: bill.total - bill.paid
+                              });
+                              setShowReceiptModal(true);
+                            }
+                          }}
+                        >
+                          <FiEye />
+                        </button>
+                        <button 
+                          className="copy-button"
+                          onClick={() => copyReceiptNumber(payment.receiptNo)}
+                        >
+                          <FiCopy />
+                        </button>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="empty-placeholder">To'lovlar yo'q</div>
+                  <div className="empty-placeholder">
+                    <FiDollarSign size={48} />
+                    <p>To'lovlar tarixi yo'q</p>
+                  </div>
                 )}
               </div>
             </section>
@@ -885,7 +1382,7 @@ const UserDashboard = () => {
 
         {/* Bottom Navigation (Mobile Only) */}
         <nav className="bottom-nav">
-          {["dashboard", "appointments", "billing", "stats"].map(tab => (
+          {["dashboard", "appointments", "billing", "payments", "stats"].map(tab => (
             <button 
               key={tab} 
               className={activeTab === tab ? "nav-active" : ""} 
@@ -894,15 +1391,337 @@ const UserDashboard = () => {
               {tab === "dashboard" && <FiHome size={22} />}
               {tab === "appointments" && <FiCalendar size={22} />}
               {tab === "billing" && <FiCreditCard size={22} />}
+              {tab === "payments" && <FiDollarSign size={22} />}
               {tab === "stats" && <FiBarChart2 size={22} />}
               <span>{
                 tab === "dashboard" ? "Asosiy" :
                 tab === "appointments" ? "Uchrashuv" :
-                tab === "billing" ? "To'lov" : "Stat"
+                tab === "billing" ? "To'lov" :
+                tab === "payments" ? "Tarix" : "Stat"
               }</span>
             </button>
           ))}
         </nav>
+
+        {/* Payment Modal */}
+        {showPaymentModal && selectedBill && (
+          <div className="payment-modal-overlay" onClick={() => !paymentProcessing && setShowPaymentModal(false)}>
+            <div className="payment-modal" onClick={e => e.stopPropagation()}>
+              <div className="payment-modal-header">
+                <h3>To'lov amalga oshirish</h3>
+                <button 
+                  className="close-modal-btn"
+                  onClick={() => !paymentProcessing && setShowPaymentModal(false)}
+                  disabled={paymentProcessing}
+                >
+                  <AiOutlineClose size={20} />
+                </button>
+              </div>
+              
+              <div className="payment-modal-body">
+                <div className="payment-bill-info">
+                  <h4>{selectedBill.patientName}</h4>
+                  <div className="payment-details">
+                    <div className="payment-detail-item">
+                      <span>Umumiy summa:</span>
+                      <strong>{selectedBill.total.toLocaleString()} UZS</strong>
+                    </div>
+                    <div className="payment-detail-item">
+                      <span>To'langan:</span>
+                      <strong style={{color: '#10b981'}}>
+                        {(selectedBill.paid || 0).toLocaleString()} UZS
+                      </strong>
+                    </div>
+                    <div className="payment-detail-item">
+                      <span>Qoldiq:</span>
+                      <strong style={{color: '#ef4444'}}>
+                        {calculateRemainingAmount(selectedBill).toLocaleString()} UZS
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="payment-amount-input">
+                  <label>To'lov summasi (UZS)</label>
+                  <input
+                    type="number"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(parseInt(e.target.value) || 0)}
+                    min="1000"
+                    max={calculateRemainingAmount(selectedBill)}
+                    disabled={paymentProcessing}
+                  />
+                  <div className="amount-suggestions">
+                    <button 
+                      onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.25))}
+                      disabled={paymentProcessing}
+                    >
+                      25%
+                    </button>
+                    <button 
+                      onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.5))}
+                      disabled={paymentProcessing}
+                    >
+                      50%
+                    </button>
+                    <button 
+                      onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.75))}
+                      disabled={paymentProcessing}
+                    >
+                      75%
+                    </button>
+                    <button 
+                      onClick={() => setPaymentAmount(calculateRemainingAmount(selectedBill))}
+                      disabled={paymentProcessing}
+                    >
+                      100%
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="payment-methods">
+                  <h4>To'lov usulini tanlang</h4>
+                  <div className="method-grid">
+                    {PAYMENT_METHODS.map(method => (
+                      <button
+                        key={method.id}
+                        className={`method-btn ${paymentMethod === method.id ? 'selected' : ''}`}
+                        onClick={() => !paymentProcessing && setPaymentMethod(method.id)}
+                        disabled={paymentProcessing}
+                      >
+                        <span className="method-icon">{method.icon}</span>
+                        <span>{method.name}</span>
+                        <span className="method-fee">{method.fee}%</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {paymentMethod === 'card' && (
+                  <div className="card-details">
+                    <h4>Karta ma'lumotlari</h4>
+                    <div className="card-inputs">
+                      <input type="text" placeholder="Karta raqami" disabled={paymentProcessing} />
+                      <div className="card-row">
+                        <input type="text" placeholder="MM/YY" disabled={paymentProcessing} />
+                        <input type="text" placeholder="CVV" disabled={paymentProcessing} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="payment-modal-footer">
+                <div className="payment-summary">
+                  <div className="summary-item">
+                    <span>To'lov summasi:</span>
+                    <strong>{paymentAmount.toLocaleString()} UZS</strong>
+                  </div>
+                  <div className="summary-item">
+                    <span>Komissiya ({PAYMENT_METHODS.find(m => m.id === paymentMethod)?.fee || 0}%):</span>
+                    <strong>{(paymentAmount * (PAYMENT_METHODS.find(m => m.id === paymentMethod)?.fee || 0) / 100).toLocaleString()} UZS</strong>
+                  </div>
+                  <div className="summary-item total">
+                    <span>Jami to'lanadi:</span>
+                    <strong>{(paymentAmount * (1 + (PAYMENT_METHODS.find(m => m.id === paymentMethod)?.fee || 0) / 100)).toLocaleString()} UZS</strong>
+                  </div>
+                </div>
+                
+                <div className="payment-actions">
+                  <button 
+                    className="cancel-payment-btn"
+                    onClick={() => !paymentProcessing && setShowPaymentModal(false)}
+                    disabled={paymentProcessing}
+                  >
+                    Bekor qilish
+                  </button>
+                  <button 
+                    className={`confirm-payment-btn ${paymentProcessing ? 'processing' : ''}`}
+                    onClick={processPayment}
+                    disabled={paymentProcessing || paymentAmount <= 0 || paymentAmount > calculateRemainingAmount(selectedBill)}
+                  >
+                    {paymentProcessing ? (
+                      <>
+                        <div className="payment-spinner"></div>
+                        To'lov amalga oshirilmoqda...
+                      </>
+                    ) : (
+                      `To'lash (${(paymentAmount * (1 + (PAYMENT_METHODS.find(m => m.id === paymentMethod)?.fee || 0) / 100)).toLocaleString()} UZS)`
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Receipt Modal */}
+        {showReceiptModal && selectedReceipt && (
+          <div className="receipt-modal-overlay" onClick={() => setShowReceiptModal(false)}>
+            <div className="receipt-modal" onClick={e => e.stopPropagation()}>
+              <div className="receipt-modal-header">
+                <h3>To'lov kvitansiyasi</h3>
+                <button 
+                  className="close-modal-btn"
+                  onClick={() => setShowReceiptModal(false)}
+                >
+                  <AiOutlineClose size={20} />
+                </button>
+              </div>
+              
+              <div className="receipt-modal-body">
+                <div className="receipt-logo">
+                  <h2>SDK DENTAL</h2>
+                  <p>To'lov kvitansiyasi</p>
+                </div>
+                
+                <div className="receipt-details">
+                  <div className="receipt-row">
+                    <span>Kvitanciya №:</span>
+                    <strong>{selectedReceipt.payment.receiptNo}</strong>
+                  </div>
+                  <div className="receipt-row">
+                    <span>Sana:</span>
+                    <strong>{new Date(selectedReceipt.payment.date).toLocaleDateString('uz-UZ')}</strong>
+                  </div>
+                  <div className="receipt-row">
+                    <span>Vaqt:</span>
+                    <strong>{new Date(selectedReceipt.payment.date).toLocaleTimeString('uz-UZ')}</strong>
+                  </div>
+                  <div className="receipt-row">
+                    <span>Mijoz:</span>
+                    <strong>{selectedReceipt.patientName}</strong>
+                  </div>
+                  <div className="receipt-row">
+                    <span>To'lov summasi:</span>
+                    <strong className="receipt-amount">
+                      {selectedReceipt.payment.amount.toLocaleString()} UZS
+                    </strong>
+                  </div>
+                  <div className="receipt-row">
+                    <span>To'lov usuli:</span>
+                    <strong>{selectedReceipt.payment.methodName}</strong>
+                  </div>
+                  <div className="receipt-row">
+                    <span>Qoldiq summa:</span>
+                    <strong className="receipt-remaining">
+                      {selectedReceipt.remaining.toLocaleString()} UZS
+                    </strong>
+                  </div>
+                  <div className="receipt-row">
+                    <span>Holati:</span>
+                    <strong className="receipt-status success">To'langan</strong>
+                  </div>
+                </div>
+                
+                <div className="receipt-services">
+                  <h4>Xizmatlar:</h4>
+                  {selectedReceipt.services.map((service, index) => (
+                    <div key={index} className="service-row">
+                      <span>{service.name}</span>
+                      <span>{service.cost.toLocaleString()} UZS</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="receipt-footer">
+                  <div className="receipt-total">
+                    <span>Umumiy summa:</span>
+                    <strong>{selectedReceipt.total.toLocaleString()} UZS</strong>
+                  </div>
+                  <div className="receipt-total">
+                    <span>To'langan:</span>
+                    <strong>{(selectedReceipt.paid || 0).toLocaleString()} UZS</strong>
+                  </div>
+                  <div className="receipt-total">
+                    <span>Qoldiq:</span>
+                    <strong>{selectedReceipt.remaining.toLocaleString()} UZS</strong>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="receipt-modal-actions">
+                <button 
+                  className="receipt-action-btn"
+                  onClick={() => generateReceipt(selectedReceipt)}
+                >
+                  <FiDownload /> Yuklab olish (TXT)
+                </button>
+                <button 
+                  className="receipt-action-btn secondary"
+                  onClick={() => copyReceiptNumber(selectedReceipt.payment.receiptNo)}
+                >
+                  <FiCopy /> Raqamni nusxalash
+                </button>
+                <button 
+                  className="receipt-action-btn outline"
+                  onClick={() => setShowReceiptModal(false)}
+                >
+                  Yopish
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Logout Confirmation Modal */}
+        {showLogoutConfirm && (
+          <div className="logout-modal-overlay">
+            <div className="logout-modal">
+              <div className="logout-modal-icon">
+                <FiLogOut size={48} />
+              </div>
+              <h3>Chiqishni tasdiqlaysizmi?</h3>
+              <p>Hisobingizdan chiqish arafasidasiz. Avtomatik ravishda {logoutTimer} soniyadan so'ng chiqiladi.</p>
+              
+              <div className="logout-reason">
+                <label>Chiqish sababi (ixtiyoriy):</label>
+                <select 
+                  value={logoutReason} 
+                  onChange={(e) => setLogoutReason(e.target.value)}
+                >
+                  <option value="">Tanlang...</option>
+                  <option value="ish_tugadi">Ish tugadi</option>
+                  <option value="tanaffus">Tanaffus</option>
+                  <option value="boshqa_device">Boshqa qurilmada kirish</option>
+                  <option value="xavfsizlik">Xavfsizlik sabablari</option>
+                  <option value="boshqa">Boshqa</option>
+                </select>
+              </div>
+              
+              <div className="logout-timer">
+                <div className="timer-circle">
+                  <svg width="100" height="100" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                    <circle 
+                      cx="50" cy="50" r="45" fill="none" 
+                      stroke="#ef4444" strokeWidth="8" strokeLinecap="round"
+                      strokeDasharray="283"
+                      strokeDashoffset={283 - (283 * (logoutTimer / 30))}
+                      transform="rotate(-90 50 50)"
+                    />
+                  </svg>
+                  <span className="timer-text">{logoutTimer}s</span>
+                </div>
+              </div>
+              
+              <div className="logout-modal-actions">
+                <button 
+                  className="cancel-logout-btn"
+                  onClick={handleCancelLogout}
+                >
+                  Bekor qilish
+                </button>
+                <button 
+                  className="confirm-logout-btn"
+                  onClick={handleLogoutClick}
+                >
+                  Chiqish
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Notification Modal */}
         {showNotificationModal && (

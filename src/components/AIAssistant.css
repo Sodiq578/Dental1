@@ -1,0 +1,44 @@
+/* AIAssistant.module.css */
+
+.container {
+  @apply p-6 bg-white rounded-xl shadow-sm max-w-3xl mx-auto;
+}
+
+.title {
+  @apply text-2xl font-bold text-gray-800 mb-6;
+}
+
+.chatWindow {
+  @apply border border-gray-200 rounded-lg h-[420px] overflow-y-auto p-5 mb-5
+         bg-gray-50/70 flex flex-col gap-4;
+}
+
+.message {
+  @apply max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed;
+}
+
+.userMessage {
+  @apply self-end bg-blue-600 text-white rounded-br-none;
+}
+
+.aiMessage {
+  @apply self-start bg-white border border-gray-200 rounded-bl-none shadow-sm;
+}
+
+.inputContainer {
+  @apply flex gap-3;
+}
+
+.input {
+  @apply flex-1 border border-gray-300 rounded-lg px-4 py-3
+         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.sendBtn {
+  @apply bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg
+         font-medium transition-colors duration-200;
+}
+
+.warning {
+  @apply text-sm text-red-600 mt-4 italic;
+}
