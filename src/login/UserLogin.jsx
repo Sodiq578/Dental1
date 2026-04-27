@@ -1,7 +1,12 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiLock, FiMail, FiEye, FiEyeOff, FiArrowLeft, FiUser, FiPhone, FiX, FiCheck, FiClock, FiBell } from 'react-icons/fi';
-import { FaTooth, FaStethoscope, FaUserMd, FaShieldAlt } from 'react-icons/fa';
+import { 
+  FiLock, FiMail, FiEye, FiEyeOff, FiArrowLeft, FiUser, 
+  FiPhone, FiX, FiCheck, FiClock, FiBell, FiShield, 
+  FiSmartphone, FiCalendar, FiChevronDown, FiChevronUp,
+  FiAlertCircle, FiLogIn, FiUserPlus, FiSend
+} from 'react-icons/fi';
+import { FaTooth, FaStethoscope, FaUserMd, FaShieldAlt, FaHeartbeat, FaSmile, FaGoogle, FaApple, FaFacebook } from 'react-icons/fa';
 import { AppContext } from '../App';
 import { getFromLocalStorage, saveToLocalStorage, logLogin, sendTelegramMessage } from '../utils';
 import './UserLogin.css';
@@ -33,24 +38,76 @@ const UserLogin = ({ onLogin }) => {
   const [showSaved, setShowSaved] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTab, setActiveTab] = useState('login');
-  const [showTestNumbers, setShowTestNumbers] = useState(false);
 
   const navigate = useNavigate();
   const { users, setUsers, setLogins, setCurrentUser } = useContext(AppContext);
   const otpInputs = useRef([]);
 
-  const TEST_PHONES = [
-    { number: '+998901234567', name: 'Test 1' },
-    { number: '+998999999999', name: 'Test 2' },
-    { number: '+998123456789', name: 'Test 3' }
-  ];
+  // TEST MODE - Oson kirish uchun demo hisoblar
+  const DEMO_ACCOUNTS = {
+    email: {
+      email: 'demo@sdkdental.uz',
+      password: 'demo123',
+      name: 'Demo Foydalanuvchi',
+      phone: '+998901234567'
+    },
+    phone: {
+      phone: '+998901234567',
+      name: 'Demo Foydalanuvchi',
+      email: 'demo@sdkdental.uz'
+    }
+  };
+
+  // Test rejimida tezkor kirish
+  const quickLogin = (type) => {
+    if (type === 'email') {
+      setFormData(prev => ({
+        ...prev,
+        email: DEMO_ACCOUNTS.email.email,
+        password: DEMO_ACCOUNTS.email.password
+      }));
+      setAuthMethod('email');
+      // Avtomatik kirish
+      setTimeout(() => {
+        const demoUser = {
+          id: Date.now(),
+          name: DEMO_ACCOUNTS.email.name,
+          email: DEMO_ACCOUNTS.email.email,
+          phone: DEMO_ACCOUNTS.email.phone,
+          role: 'patient',
+          isDemo: true
+        };
+        onLogin(demoUser);
+        saveUser(demoUser);
+        navigate('/foydalanuvchi');
+      }, 100);
+    } else if (type === 'phone') {
+      setFormData(prev => ({
+        ...prev,
+        phone: DEMO_ACCOUNTS.phone.phone
+      }));
+      setAuthMethod('phone');
+      // Avtomatik kirish
+      setTimeout(() => {
+        const demoUser = {
+          id: Date.now() + 1,
+          name: DEMO_ACCOUNTS.phone.name,
+          email: DEMO_ACCOUNTS.phone.email,
+          phone: DEMO_ACCOUNTS.phone.phone,
+          role: 'patient',
+          isDemo: true
+        };
+        onLogin(demoUser);
+        saveUser(demoUser);
+        navigate('/foydalanuvchi');
+      }, 100);
+    }
+  };
 
   useEffect(() => {
-    // Saved users ni yuklash
     const saved = getFromLocalStorage('savedUsers', []);
     setSavedUsers(saved);
     
-    // Remember me ma'lumotlarini yuklash
     const rememberData = getFromLocalStorage('rememberMe', null);
     if (rememberData && rememberData.user) {
       setRememberMe(true);
@@ -64,14 +121,12 @@ const UserLogin = ({ onLogin }) => {
       }
     }
 
-    // Welcome modalni faqat birinchi marta ko'rsatish
     const hasSeenWelcome = getFromLocalStorage('hasSeenWelcome', false);
     if (hasSeenWelcome) {
       setShowWelcome(false);
     }
   }, []);
 
-  // Timer uchun useEffect
   useEffect(() => {
     let interval = null;
     if (isOtpMode && timer > 0) {
@@ -85,7 +140,6 @@ const UserLogin = ({ onLogin }) => {
     return () => clearInterval(interval);
   }, [isOtpMode, timer]);
 
-  // OTP mode ga o'tganda inputlarni tozalash
   useEffect(() => {
     if (isOtpMode) {
       setOtpDigits(['', '', '', '']);
@@ -94,19 +148,15 @@ const UserLogin = ({ onLogin }) => {
     }
   }, [isOtpMode]);
 
-  // Form inputlarini boshqarish
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
-    
-    // Xatolarni tozalash
     if (error) setError('');
   };
 
-  // Foydalanuvchini saqlash
   const saveUser = (userData) => {
     if (!rememberMe) return;
     
@@ -120,7 +170,6 @@ const UserLogin = ({ onLogin }) => {
       avatarColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
     };
     
-    // Takroriy kirishlarni oldini olish
     const existingIndex = savedUsers.findIndex(u => 
       (u.email && u.email === userToSave.email) || 
       (u.phone && u.phone === userToSave.phone)
@@ -137,7 +186,6 @@ const UserLogin = ({ onLogin }) => {
     setSavedUsers(updatedUsers);
     saveToLocalStorage('savedUsers', updatedUsers);
     
-    // Remember me ma'lumotlarini saqlash
     saveToLocalStorage('rememberMe', {
       rememberMe: true,
       user: userToSave,
@@ -146,14 +194,12 @@ const UserLogin = ({ onLogin }) => {
     });
   };
 
-  // Saqlangan foydalanuvchini o'chirish
   const removeSavedUser = (userId, e) => {
     if (e) e.stopPropagation();
     const updatedUsers = savedUsers.filter(user => user.id !== userId);
     setSavedUsers(updatedUsers);
     saveToLocalStorage('savedUsers', updatedUsers);
     
-    // Agar o'chirilgan foydalanuvchi current bo'lsa, rememberMe dan ham o'chirish
     const rememberData = getFromLocalStorage('rememberMe', null);
     if (rememberData && rememberData.user && rememberData.user.id === userId) {
       saveToLocalStorage('rememberMe', null);
@@ -161,7 +207,6 @@ const UserLogin = ({ onLogin }) => {
     }
   };
 
-  // Barcha saqlanganlarni tozalash
   const clearSavedUsers = () => {
     setSavedUsers([]);
     saveToLocalStorage('savedUsers', []);
@@ -170,7 +215,6 @@ const UserLogin = ({ onLogin }) => {
     setRememberMe(false);
   };
 
-  // Saqlangan foydalanuvchini tanlash
   const handleSavedUserClick = (user) => {
     if (user.email) {
       setFormData(prev => ({ ...prev, email: user.email }));
@@ -182,7 +226,6 @@ const UserLogin = ({ onLogin }) => {
     setShowSaved(false);
   };
 
-  // OTP yuborish
   const sendOtp = async (phoneNumber, chatId) => {
     try {
       const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
@@ -195,21 +238,18 @@ const UserLogin = ({ onLogin }) => {
         attempts: 0
       };
 
-      // OTP ni saqlash
       const currentOtps = getFromLocalStorage('otpCodes', []);
       const filteredOtps = currentOtps.filter((o) => o.phone !== phoneNumber);
       filteredOtps.push(otpData);
       saveToLocalStorage('otpCodes', filteredOtps);
 
-      // Telegramga xabar yuborish
-      const message = `🦷 SDK DENTAL kirish kodi: ${generatedOtp}\n\nKod 10 daqiqa amal qiladi.\nHech kimga bermang!`;
+      const message = `🦷 SDK DENTAL kirish kodi: ${generatedOtp}\n\nKod 10 daqiqa amal qiladi.`;
       
       let success = true;
       if (chatId) {
         success = await sendTelegramMessage(chatId, message);
       }
 
-      // Agar Telegram xatolik bo'lsa ham, test rejimida davom etish
       if (!success && process.env.NODE_ENV === 'development') {
         console.log('Test OTP:', generatedOtp);
         success = true;
@@ -218,12 +258,10 @@ const UserLogin = ({ onLogin }) => {
       return success;
     } catch (error) {
       console.error('OTP yuborishda xatolik:', error);
-      // Test rejimida har doim true qaytarish
       return process.env.NODE_ENV === 'development';
     }
   };
 
-  // OTP ni tekshirish
   const verifyOtp = (phoneNumber, enteredOtp) => {
     try {
       const currentOtps = getFromLocalStorage('otpCodes', []);
@@ -231,30 +269,24 @@ const UserLogin = ({ onLogin }) => {
       
       if (!otpData) return false;
       
-      // Muddatni tekshirish
       const isExpired = new Date(otpData.expiresAt) < new Date();
       if (isExpired) {
-        // Muddat o'tgan OTP larni tozalash
         const validOtps = currentOtps.filter(o => new Date(o.expiresAt) > new Date());
         saveToLocalStorage('otpCodes', validOtps);
         return false;
       }
       
-      // Urinishlar sonini tekshirish
       if (otpData.attempts >= 3) {
         return false;
       }
       
-      // OTP ni tekshirish
       const isValid = otpData.otp === enteredOtp;
       
       if (isValid) {
-        // Muvaffaqiyatli tekshiruvdan keyin OTP ni o'chirish
         const updatedOtps = currentOtps.filter(o => o.phone !== phoneNumber);
         saveToLocalStorage('otpCodes', updatedOtps);
         return true;
       } else {
-        // Noto'g'ri urinish - attempts ni oshirish
         otpData.attempts += 1;
         const updatedOtps = currentOtps.map(o => 
           o.phone === phoneNumber ? otpData : o
@@ -268,7 +300,6 @@ const UserLogin = ({ onLogin }) => {
     }
   };
 
-  // OTP inputlarini boshqarish
   const handleOtpChange = (index, value) => {
     if (value && !/^\d$/.test(value)) return;
     
@@ -276,29 +307,23 @@ const UserLogin = ({ onLogin }) => {
     newOtpDigits[index] = value;
     setOtpDigits(newOtpDigits);
     
-    // Keyingi inputga o'tish
     if (value && index < 3) {
       otpInputs.current[index + 1]?.focus();
     }
     
-    // OTP ni birlashtirish
     const fullOtp = newOtpDigits.join('');
     setOtp(fullOtp);
     
-    // Avtomatik tasdiqlash
     if (fullOtp.length === 4) {
       setTimeout(() => handleOtpVerify(fullOtp), 300);
     }
   };
 
-  // OTP inputlarida klavish bosish
   const handleOtpKeyDown = (index, e) => {
     if (e.key === 'Backspace') {
       if (!otpDigits[index] && index > 0) {
-        // Oldingi inputga o'tish
         otpInputs.current[index - 1]?.focus();
       } else if (otpDigits[index]) {
-        // Joriy inputni tozalash
         const newOtpDigits = [...otpDigits];
         newOtpDigits[index] = '';
         setOtpDigits(newOtpDigits);
@@ -311,7 +336,6 @@ const UserLogin = ({ onLogin }) => {
     }
   };
 
-  // OTP ni tasdiqlash
   const handleOtpVerify = async (otpCode) => {
     if (otpCode.length !== 4) {
       setError("Iltimos, 4 xonali kodni kiriting");
@@ -326,7 +350,6 @@ const UserLogin = ({ onLogin }) => {
       
       if (isValid) {
         if (isRegisterMode) {
-          // Yangi foydalanuvchini qo'shish
           const newUser = {
             ...tempUser,
             id: Date.now(),
@@ -338,7 +361,6 @@ const UserLogin = ({ onLogin }) => {
           setUsers(updatedUsers);
           saveToLocalStorage('users', updatedUsers);
           
-          // Tasdiqlash muvaffaqiyatli
           setModalContent({
             title: "Tabriklaymiz!",
             message: "Ro'yxatdan muvaffaqiyatli o'tdingiz",
@@ -346,11 +368,8 @@ const UserLogin = ({ onLogin }) => {
           });
           setShowModal(true);
           
-          // Login qilish
           onLogin(newUser);
           saveUser(newUser);
-          
-          // Login logini
           logLogin(newUser);
           
           setLogins((prevLogins) => {
@@ -372,12 +391,10 @@ const UserLogin = ({ onLogin }) => {
             return newLogins;
           });
           
-          // Foydalanuvchi sahifasiga o'tish
           setTimeout(() => {
             navigate('/foydalanuvchi');
           }, 1500);
         } else {
-          // Login qilish
           onLogin(tempUser);
           saveUser(tempUser);
           logLogin(tempUser);
@@ -405,7 +422,6 @@ const UserLogin = ({ onLogin }) => {
         }
       } else {
         setError("Noto'g'ri kod. Qayta urinib ko'ring.");
-        // OTP inputlarini qizil rangga o'zgartirish
         otpInputs.current.forEach(input => {
           if (input) {
             input.classList.add('error');
@@ -423,7 +439,6 @@ const UserLogin = ({ onLogin }) => {
     }
   };
 
-  // OTP ni qayta yuborish
   const handleResendOtp = async () => {
     if (!canResend) return;
     
@@ -440,21 +455,19 @@ const UserLogin = ({ onLogin }) => {
         setSuccess("Yangi kod yuborildi!");
         setTimeout(() => setSuccess(''), 3000);
         
-        // Birinchi inputga focus
         setTimeout(() => {
           otpInputs.current[0]?.focus();
         }, 100);
       } else {
-        setError("Kod yuborishda xatolik. Iltimos, Chat ID ni tekshiring.");
+        setError("Kod yuborishda xatolik.");
       }
     } catch (error) {
-      setError("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+      setError("Xatolik yuz berdi.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Login qilish
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -463,9 +476,28 @@ const UserLogin = ({ onLogin }) => {
     
     try {
       if (authMethod === 'email') {
-        // Email orqali login
         if (!formData.email || !formData.password) {
-          setError("Iltimos, barcha maydonlarni to'ldiring");
+          setError("Iltimos, email va parolni kiriting");
+          setIsLoading(false);
+          return;
+        }
+        
+        // TEST MODE - Demo hisob bilan tekshirish
+        if (formData.email === DEMO_ACCOUNTS.email.email && formData.password === DEMO_ACCOUNTS.email.password) {
+          const demoUser = {
+            id: Date.now(),
+            name: DEMO_ACCOUNTS.email.name,
+            email: DEMO_ACCOUNTS.email.email,
+            phone: DEMO_ACCOUNTS.email.phone,
+            role: 'patient',
+            isDemo: true,
+            lastLogin: new Date().toISOString()
+          };
+          
+          onLogin(demoUser);
+          saveUser(demoUser);
+          logLogin(demoUser);
+          navigate('/foydalanuvchi');
           setIsLoading(false);
           return;
         }
@@ -477,7 +509,6 @@ const UserLogin = ({ onLogin }) => {
         );
         
         if (user) {
-          // Login muvaffaqiyatli
           const userData = {
             id: user.id,
             name: user.name,
@@ -491,107 +522,39 @@ const UserLogin = ({ onLogin }) => {
           onLogin(userData);
           saveUser(userData);
           logLogin(userData);
-          
-          setLogins((prevLogins) => {
-            const newLogins = [
-              ...prevLogins,
-              {
-                id: Date.now(),
-                userId: userData.id,
-                name: userData.name,
-                email: userData.email,
-                phone: user.phone,
-                role: userData.role,
-                timestamp: new Date().toISOString(),
-                loginMethod: 'email',
-                status: 'success'
-              },
-            ];
-            saveToLocalStorage('logins', newLogins);
-            return newLogins;
-          });
-          
           navigate('/foydalanuvchi');
         } else {
-          setError("Noto'g'ri email yoki parol");
+          setError("Email yoki parol noto'g'ri");
         }
       } else {
-        // Telefon orqali login
-        if (!/^\+998\d{9}$/.test(formData.phone)) {
-          setError("Iltimos, to'g'ri telefon raqamini kiriting");
+        if (!formData.phone) {
+          setError("Telefon raqamni kiriting");
           setIsLoading(false);
           return;
         }
         
-        // Test raqamlarini tekshirish
-        const testPhone = TEST_PHONES.find(t => t.number === formData.phone);
-        if (testPhone) {
-          // Test foydalanuvchi uchun
-          let testUser = users.find((u) => u.phone === formData.phone);
-          
-          if (!testUser) {
-            testUser = {
-              id: Date.now(),
-              name: testPhone.name,
-              email: `${testPhone.number.replace('+', '')}@test.sdkdental`,
-              phone: formData.phone,
-              password: 'test123',
-              role: 'patient',
-              isTest: true
-            };
-            const updatedUsers = [...users, testUser];
-            setUsers(updatedUsers);
-            saveToLocalStorage('users', updatedUsers);
-          }
-          
-          const userData = {
-            id: testUser.id,
-            name: testUser.name,
-            email: testUser.email,
-            phone: testUser.phone,
+        // TEST MODE - Demo telefon bilan tekshirish
+        if (formData.phone === DEMO_ACCOUNTS.phone.phone) {
+          const demoUser = {
+            id: Date.now() + 1,
+            name: DEMO_ACCOUNTS.phone.name,
+            email: DEMO_ACCOUNTS.phone.email,
+            phone: DEMO_ACCOUNTS.phone.phone,
             role: 'patient',
-            loginMethod: 'phone_direct_test',
-            isTest: true
+            isDemo: true,
+            lastLogin: new Date().toISOString()
           };
           
-          onLogin(userData);
-          saveUser(userData);
-          logLogin(userData);
-          
-          setLogins((prevLogins) => {
-            const newLogins = [
-              ...prevLogins,
-              {
-                id: Date.now(),
-                userId: userData.id,
-                name: userData.name,
-                email: userData.email,
-                phone: userData.phone,
-                role: userData.role,
-                timestamp: new Date().toISOString(),
-                loginMethod: 'phone_direct_test',
-                status: 'success'
-              },
-            ];
-            saveToLocalStorage('logins', newLogins);
-            return newLogins;
-          });
-          
+          onLogin(demoUser);
+          saveUser(demoUser);
+          logLogin(demoUser);
           navigate('/foydalanuvchi');
-          setIsLoading(false);
-          return;
-        }
-        
-        // Haqiqiy foydalanuvchi uchun
-        if (!formData.telegramChatId) {
-          setError("Iltimos, Telegram Chat ID ni kiriting");
           setIsLoading(false);
           return;
         }
         
         const user = users.find((u) => u.phone === formData.phone && u.role === 'patient');
         if (user) {
-          // OTP yuborish
           setTempUser({
             id: user.id,
             name: user.name,
@@ -608,21 +571,20 @@ const UserLogin = ({ onLogin }) => {
             setCanResend(false);
             setSuccess("Telefon raqamingizga kod yuborildi!");
           } else {
-            setError("Kod yuborishda xatolik. Chat ID ni tekshiring.");
+            setError("Kod yuborishda xatolik.");
           }
         } else {
-          setError("Bu raqam ro'yxatdan o'tmagan. Iltimos, ro'yxatdan o'ting.");
+          setError("Bu raqam ro'yxatdan o'tmagan");
         }
       }
     } catch (error) {
-      setError("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+      setError("Xatolik yuz berdi");
       console.error('Login xatosi:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Ro'yxatdan o'tish
   const handleRegister = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -630,43 +592,38 @@ const UserLogin = ({ onLogin }) => {
     setSuccess('');
     
     try {
-      // Validatsiya
       if (!formData.name || !formData.email || !formData.phone || !formData.password) {
-        setError("Iltimos, barcha maydonlarni to'ldiring");
+        setError("Barcha maydonlarni to'ldiring");
         setIsLoading(false);
         return;
       }
       
-      // Email validatsiya
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        setError("Iltimos, to'g'ri email manzilini kiriting");
+        setError("To'g'ri email kiriting");
         setIsLoading(false);
         return;
       }
       
-      // Telefon validatsiya
       if (!/^\+998\d{9}$/.test(formData.phone)) {
-        setError("Iltimos, to'g'ri telefon raqamini kiriting (+998XXXXXXXXX formatida)");
+        setError("To'g'ri telefon raqam kiriting (+998XXXXXXXXX)");
         setIsLoading(false);
         return;
       }
       
-      // Parol validatsiya (kamida 6 belgi)
       if (formData.password.length < 6) {
-        setError("Parol kamida 6 belgidan iborat bo'lishi kerak");
+        setError("Parol kamida 6 belgi bo'lishi kerak");
         setIsLoading(false);
         return;
       }
       
-      // Foydalanuvchi mavjudligini tekshirish
       const existingUser = users.find((u) => u.email === formData.email || u.phone === formData.phone);
       if (existingUser) {
-        setError("Bu email yoki telefon raqam allaqachon ro'yxatdan o'tgan");
+        setError("Bu email yoki telefon allaqachon ro'yxatdan o'tgan");
         setIsLoading(false);
         return;
       }
       
-      const userRequest = {
+      const newUser = {
         id: Date.now(),
         name: formData.name,
         email: formData.email,
@@ -674,76 +631,46 @@ const UserLogin = ({ onLogin }) => {
         password: formData.password,
         telegramChatId: formData.telegramChatId,
         role: 'patient',
-        status: 'pending',
         createdAt: new Date().toISOString(),
-        isVerified: false
+        isVerified: true
       };
       
-      setTempUser(userRequest);
+      const updatedUsers = [...users, newUser];
+      setUsers(updatedUsers);
+      saveToLocalStorage('users', updatedUsers);
       
-      if (authMethod === 'phone' && formData.telegramChatId) {
-        // Telefon orqali ro'yxatdan o'tish - OTP yuborish
-        const success = await sendOtp(formData.phone, formData.telegramChatId);
-        if (success) {
-          setIsOtpMode(true);
-          setTimer(120);
-          setCanResend(false);
-          setSuccess("Telefon raqamingizga tasdiqlash kodi yuborildi!");
-        } else {
-          setError("Kod yuborishda xatolik. Chat ID ni tekshiring.");
-        }
-      } else {
-        // Email orqali ro'yxatdan o'tish
-        const pendingUsers = getFromLocalStorage('pendingUsers', []);
-        pendingUsers.push(userRequest);
-        saveToLocalStorage('pendingUsers', pendingUsers);
-        
-        setModalContent({
-          title: "So'rov muvaffaqiyatli yuborildi!",
-          message: "Ro'yxatdan o'tish so'rovingiz administrator tomonidan ko'rib chiqilmoqda. Tasdiqlash haqida sizga xabar beramiz.",
-          type: 'success'
-        });
-        setShowModal(true);
-        
-        // Formani tozalash
-        setTimeout(() => {
-          setIsRegisterMode(false);
-          setFormData({
-            email: '',
-            phone: '',
-            password: '',
-            name: '',
-            telegramChatId: ''
-          });
-          setShowModal(false);
-        }, 3000);
-      }
+      setModalContent({
+        title: "Tabriklaymiz!",
+        message: "Ro'yxatdan muvaffaqiyatli o'tdingiz",
+        type: 'success'
+      });
+      setShowModal(true);
+      
+      onLogin(newUser);
+      saveUser(newUser);
+      logLogin(newUser);
+      
+      setTimeout(() => {
+        navigate('/foydalanuvchi');
+      }, 1500);
+      
     } catch (error) {
-      setError("Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.");
+      setError("Xatolik yuz berdi");
       console.error('Register xatosi:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Modalni yopish
   const closeModal = () => {
     setShowModal(false);
   };
 
-  // Welcome modalni yopish
   const closeWelcome = () => {
     setShowWelcome(false);
     saveToLocalStorage('hasSeenWelcome', true);
   };
 
-  // Test raqamini tanlash
-  const handleTestNumberClick = (phoneNumber) => {
-    setFormData(prev => ({ ...prev, phone: phoneNumber }));
-    setShowTestNumbers(false);
-  };
-
-  // Formani tozalash
   const resetForm = () => {
     setFormData({
       email: '',
@@ -757,7 +684,6 @@ const UserLogin = ({ onLogin }) => {
     setShowPassword(false);
   };
 
-  // Tab o'zgartirish
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setIsRegisterMode(tab === 'register');
@@ -765,7 +691,6 @@ const UserLogin = ({ onLogin }) => {
     resetForm();
   };
 
-  // Orqaga qaytish
   const handleGoBack = () => {
     if (isOtpMode) {
       setIsOtpMode(false);
@@ -775,768 +700,372 @@ const UserLogin = ({ onLogin }) => {
     }
   };
 
-  return (
-    <div className="login-page">
-      {/* Background Animation */}
-      <div className="bg-animation">
-        {[...Array(5)].map((_, i) => (
-          <div key={i} className={`wave wave-${i + 1}`}></div>
-        ))}
-      </div>
+  // Demo hisobni to'ldirish
+  const fillDemoAccount = () => {
+    setFormData(prev => ({
+      ...prev,
+      email: DEMO_ACCOUNTS.email.email,
+      password: DEMO_ACCOUNTS.email.password
+    }));
+    setAuthMethod('email');
+    setSuccess("Demo hisob ma'lumotlari to'ldirildi!");
+    setTimeout(() => setSuccess(''), 3000);
+  };
 
-      {/* Floating Elements */}
-      <div className="floating-elements">
-        <FaTooth className="floating-icon tooth" />
-        <FaStethoscope className="floating-icon stethoscope" />
-        <FaUserMd className="floating-icon doctor" />
-        <FaShieldAlt className="floating-icon shield" />
-      </div>
+  return (
+    <div className="app-wrapper">
+      {/* Background */}
+      <div className="bg-gradient-layer"></div>
+      <div className="float-shape shape-1"></div>
+      <div className="float-shape shape-2"></div>
+      <div className="float-shape shape-3"></div>
 
       {/* Welcome Modal */}
       {showWelcome && (
-        <div className="welcome-modal-overlay">
-          <div className="welcome-modal">
-            <div className="welcome-modal-content">
-              <button className="welcome-close" onClick={closeWelcome}>
-                <FiX />
-              </button>
-              
-              <div className="welcome-header">
-                <FaTooth className="welcome-icon" />
-                <h2>SDK DENTAL</h2>
-                <p className="welcome-subtitle">Professional stomatologiya klinikasi</p>
+        <div className="welcome-screen">
+          <div className="welcome-card">
+            <button className="welcome-close" onClick={closeWelcome}>
+              <FiX />
+            </button>
+            <div className="welcome-icon-box">
+              <FaTooth />
+            </div>
+            <h2 className="welcome-title">SDK DENTAL</h2>
+            <p className="welcome-sub">Professional stomatologiya</p>
+            <p className="welcome-desc">
+              <strong>Zamonaviy texnologiyalar</strong> va <strong>tajribali shifokorlar</strong>
+            </p>
+            <div className="welcome-features">
+              <div className="welcome-feat">
+                <div className="feat-icon"><FiClock /></div>
+                <div><h4>24/7 Yordam</h4><p>Har vaqt</p></div>
               </div>
-              
-              <div className="welcome-body">
-                <p className="welcome-text">
-                  <strong>Yangi asr texnologiyalari</strong> va <strong>tajribali mutaxassislar</strong> bilan. 
-                  Sog'lig'ingiz - bizning mas'uliyatimiz.
-                </p>
-                
-                <div className="welcome-features">
-                  <div className="feature-item">
-                    <div className="feature-icon">
-                      <FiClock />
-                    </div>
-                    <div className="feature-text">
-                      <h4>24/7 qo'llab-quvvatlash</h4>
-                      <p>Har qanday vaqtda yordam oling</p>
-                    </div>
-                  </div>
-                  
-                  <div className="feature-item">
-                    <div className="feature-icon">
-                      <FaUserMd />
-                    </div>
-                    <div className="feature-text">
-                      <h4>Tajribali shifokorlar</h4>
-                      <p>Yuqori malakali mutaxassislar</p>
-                    </div>
-                  </div>
-                  
-                  <div className="feature-item">
-                    <div className="feature-icon">
-                      <FiBell />
-                    </div>
-                    <div className="feature-text">
-                      <h4>Eslatma xizmati</h4>
-                      <p>Navbatlarni eslab qolamiz</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="welcome-security">
-                  <FaShieldAlt className="security-icon" />
-                  <p>Barcha ma'lumotlaringiz xavfsiz saqlanadi</p>
-                </div>
+              <div className="welcome-feat">
+                <div className="feat-icon"><FaUserMd /></div>
+                <div><h4>Mutaxassislar</h4><p>Malakali</p></div>
               </div>
-              
-              <div className="welcome-footer">
-                <button className="welcome-continue-btn" onClick={closeWelcome}>
-                  Tushunarli, davom etish
-                </button>
-                <p className="welcome-note">Bu xabar faqat birinchi marta ko'rsatiladi</p>
+              <div className="welcome-feat">
+                <div className="feat-icon"><FiBell /></div>
+                <div><h4>Eslatmalar</h4><p>Navbatlar</p></div>
               </div>
             </div>
+            <button className="welcome-btn" onClick={closeWelcome}>Boshlash</button>
           </div>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="login-container">
-        {/* Back Button */}
-        <button className="back-button" onClick={handleGoBack}>
+      {/* Main Panel */}
+      <div className="main-panel">
+        <button className="nav-back-btn" onClick={handleGoBack}>
           <FiArrowLeft /> Orqaga
         </button>
 
-        <div className="login-card">
-          {/* Header */}
-          <div className="login-header">
-            <div className="logo-section">
-              <div className="logo-wrapper">
-                <FaTooth className="main-logo" />
-                <div className="logo-pulse"></div>
-              </div>
-              <div className="logo-text">
-                <h1>SDK DENTAL</h1>
-                <p className="tagline">Sog'lig'ingiz - bizning mas'uliyatimiz</p>
-              </div>
+        <div className="panel-header">
+          <div className="logo-block">
+            <div className="logo-icon">
+              <FaTooth />
             </div>
-            
-            {/* Tabs */}
-            <div className="login-tabs">
-              <button 
-                className={`tab ${activeTab === 'login' ? 'active' : ''}`}
-                onClick={() => handleTabChange('login')}
-              >
-                Kirish
-              </button>
-              <button 
-                className={`tab ${activeTab === 'register' ? 'active' : ''}`}
-                onClick={() => handleTabChange('register')}
-              >
-                Ro'yxatdan o'tish
-              </button>
+            <div>
+              <h1 className="logo-text">SDK DENTAL</h1>
+              <p className="logo-slogan">Sog'lig'ingiz ishonchda</p>
             </div>
           </div>
 
-          {/* Success Message */}
-          {success && (
-            <div className="success-message">
-              <FiCheck className="success-icon" />
-              <span>{success}</span>
-            </div>
-          )}
+          <div className="tab-switch">
+            <button 
+              className={`tab-item ${activeTab === 'login' ? 'active' : ''}`}
+              onClick={() => handleTabChange('login')}
+            >
+              Kirish
+            </button>
+            <button 
+              className={`tab-item ${activeTab === 'register' ? 'active' : ''}`}
+              onClick={() => handleTabChange('register')}
+            >
+              Ro'yxatdan o'tish
+            </button>
+          </div>
+        </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="error-message">
-              <div className="error-icon">!</div>
-              <span>{error}</span>
-            </div>
-          )}
+        {/* Messages */}
+        {success && (
+          <div className="msg-box msg-success">
+            <FiCheck /> <span>{success}</span>
+          </div>
+        )}
+        {error && (
+          <div className="msg-box msg-error">
+            <FiAlertCircle /> <span>{error}</span>
+          </div>
+        )}
 
-          {/* Content */}
-          <div className="login-content">
-            {isOtpMode ? (
-              /* OTP Form */
-              <form onSubmit={(e) => { e.preventDefault(); handleOtpVerify(otp); }} className="login-form">
-                <div className="otp-header">
-                  <h3>📱 Telefon raqamingizga kod yuborildi</h3>
-                  <p>Telegram orqali yuborilgan 4 xonali kodni kiriting</p>
-                  <p className="otp-hint">
-                    <strong>Test rejimi:</strong> <code>1234</code> kodini ishlatishingiz mumkin
-                  </p>
+        <div className="panel-body">
+          {isOtpMode ? (
+            // OTP Form
+            <form onSubmit={(e) => { e.preventDefault(); handleOtpVerify(otp); }} className="auth-form">
+              <div className="otp-head">
+                <h3>Tasdiqlash kodi</h3>
+                <p>Telegram orqali 4 xonali kod keldi</p>
+                <div className="otp-hint">
+                  <FiSmartphone />
+                  <span>Test: <code>1234</code> kodini ishlating</span>
                 </div>
+              </div>
 
-                <div className="otp-inputs-container">
-                  <div className="otp-inputs">
-                    {[0, 1, 2, 3].map((index) => (
-                      <input
-                        key={index}
-                        ref={(el) => (otpInputs.current[index] = el)}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength="1"
-                        value={otpDigits[index]}
-                        onChange={(e) => handleOtpChange(index, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                        onFocus={(e) => e.target.select()}
-                        className={`otp-input ${otpDigits[index] ? 'filled' : ''}`}
-                        autoFocus={index === 0}
-                      />
-                    ))}
-                  </div>
-                  <div className="otp-dots">
-                    {[0, 1, 2, 3].map((index) => (
-                      <div 
-                        key={index} 
-                        className={`otp-dot ${otpDigits[index] ? 'active' : ''}`}
-                      ></div>
-                    ))}
-                  </div>
-                </div>
+              <div className="otp-fields">
+                {[0, 1, 2, 3].map((idx) => (
+                  <input
+                    key={idx}
+                    ref={(el) => (otpInputs.current[idx] = el)}
+                    type="text"
+                    maxLength="1"
+                    value={otpDigits[idx]}
+                    onChange={(e) => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                    className={`otp-field ${otpDigits[idx] ? 'filled' : ''}`}
+                    autoFocus={idx === 0}
+                  />
+                ))}
+              </div>
 
-                <div className="otp-timer">
-                  <FiClock className="timer-icon" />
-                  <span>
-                    Kod amal qilish muddati: 
-                    <strong> {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</strong>
-                  </span>
-                </div>
+              <div className="otp-timer">
+                <FiClock /> <span>Muddati: <strong>{Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</strong></span>
+              </div>
 
-                <button
-                  type="submit"
-                  className={`submit-btn ${isLoading ? 'loading' : ''}`}
-                  disabled={isLoading || otp.length !== 4}
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="spinner"></div>
-                      Tekshirilmoqda...
-                    </>
-                  ) : (
-                    'Tasdiqlash'
-                  )}
+              <button type="submit" className={`action-btn ${isLoading ? 'loading' : ''}`} disabled={isLoading || otp.length !== 4}>
+                {isLoading ? <div className="loader"></div> : 'Tasdiqlash'}
+              </button>
+
+              <div className="otp-footer">
+                <button type="button" className={`resend-link ${canResend ? 'ready' : ''}`} onClick={handleResendOtp} disabled={!canResend}>
+                  {canResend ? 'Kodni qayta yuborish' : `Kuting ${Math.floor(timer / 60)}:${(timer % 60).toString().padStart(2, '0')}`}
                 </button>
+                <button type="button" className="back-link" onClick={() => { setIsOtpMode(false); resetForm(); }}>
+                  Orqaga
+                </button>
+              </div>
+            </form>
+          ) : isRegisterMode ? (
+            // Register Form
+            <form onSubmit={handleRegister} className="auth-form">
+              <div className="input-row">
+                <label><FiUser /> Ism familiya</label>
+                <input type="text" name="name" placeholder="To'liq ismingiz" value={formData.name} onChange={handleInputChange} required />
+              </div>
 
-                <div className="otp-actions">
-                  <button
-                    type="button"
-                    className={`resend-btn ${canResend ? 'active' : 'disabled'}`}
-                    onClick={handleResendOtp}
-                    disabled={!canResend || isLoading}
-                  >
-                    {canResend ? 'Kodni qayta yuborish' : 'Kutish...'}
+              <div className="input-row">
+                <label>Kirish usuli</label>
+                <div className="method-group">
+                  <button type="button" className={`method ${authMethod === 'email' ? 'selected' : ''}`} onClick={() => setAuthMethod('email')}>
+                    <FiMail /> Email
                   </button>
-                  <button
-                    type="button"
-                    className="back-btn"
-                    onClick={() => {
-                      setIsOtpMode(false);
-                      setOtpDigits(['', '', '', '']);
-                      setOtp('');
-                      setTimer(120);
-                      setCanResend(false);
-                    }}
-                    disabled={isLoading}
-                  >
-                    Orqaga
+                  <button type="button" className={`method ${authMethod === 'phone' ? 'selected' : ''}`} onClick={() => setAuthMethod('phone')}>
+                    <FiPhone /> Telefon
                   </button>
                 </div>
-              </form>
-            ) : isRegisterMode ? (
-              /* Register Form */
-              <form onSubmit={handleRegister} className="login-form">
-                <div className="form-section">
-                  <h3 className="section-title">Shaxsiy ma'lumotlar</h3>
-                  
-                  <div className="input-group">
-                    <FiUser className="input-icon" />
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="To'liq ismingiz"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      autoComplete="name"
-                    />
-                    <div className="input-hint">Ism familiyangizni kiriting</div>
-                  </div>
+              </div>
+
+              {authMethod === 'email' ? (
+                <div className="input-row">
+                  <label><FiMail /> Email</label>
+                  <input type="email" name="email" placeholder="example@email.com" value={formData.email} onChange={handleInputChange} required />
                 </div>
-
-                <div className="form-section">
-                  <h3 className="section-title">Kirish usuli</h3>
-                  
-                  <div className="auth-method-selector">
-                    <div className="method-buttons">
-                      <button
-                        type="button"
-                        className={`method-btn ${authMethod === 'email' ? 'active' : ''}`}
-                        onClick={() => setAuthMethod('email')}
-                      >
-                        <FiMail className="method-icon" />
-                        <span>Email orqali</span>
-                        <div className="method-badge">Tavsiya etiladi</div>
-                      </button>
-                      <button
-                        type="button"
-                        className={`method-btn ${authMethod === 'phone' ? 'active' : ''}`}
-                        onClick={() => setAuthMethod('phone')}
-                      >
-                        <FiPhone className="method-icon" />
-                        <span>Telefon orqali</span>
-                        <div className="method-badge">Tezkor</div>
-                      </button>
-                    </div>
+              ) : (
+                <>
+                  <div className="input-row">
+                    <label><FiPhone /> Telefon</label>
+                    <input type="tel" name="phone" placeholder="+998 XX XXX XX XX" value={formData.phone} onChange={handleInputChange} required />
                   </div>
+                  <div className="input-row">
+                    <label><FiSend /> Telegram Chat ID</label>
+                    <input type="text" name="telegramChatId" placeholder="Chat ID" value={formData.telegramChatId} onChange={handleInputChange} />
+                    <small className="field-note">@BotFather dan oling</small>
+                  </div>
+                </>
+              )}
 
-                  {authMethod === 'email' ? (
-                    <div className="input-group">
-                      <FiMail className="input-icon" />
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="Email manzilingiz"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                        autoComplete="email"
-                      />
-                      <div className="input-hint">example@email.com</div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="input-group">
-                        <FiPhone className="input-icon" />
-                        <input
-                          type="tel"
-                          name="phone"
-                          placeholder="+998 XX XXX XX XX"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          required
-                          autoComplete="tel"
-                        />
-                        <button
-                          type="button"
-                          className="test-numbers-btn"
-                          onClick={() => setShowTestNumbers(!showTestNumbers)}
-                        >
-                          Test raqamlar
-                        </button>
-                        
-                        {showTestNumbers && (
-                          <div className="test-numbers-dropdown">
-                            {TEST_PHONES.map((test, index) => (
-                              <div
-                                key={index}
-                                className="test-number-item"
-                                onClick={() => handleTestNumberClick(test.number)}
-                              >
-                                <span className="test-number">{test.number}</span>
-                                <span className="test-name">{test.name}</span>
-                              </div>
-                            ))}
+              <div className="input-row">
+                <label><FiLock /> Parol</label>
+                <div className="pass-wrap">
+                  <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Parol" value={formData.password} onChange={handleInputChange} required />
+                  <button type="button" className="pass-eye" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+              </div>
+
+              <label className="check-item">
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                <span className="check-mark"></span>
+                <span>Meni eslab qol</span>
+              </label>
+
+              <label className="check-item">
+                <input type="checkbox" required />
+                <span className="check-mark"></span>
+                <span><a href="/terms">Shartlar</a> va <a href="/privacy">maxfiylik</a>ga roziman</span>
+              </label>
+
+              <button type="submit" className={`action-btn ${isLoading ? 'loading' : ''}`} disabled={isLoading}>
+                {isLoading ? <div className="loader"></div> : 'Ro\'yxatdan o\'tish'}
+              </button>
+
+              <div className="switch-prompt">
+                Hisobingiz bormi? <button type="button" className="switch-link" onClick={() => handleTabChange('login')}>Kirish</button>
+              </div>
+            </form>
+          ) : (
+            // Login Form
+            <form onSubmit={handleLogin} className="auth-form">
+              {/* TEST MODE - Quick Demo Access */}
+              <div className="demo-section">
+                <div className="demo-title">
+                  <FaSmile /> Test rejimi
+                </div>
+                <div className="demo-buttons">
+                  <button type="button" className="demo-btn" onClick={() => quickLogin('email')}>
+                    <FiMail /> Demo Email
+                  </button>
+                  <button type="button" className="demo-btn" onClick={() => quickLogin('phone')}>
+                    <FiPhone /> Demo Telefon
+                  </button>
+                  <button type="button" className="demo-btn fill" onClick={fillDemoAccount}>
+                    <FiUser /> To'ldirish
+                  </button>
+                </div>
+                <p className="demo-note">⚡ Bir tugma bilan kirish! Parol: <code>demo123</code></p>
+              </div>
+
+              {/* Saved Users */}
+              {savedUsers.length > 0 && (
+                <div className="saved-wrap">
+                  <div className="saved-toggle" onClick={() => setShowSaved(!showSaved)}>
+                    <span>👤 Saqlangan ({savedUsers.length})</span>
+                    {showSaved ? <FiChevronUp /> : <FiChevronDown />}
+                  </div>
+                  {showSaved && (
+                    <div className="saved-list">
+                      <div className="saved-list-header">
+                        <span>Avvalgi kirishlar</span>
+                        <button type="button" onClick={clearSavedUsers}><FiX /> Tozalash</button>
+                      </div>
+                      {savedUsers.map(user => (
+                        <div key={user.id} className="saved-item" onClick={() => handleSavedUserClick(user)}>
+                          <div className="saved-avatar" style={{ background: user.avatarColor || '#d6e9ff' }}>
+                            {user.name[0]}
                           </div>
-                        )}
-                      </div>
-                      
-                      <div className="input-group">
-                        <FiMail className="input-icon" />
-                        <input
-                          type="text"
-                          name="telegramChatId"
-                          placeholder="Telegram Chat ID"
-                          value={formData.telegramChatId}
-                          onChange={handleInputChange}
-                          required={authMethod === 'phone'}
-                          autoComplete="off"
-                        />
-                        <div className="input-hint">
-                          @BotFather dan olingan ID raqami
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="form-section">
-                  <h3 className="section-title">Xavfsizlik</h3>
-                  
-                  <div className="input-group password-group">
-                    <FiLock className="input-icon" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      placeholder="Parol"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle"
-                      onClick={() => setShowPassword(!showPassword)}
-                      tabIndex="-1"
-                    >
-                      {showPassword ? <FiEyeOff /> : <FiEye />}
-                    </button>
-                    <div className="password-strength">
-                      <div 
-                        className={`strength-bar ${formData.password.length >= 6 ? 'strong' : 'weak'}`}
-                      ></div>
-                      <span className="strength-text">
-                        {formData.password.length >= 6 ? 'Kuchli parol' : 'Kamida 6 belgi'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="remember-section">
-                    <label className="checkbox-container">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                      />
-                      <span className="checkmark"></span>
-                      <span className="checkbox-label">
-                        Ma'lumotlarimni eslab qolish
-                        <span className="hint">(30 kun davomida)</span>
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="terms-agreement">
-                  <label className="checkbox-container">
-                    <input type="checkbox" required />
-                    <span className="checkmark"></span>
-                    <span className="checkbox-label">
-                      Men <a href="/terms" target="_blank" rel="noopener noreferrer">foydalanish shartlari</a> va 
-                      <a href="/privacy" target="_blank" rel="noopener noreferrer">maxfiylik siyosati</a>ga roziman
-                    </span>
-                  </label>
-                </div>
-
-                <button
-                  type="submit"
-                  className={`submit-btn register-btn ${isLoading ? 'loading' : ''}`}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="spinner"></div>
-                      Jo'natilmoqda...
-                    </>
-                  ) : (
-                    <>
-                      <FaTooth className="btn-icon" />
-                      Ro'yxatdan o'tish
-                    </>
-                  )}
-                </button>
-
-                <div className="switch-mode">
-                  <p>
-                    Allaqachon hisobingiz bormi?{' '}
-                    <button
-                      type="button"
-                      className="switch-btn"
-                      onClick={() => handleTabChange('login')}
-                    >
-                      Kirish
-                    </button>
-                  </p>
-                </div>
-              </form>
-            ) : (
-              /* Login Form */
-              <form onSubmit={handleLogin} className="login-form">
-                {/* Saved Users */}
-                {savedUsers.length > 0 && (
-                  <div className="saved-users-section">
-                    <div 
-                      className="saved-toggle"
-                      onClick={() => setShowSaved(!showSaved)}
-                    >
-                      <div className="saved-toggle-left">
-                        <span className="saved-icon">👤</span>
-                        <span>Saqlangan foydalanuvchilar ({savedUsers.length})</span>
-                      </div>
-                      <span className={`toggle-arrow ${showSaved ? 'up' : 'down'}`}>
-                        {showSaved ? '▲' : '▼'}
-                      </span>
-                    </div>
-                    
-                    {showSaved && (
-                      <div className="saved-list">
-                        <div className="saved-header">
-                          <span>Avvalgi kirishlar</span>
-                          <button 
-                            type="button" 
-                            className="clear-btn"
-                            onClick={clearSavedUsers}
-                            title="Barchasini o'chirish"
-                          >
-                            <FiX /> Tozalash
+                          <div className="saved-info">
+                            <div className="saved-name">{user.name}</div>
+                            <div className="saved-contact">{user.email || user.phone}</div>
+                          </div>
+                          <button type="button" className="saved-remove" onClick={(e) => removeSavedUser(user.id, e)}>
+                            <FiX />
                           </button>
                         </div>
-                        <div className="saved-items">
-                          {savedUsers.map((user) => (
-                            <div 
-                              key={user.id} 
-                              className="saved-item"
-                              onClick={() => handleSavedUserClick(user)}
-                              title={`${user.name} bilan kirish`}
-                            >
-                              <div 
-                                className="user-avatar"
-                                style={{ backgroundColor: user.avatarColor || '#4CAF50' }}
-                              >
-                                {user.name.charAt(0).toUpperCase()}
-                              </div>
-                              <div className="saved-info">
-                                <div className="saved-name">{user.name}</div>
-                                <div className="saved-detail">
-                                  {user.email || user.phone}
-                                </div>
-                                <div className="saved-time">
-                                  {new Date(user.timestamp).toLocaleDateString()}
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                className="remove-btn"
-                                onClick={(e) => removeSavedUser(user.id, e)}
-                                title="O'chirish"
-                              >
-                                <FiX />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="auth-method-selector">
-                  <div className="method-buttons">
-                    <button
-                      type="button"
-                      className={`method-btn ${authMethod === 'email' ? 'active' : ''}`}
-                      onClick={() => setAuthMethod('email')}
-                    >
-                      <FiMail className="method-icon" />
-                      Email
-                    </button>
-                    <button
-                      type="button"
-                      className={`method-btn ${authMethod === 'phone' ? 'active' : ''}`}
-                      onClick={() => setAuthMethod('phone')}
-                    >
-                      <FiPhone className="method-icon" />
-                      Telefon
-                    </button>
-                  </div>
-                </div>
-
-                {authMethod === 'email' ? (
-                  <>
-                    <div className="input-group">
-                      <FiMail className="input-icon" />
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="Email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                        autoComplete="email"
-                      />
+                      ))}
                     </div>
-                    
-                    <div className="input-group password-group">
-                      <FiLock className="input-icon" />
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        name="password"
-                        placeholder="Parol"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        required
-                        autoComplete="current-password"
-                      />
-                      <button
-                        type="button"
-                        className="password-toggle"
-                        onClick={() => setShowPassword(!showPassword)}
-                        tabIndex="-1"
-                      >
+                  )}
+                </div>
+              )}
+
+              {/* Auth Method */}
+              <div className="method-group full">
+                <button type="button" className={`method ${authMethod === 'email' ? 'selected' : ''}`} onClick={() => setAuthMethod('email')}>
+                  <FiMail /> Email
+                </button>
+                <button type="button" className={`method ${authMethod === 'phone' ? 'selected' : ''}`} onClick={() => setAuthMethod('phone')}>
+                  <FiPhone /> Telefon
+                </button>
+              </div>
+
+              {authMethod === 'email' ? (
+                <>
+                  <div className="input-row">
+                    <input type="email" name="email" placeholder="Email manzil" value={formData.email} onChange={handleInputChange} required />
+                  </div>
+                  <div className="input-row">
+                    <div className="pass-wrap">
+                      <input type={showPassword ? 'text' : 'password'} name="password" placeholder="Parol" value={formData.password} onChange={handleInputChange} required />
+                      <button type="button" className="pass-eye" onClick={() => setShowPassword(!showPassword)}>
                         {showPassword ? <FiEyeOff /> : <FiEye />}
                       </button>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="input-group">
-                      <FiPhone className="input-icon" />
-                      <input
-                        type="tel"
-                        name="phone"
-                        placeholder="+998 XX XXX XX XX"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        required
-                        autoComplete="tel"
-                      />
-                      <button
-                        type="button"
-                        className="test-numbers-btn"
-                        onClick={() => setShowTestNumbers(!showTestNumbers)}
-                      >
-                        Test raqamlar
-                      </button>
-                      
-                      {showTestNumbers && (
-                        <div className="test-numbers-dropdown">
-                          {TEST_PHONES.map((test, index) => (
-                            <div
-                              key={index}
-                              className="test-number-item"
-                              onClick={() => handleTestNumberClick(test.number)}
-                            >
-                              <span className="test-number">{test.number}</span>
-                              <span className="test-name">{test.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="input-group">
-                      <FiMail className="input-icon" />
-                      <input
-                        type="text"
-                        name="telegramChatId"
-                        placeholder="Telegram Chat ID"
-                        value={formData.telegramChatId}
-                        onChange={handleInputChange}
-                        required
-                        autoComplete="off"
-                      />
-                    </div>
-                  </>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="input-row">
+                    <input type="tel" name="phone" placeholder="+998 XX XXX XX XX" value={formData.phone} onChange={handleInputChange} required />
+                  </div>
+                  <div className="input-row">
+                    <input type="text" name="telegramChatId" placeholder="Telegram Chat ID (ixtiyoriy)" value={formData.telegramChatId} onChange={handleInputChange} />
+                  </div>
+                </>
+              )}
+
+              <div className="login-extra">
+                <label className="check-item">
+                  <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                  <span className="check-mark"></span>
+                  <span>Eslab qol</span>
+                </label>
+                {authMethod === 'email' && (
+                  <button type="button" className="forgot-link" onClick={() => {
+                    setModalContent({ title: 'Yordam', message: 'Administratorga murojaat qiling:\n📞 +998 90 123 45 67', type: 'info' });
+                    setShowModal(true);
+                  }}>
+                    Parol unutdingizmi?
+                  </button>
                 )}
+              </div>
 
-                <div className="login-options">
-                  <div className="options-left">
-                    <label className="checkbox-container">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                      />
-                      <span className="checkmark"></span>
-                      <span className="checkbox-label">Meni eslab qol</span>
-                    </label>
-                  </div>
-                  
-                  <div className="options-right">
-                    {authMethod === 'email' && (
-                      <button 
-                        type="button" 
-                        className="forgot-btn"
-                        onClick={() => {
-                          setModalContent({
-                            title: 'Parolni tiklash',
-                            message: 'Parolni tiklash uchun iltimos, administrator bilan bog\'laning:\n📞 +998 90 123 45 67\n✉️ support@sdkdental.uz',
-                            type: 'info'
-                          });
-                          setShowModal(true);
-                        }}
-                      >
-                        Parolni unutdingizmi?
-                      </button>
-                    )}
-                  </div>
-                </div>
+              <button type="submit" className={`action-btn login-btn ${isLoading ? 'loading' : ''}`} disabled={isLoading}>
+                {isLoading ? <div className="loader"></div> : <><FiLogIn /> Tizimga kirish</>}
+              </button>
 
-                <button
-                  type="submit"
-                  className={`submit-btn login-btn ${isLoading ? 'loading' : ''}`}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="spinner"></div>
-                      Kirilmoqda...
-                    </>
-                  ) : (
-                    <>
-                      <FaTooth className="btn-icon" />
-                      Tizimga kirish
-                    </>
-                  )}
+              <div className="admin-link">
+                <button type="button" className="admin-btn" onClick={() => navigate('/admin/login')}>
+                  Admin panel
                 </button>
+              </div>
 
-                <div className="quick-actions">
-                  <button
-                    type="button"
-                    className="quick-action-btn"
-                    onClick={() => handleTestNumberClick(TEST_PHONES[0].number)}
-                  >
-                    Test rejimida kirish
-                  </button>
-                  <button
-                    type="button"
-                    className="quick-action-btn outline"
-                    onClick={() => navigate('/admin/login')}
-                  >
-                    Admin paneli
-                  </button>
-                </div>
-
-                <div className="switch-mode">
-                  <p>
-                    Hisobingiz yo'qmi?{' '}
-                    <button
-                      type="button"
-                      className="switch-btn"
-                      onClick={() => handleTabChange('register')}
-                    >
-                      Ro'yxatdan o'tish
-                    </button>
-                  </p>
-                </div>
-              </form>
-            )}
-          </div>
+              <div className="switch-prompt">
+                Hisobingiz yo'qmi? <button type="button" className="switch-link" onClick={() => handleTabChange('register')}>Ro'yxatdan o'tish</button>
+              </div>
+            </form>
+          )}
         </div>
 
-        {/* Security Info */}
-        <div className="security-info">
-          <FaShieldAlt className="security-icon" />
-          <p>Barcha ma'lumotlaringiz SSL shifrlash orqali himoyalangan</p>
+        <div className="panel-footer">
+          <FaShieldAlt /> <span>SSL shifrlangan xavfsiz tizim</span>
         </div>
+      </div>
+
+      {/* Footer */}
+      <div className="global-footer">
+        <div className="footer-links">
+          <a href="/about">Loyiha haqida</a>
+          <a href="/contact">Bog'lanish</a>
+          <a href="/privacy">Maxfiylik</a>
+        </div>
+        <p>© 2024 SDK DENTAL</p>
       </div>
 
       {/* Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className={`modal-title ${modalContent.type}`}>
-                {modalContent.type === 'success' ? '✅ ' : 'ℹ️ '}
-                {modalContent.title}
-              </h3>
-              <button className="modal-close" onClick={closeModal}>
-                <FiX />
-              </button>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{modalContent.type === 'success' ? '✅' : 'ℹ️'} {modalContent.title}</h3>
+              <button onClick={closeModal}><FiX /></button>
             </div>
-            <div className="modal-body">
-              <p>{modalContent.message}</p>
-            </div>
-            <div className="modal-footer">
-              <button className="modal-btn primary" onClick={closeModal}>
-                Tushunarli
-              </button>
-              {modalContent.type === 'info' && (
-                <button 
-                  className="modal-btn secondary"
-                  onClick={() => {
-                    navigator.clipboard.writeText('+998901234567');
-                    setSuccess('Raqam nusxalandi!');
-                    closeModal();
-                  }}
-                >
-                  Raqamni nusxalash
-                </button>
-              )}
+            <div className="modal-body">{modalContent.message}</div>
+            <div className="modal-foot">
+              <button className="modal-btn primary" onClick={closeModal}>Yopish</button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <div className="login-footer">
-        <div className="footer-content">
-          <div className="footer-links">
-            <a href="/about">Loyiha haqida</a>
-            <a href="/contact">Bog'lanish</a>
-            <a href="/privacy">Maxfiylik</a>
-            <a href="/terms">Foydalanish shartlari</a>
-          </div>
-          <p className="copyright">© 2024 SDK DENTAL. Barcha huquqlar himoyalangan.</p>
-          <p className="contact-info">
-            📞 Qo'llab-quvvatlash: <a href="tel:+998901234567">+998 90 123 45 67</a> | 
-            ✉️ Email: <a href="mailto:info@sdkdental.uz">info@sdkdental.uz</a>
-          </p>
-        </div>
-      </div>
     </div>
   );
 };

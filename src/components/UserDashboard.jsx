@@ -1,3 +1,4 @@
+// UserDashboard.jsx
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -5,19 +6,22 @@ import {
   FiDownload, FiLogOut, FiPhone, FiPlus, FiSearch,
   FiHome, FiCreditCard, FiBarChart2, FiBell, FiMenu, 
   FiX, FiCheckCircle, FiAlertCircle, FiCheck, FiTrash2,
-  FiMessageSquare, FiEye, FiPrinter, FiCopy, FiChevronRight
+  FiMessageSquare, FiEye, FiPrinter, FiCopy, FiChevronRight,
+  FiEdit2, FiMapPin, FiMail, FiGlobe, FiStar, FiTrendingUp,
+  FiUsers, FiFileText, FiInfo, FiSettings, FiShield
 } from "react-icons/fi";
 import { AiOutlineClose } from "react-icons/ai";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line
+  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line,
+  AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from "recharts";
 import { CSVLink } from "react-csv";
 import { AppContext } from "../App";
 import { addNewPatient, sendTelegramMessage } from "../utils";
 import "./UserDashboard.css";
 
-const COLORS = ['#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#7209b7', '#f72585'];
+const COLORS = ['#4361ee', '#3f37c9', '#4895ef', '#4cc9f0', '#7209b7', '#f72585', '#10b981', '#f59e0b'];
 
 const PAYMENT_METHODS = [
   { id: 'cash', name: 'Naqd pul', icon: '💰', fee: 0 },
@@ -28,13 +32,14 @@ const PAYMENT_METHODS = [
   { id: 'transfer', name: 'Bank o\'tkazmasi', icon: '🏦', fee: 0.5 }
 ];
 
-const PAYMENT_STATUS = {
-  PENDING: "kutilmoqda",
-  PROCESSING: "jarayonda",
-  SUCCESS: "muvaffaqiyatli",
-  FAILED: "muvaffaqiyatsiz",
-  REFUNDED: "qaytarilgan"
-};
+const TREATMENT_TYPES = [
+  { id: 1, name: "Tish tozalash", duration: 30, price: 150000 },
+  { id: 2, name: "Karyes davolash", duration: 45, price: 200000 },
+  { id: 3, name: "Tish olish", duration: 30, price: 250000 },
+  { id: 4, name: "Implantatsiya", duration: 60, price: 1500000 },
+  { id: 5, name: "Koronka", duration: 45, price: 800000 },
+  { id: 6, name: "Oqartirish", duration: 60, price: 500000 }
+];
 
 const UserDashboard = () => {
   const { currentUser, appointments, billings, setAppointments, setBillings, handleLogout } = useContext(AppContext);
@@ -43,6 +48,93 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Profile states
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: currentUser?.name || '',
+    email: currentUser?.email || 'user@example.com',
+    phone: currentUser?.phone || '+998901234567',
+    address: 'Toshkent sh., Chilonzor tumani',
+    birthday: '1990-01-01',
+    bloodType: 'O+',
+    allergies: 'Yo\'q',
+    emergencyContact: '+998901234568',
+    emergencyName: 'Oilaviy shifokor',
+    avatar: null
+  });
+
+  // Treatment History states
+  const [treatmentHistory, setTreatmentHistory] = useState([
+    {
+      id: 1,
+      date: '2024-10-15',
+      type: 'Tish tozalash',
+      doctor: 'Dr. Alimova D.',
+      cost: 150000,
+      status: 'completed',
+      notes: 'Muntazam tozalash, tishlari sog\'lom',
+      nextAppointment: '2024-11-15',
+      toothNumber: '11,21,31,41',
+      beforeImage: null,
+      afterImage: null
+    },
+    {
+      id: 2,
+      date: '2024-09-20',
+      type: 'Karyes davolash',
+      doctor: 'Dr. Karimov R.',
+      cost: 200000,
+      status: 'completed',
+      notes: 'O\'ng tish karyesi davolandi',
+      nextAppointment: null,
+      toothNumber: '16',
+      beforeImage: null,
+      afterImage: null
+    },
+    {
+      id: 3,
+      date: '2024-11-01',
+      type: 'Tish olish',
+      doctor: 'Dr. Alimova D.',
+      cost: 250000,
+      status: 'ongoing',
+      notes: 'Aql tishi olindi, shish bosilishi mumkin',
+      nextAppointment: '2024-11-08',
+      toothNumber: '28',
+      beforeImage: null,
+      afterImage: null
+    }
+  ]);
+
+  // Calendar states
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(null);
+  const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
+  const [selectedCalendarAppointment, setSelectedCalendarAppointment] = useState(null);
+
+  // Chat states
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [messages, setMessages] = useState([
+    { id: 1, text: "Assalomu alaykum! Bugungi uchrashuvingiz 15:00 da", sender: "doctor", time: new Date().toISOString(), read: true },
+    { id: 2, text: "Va alaykum assalom! Mayli, kelaman", sender: "user", time: new Date(Date.now() - 3600000).toISOString(), read: true },
+    { id: 3, text: "Uchrashuvdan oldin tishlaringizni cho'tkalang", sender: "doctor", time: new Date(Date.now() - 1800000).toISOString(), read: false }
+  ]);
+  const [newMessage, setNewMessage] = useState('');
+
+  // Search states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState({ appointments: [], billings: [] });
+
+  // Reminder states
+  const [reminders, setReminders] = useState([
+    { id: 1, title: "Ertaga tish tozalash", date: new Date(Date.now() + 86400000).toISOString(), time: "10:00", type: "appointment", active: true },
+    { id: 2, title: "To'lov muddati", date: new Date(Date.now() + 172800000).toISOString(), time: "18:00", type: "payment", active: true },
+    { id: 3, title: "Dori ichish", date: new Date(Date.now() + 3600000).toISOString(), time: "20:00", type: "medicine", active: false }
+  ]);
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [newReminder, setNewReminder] = useState({ title: '', date: '', time: '', type: 'appointment' });
 
   // Patient registration states
   const [newPatient, setNewPatient] = useState({
@@ -55,6 +147,7 @@ const UserDashboard = () => {
   const [patientId, setPatientId] = useState(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [procedure, setProcedure] = useState('');
+  const [selectedTreatment, setSelectedTreatment] = useState('');
 
   // Notification states
   const [notifications, setNotifications] = useState([
@@ -97,16 +190,6 @@ const UserDashboard = () => {
       read: true,
       date: new Date(Date.now() - 86400000).toISOString(),
       action: { type: "settings" }
-    },
-    {
-      id: 5,
-      title: "Yangilik: Yangi xizmatlar",
-      message: "Endi implantatsiya va ortopedik davolash xizmatlari mavjud",
-      type: "system",
-      time: "2 kun oldin",
-      read: true,
-      date: new Date(Date.now() - 172800000).toISOString(),
-      action: { type: "info" }
     }
   ]);
   
@@ -156,6 +239,25 @@ const UserDashboard = () => {
     });
   }, [userAppointments, filter]);
 
+  // Search functionality
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      setSearchResults({
+        appointments: userAppointments.filter(apt => 
+          apt.procedure?.toLowerCase().includes(query) ||
+          apt.date?.includes(query)
+        ),
+        billings: userBillings.filter(bill => 
+          bill.services?.some(s => s.name.toLowerCase().includes(query)) ||
+          bill.total?.toString().includes(query)
+        )
+      });
+    } else {
+      setSearchResults({ appointments: [], billings: [] });
+    }
+  }, [searchQuery, userAppointments, userBillings]);
+
   // Calculate statistics
   const totalAppointments = userAppointments.length;
   const totalCost = userBillings.reduce((sum, bill) => sum + (bill.total || 0), 0);
@@ -193,7 +295,7 @@ const UserDashboard = () => {
     return stats;
   }, [userBillings]);
 
-  // Prepare chart data
+  // Chart data
   const treatmentsByMonth = useMemo(() => {
     const monthly = {};
     filteredAppointments.forEach(apt => {
@@ -230,82 +332,119 @@ const UserDashboard = () => {
     return timeline.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
   }, [userBillings]);
 
-  // CSV data for export
-  const appointmentCSVData = filteredAppointments.map(apt => ({
-    Sana: new Date(apt.date).toLocaleDateString('uz-UZ'),
-    Vaqt: apt.time,
-    Muolaja: apt.procedure,
-    Holat: apt.status
-  }));
-
-  const billingCSVData = userBillings.map(bill => ({
-    Sana: new Date(bill.date).toLocaleDateString('uz-UZ'),
-    Jami: bill.total,
-    Tolangan: bill.paid || 0,
-    Qoldiq: bill.total - (bill.paid || 0),
-    Xizmatlar: bill.services.map(s => s.name).join(", "),
-    Holat: bill.status
-  }));
-
-  // Logout handler
-  const handleLogoutClick = () => {
-    setIsLoading(true);
+  // Calendar helpers
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startWeekday = firstDay.getDay();
     
-    // Log logout reason if provided
-    if (logoutReason) {
-      console.log(`Chiqish sababi: ${logoutReason}`);
+    const days = [];
+    for (let i = 0; i < startWeekday; i++) {
+      days.push(null);
     }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    return days;
+  };
+
+  const getAppointmentsForDate = (date) => {
+    if (!date) return [];
+    const dateStr = date.toISOString().split('T')[0];
+    return userAppointments.filter(apt => apt.date === dateStr);
+  };
+
+  const calendarDays = getDaysInMonth(currentMonth);
+  const monthNames = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'];
+  const weekDays = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
+
+  const changeMonth = (delta) => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1));
+  };
+
+  const handleDateClick = (date) => {
+    if (!date) return;
+    setSelectedCalendarDate(date);
+    const apts = getAppointmentsForDate(date);
+    if (apts.length > 0) {
+      setSelectedCalendarAppointment(apts[0]);
+      setShowAppointmentDetails(true);
+    }
+  };
+
+  // Profile handlers
+  const handleProfileUpdate = () => {
+    setEditingProfile(false);
+    setSuccessMessage("Profil ma'lumotlari yangilandi!");
+    setShowProfileModal(false);
+  };
+
+  // Treatment history helpers
+  const getTreatmentStatusBadge = (status) => {
+    switch(status) {
+      case 'completed': return { text: 'Yakunlangan', color: '#10b981' };
+      case 'ongoing': return { text: 'Jarayonda', color: '#f59e0b' };
+      case 'cancelled': return { text: 'Bekor qilingan', color: '#ef4444' };
+      default: return { text: 'Rejada', color: '#4361ee' };
+    }
+  };
+
+  // Chat handlers
+  const sendMessage = () => {
+    if (!newMessage.trim()) return;
+    const msg = {
+      id: Date.now(),
+      text: newMessage,
+      sender: 'user',
+      time: new Date().toISOString(),
+      read: false
+    };
+    setMessages([...messages, msg]);
+    setNewMessage('');
     
+    // Auto-reply simulation
     setTimeout(() => {
-      handleLogout();
-      navigate("/login");
-    }, 800);
+      const reply = {
+        id: Date.now() + 1,
+        text: "Xabaringiz qabul qilindi. Tez orada javob beramiz!",
+        sender: 'doctor',
+        time: new Date().toISOString(),
+        read: false
+      };
+      setMessages(prev => [...prev, reply]);
+    }, 1000);
   };
 
-  // Logout confirmation
-  const handleLogoutConfirm = () => {
-    setShowLogoutConfirm(true);
-    setLogoutTimer(30);
-  };
-
-  const handleCancelLogout = () => {
-    setShowLogoutConfirm(false);
-    setLogoutTimer(30);
-    setLogoutReason('');
-  };
-
-  // Auto logout timer
-  useEffect(() => {
-    let timer;
-    if (showLogoutConfirm && logoutTimer > 0) {
-      timer = setInterval(() => {
-        setLogoutTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (logoutTimer === 0 && showLogoutConfirm) {
-      handleLogoutClick();
+  // Reminder handlers
+  const addReminder = () => {
+    if (!newReminder.title || !newReminder.date || !newReminder.time) {
+      setError("Barcha maydonlarni to'ldiring");
+      return;
     }
-    return () => clearInterval(timer);
-  }, [showLogoutConfirm, logoutTimer]);
-
-  // Reset timer on user activity
-  useEffect(() => {
-    const resetTimer = () => {
-      if (showLogoutConfirm) {
-        setLogoutTimer(30);
-      }
+    const reminder = {
+      id: Date.now(),
+      ...newReminder,
+      active: true,
+      date: new Date(newReminder.date).toISOString()
     };
+    setReminders([...reminders, reminder]);
+    setShowReminderModal(false);
+    setNewReminder({ title: '', date: '', time: '', type: 'appointment' });
+    setSuccessMessage("Eslatma qo'shildi!");
+  };
 
-    const events = ['mousemove', 'keypress', 'click', 'scroll', 'touchstart'];
-    events.forEach(event => {
-      window.addEventListener(event, resetTimer);
-    });
+  const toggleReminder = (id) => {
+    setReminders(reminders.map(r => 
+      r.id === id ? { ...r, active: !r.active } : r
+    ));
+  };
 
-    return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, resetTimer);
-      });
-    };
-  }, [showLogoutConfirm]);
+  const deleteReminder = (id) => {
+    setReminders(reminders.filter(r => r.id !== id));
+  };
 
   // Time slot generation
   const generateTimeSlots = () => {
@@ -351,20 +490,17 @@ const UserDashboard = () => {
     setError('');
     setSuccessMessage('');
     
-    // Validate phone number
     if (!newPatient.phone.match(/^\+998[0-9]{9}$/)) {
       setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
       return;
     }
 
-    // In a real app, this would be an API call
     addNewPatient(newPatient, (success, message, data) => {
       if (success) {
         setPatientId(data.id);
         setShowRegistration(false);
         setSuccessMessage("Muvaffaqiyatli ro'yxatdan o'tdingiz!");
         
-        // Add notification
         const newNotification = {
           id: Date.now(),
           title: "Ro'yxatdan o'tish muvaffaqiyatli",
@@ -377,7 +513,6 @@ const UserDashboard = () => {
         };
         setNotifications([newNotification, ...notifications]);
         
-        // Send Telegram notification if provided
         if (newPatient.telegram) {
           sendTelegramMessage(newPatient.telegram, `Hurmatli ${newPatient.name}, ro'yxatdan o'tdingiz!`);
         }
@@ -395,15 +530,18 @@ const UserDashboard = () => {
     
     if (!patientId) return setError("Avval ro'yxatdan o'ting");
     if (!selectedTime) return setError("Vaqt tanlang");
-    if (!procedure.trim()) return setError("Muolaja nomini kiriting");
+    if (!procedure.trim() && !selectedTreatment) return setError("Muolaja nomini kiriting");
 
-    const cost = 100000;
+    const finalProcedure = procedure || selectedTreatment;
+    const selectedTreatmentData = TREATMENT_TYPES.find(t => t.name === finalProcedure);
+    const cost = selectedTreatmentData?.price || 100000;
+    
     const newApt = {
       id: Date.now(),
       patientId,
       date: selectedDate,
       time: selectedTime,
-      procedure,
+      procedure: finalProcedure,
       status: 'kutilmoqda',
       createdAt: new Date().toISOString()
     };
@@ -413,26 +551,25 @@ const UserDashboard = () => {
       patientId,
       patientName: newPatient.name,
       date: selectedDate,
-      services: [{ name: procedure, cost }],
+      services: [{ name: finalProcedure, cost }],
       total: cost,
       paid: 0,
       status: 'to\'lanmagan',
       paymentHistory: []
     };
 
-    // Update state
     setAppointments([...appointments, newApt]);
     setBillings([...billings, newBill]);
     
     setSuccessMessage("Uchrashuv muvaffaqiyatli band qilindi!");
     setSelectedTime('');
     setProcedure('');
+    setSelectedTreatment('');
 
-    // Add notification
     const newNotification = {
       id: Date.now() + 2,
       title: "Yangi uchrashuv band qilindi",
-      message: `${selectedDate} ${selectedTime} da ${procedure} muolajasi uchun uchrashuv band qilindi`,
+      message: `${selectedDate} ${selectedTime} da ${finalProcedure} muolajasi uchun uchrashuv band qilindi`,
       type: "appointment",
       time: "Hozir",
       read: false,
@@ -441,8 +578,7 @@ const UserDashboard = () => {
     };
     setNotifications([newNotification, ...notifications]);
 
-    // Send notifications
-    const msg = `✅ ${newPatient.name}, ${selectedDate} ${selectedTime} da uchrashuv band qilindi!\nMuolaja: ${procedure}\nNarxi: ${cost} UZS`;
+    const msg = `✅ ${newPatient.name}, ${selectedDate} ${selectedTime} da uchrashuv band qilindi!\nMuolaja: ${finalProcedure}\nNarxi: ${cost} UZS`;
     if (newPatient.telegram) sendTelegramMessage(newPatient.telegram, msg);
     sendTelegramMessage('5838205785', `Yangi band: ${newPatient.name} - ${selectedDate} ${selectedTime}`);
   };
@@ -461,7 +597,6 @@ const UserDashboard = () => {
     setPaymentProcessing(true);
     
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const updatedBillings = billings.map(b => 
@@ -483,7 +618,6 @@ const UserDashboard = () => {
       
       setBillings(updatedBillings);
       
-      // Add to payment history
       const newPaymentRecord = {
         billId: selectedBill.id,
         patientName: selectedBill.patientName,
@@ -497,7 +631,6 @@ const UserDashboard = () => {
       
       setPaymentHistory([newPaymentRecord, ...paymentHistory]);
       
-      // Generate and show receipt
       const receiptData = {
         ...selectedBill,
         payment: newPaymentRecord,
@@ -509,7 +642,6 @@ const UserDashboard = () => {
       setSuccessMessage(`To'lov muvaffaqiyatli amalga oshirildi! ${paymentAmount.toLocaleString()} UZS`);
       setShowPaymentModal(false);
       
-      // Add notification
       const newNotification = {
         id: Date.now(),
         title: "To'lov muvaffaqiyatli amalga oshirildi",
@@ -522,7 +654,6 @@ const UserDashboard = () => {
       };
       setNotifications([newNotification, ...notifications]);
       
-      // Auto-show receipt after 1 second
       setTimeout(() => {
         setShowReceiptModal(true);
       }, 1000);
@@ -534,7 +665,6 @@ const UserDashboard = () => {
     }
   };
 
-  // Simple text-based receipt generation (no jsPDF required)
   const generateReceipt = (receiptData) => {
     const receiptContent = `
 SDK DENTAL - TO'LOV KVITANSIYASI
@@ -561,7 +691,6 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
 © SDK DENTAL 2024
     `;
     
-    // Create a Blob and download as text file
     const blob = new Blob([receiptContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -593,13 +722,11 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
     return bill.total - (bill.paid || 0);
   };
 
-  // Request next available slot
   const handleRequestNextSlot = () => {
     const next = findNextAvailableSlot();
     if (next) {
       setSuccessMessage(`Keyingi bo'sh vaqt: ${next.date} ${next.time}`);
       
-      // Add notification
       const newNotification = {
         id: Date.now(),
         title: "Bo'sh vaqt topildi",
@@ -689,11 +816,11 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
         }
         break;
       default:
-        // Do nothing
+        break;
     }
   };
 
-  // Auto-update badge count when notifications change
+  // Auto-update badge count
   useEffect(() => {
     const unreadCount = notifications.filter(n => !n.read).length;
     setNotificationBadgeCount(unreadCount);
@@ -722,22 +849,104 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
     }
   }, [successMessage, error]);
 
+  // Logout handler
+  const handleLogoutClick = () => {
+    setIsLoading(true);
+    
+    if (logoutReason) {
+      console.log(`Chiqish sababi: ${logoutReason}`);
+    }
+    
+    setTimeout(() => {
+      handleLogout();
+      navigate("/login");
+    }, 800);
+  };
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutConfirm(true);
+    setLogoutTimer(30);
+  };
+
+  const handleCancelLogout = () => {
+    setShowLogoutConfirm(false);
+    setLogoutTimer(30);
+    setLogoutReason('');
+  };
+
+  // Auto logout timer
+  useEffect(() => {
+    let timer;
+    if (showLogoutConfirm && logoutTimer > 0) {
+      timer = setInterval(() => {
+        setLogoutTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (logoutTimer === 0 && showLogoutConfirm) {
+      handleLogoutClick();
+    }
+    return () => clearInterval(timer);
+  }, [showLogoutConfirm, logoutTimer]);
+
+  // Reset timer on user activity
+  useEffect(() => {
+    const resetTimer = () => {
+      if (showLogoutConfirm) {
+        setLogoutTimer(30);
+      }
+    };
+
+    const events = ['mousemove', 'keypress', 'click', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [showLogoutConfirm]);
+
+  // CSV data for export
+  const appointmentCSVData = filteredAppointments.map(apt => ({
+    Sana: new Date(apt.date).toLocaleDateString('uz-UZ'),
+    Vaqt: apt.time,
+    Muolaja: apt.procedure,
+    Holat: apt.status
+  }));
+
+  const billingCSVData = userBillings.map(bill => ({
+    Sana: new Date(bill.date).toLocaleDateString('uz-UZ'),
+    Jami: bill.total,
+    Tolangan: bill.paid || 0,
+    Qoldiq: bill.total - (bill.paid || 0),
+    Xizmatlar: bill.services.map(s => s.name).join(", "),
+    Holat: bill.status
+  }));
+
+  const treatmentCSVData = treatmentHistory.map(t => ({
+    Sana: t.date,
+    Muolaja: t.type,
+    Shifokor: t.doctor,
+    Narxi: t.cost,
+    Holat: t.status,
+    Eslatma: t.notes
+  }));
+
   if (!currentUser) return null;
 
-  // News items
   const newsItems = [
     { title: "O'zbekiston Stomatologiyasi 2025", desc: "Toshkentda stomatologiya ko'rgazmasi, 15-17 aprel", img: "https://images.pexels.com/photos/6812583/pexels-photo-6812583.jpeg" },
     { title: "UzMedExpo 2025", desc: "17-xalqaro sog'liqni saqlash ko'rgazmasi", img: "https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-9054.jpg" },
     { title: "IDECA Toshkent 2025", desc: "Stomatologiya ta'limi tadbirlari", img: "https://images.pexels.com/photos/4226263/pexels-photo-4226263.jpeg" },
-    { title: "Stomatologiyada AI", desc: "Sun'iy intellekt yangi imkoniyatlar", img: "https://images.pexels.com/photos/804009/pexels-photo-804009.jpeg" },
-    { title: "2025 Trendlar", desc: "Minimal invaziv va 3D texnologiyalar", img: "https://images.pexels.com/photos/6628600/pexels-photo-6628600.jpeg" }
+    { title: "Stomatologiyada AI", desc: "Sun'iy intellekt yangi imkoniyatlar", img: "https://images.pexels.com/photos/804009/pexels-photo-804009.jpeg" }
   ];
 
   return (
     <div className="dashboard-wrapper">
       {/* Desktop Sidebar */}
       <div className="desktop-sidebar">
-        <div className="sidebar-profile">
+        <div className="sidebar-profile" onClick={() => setShowProfileModal(true)} style={{ cursor: 'pointer' }}>
           <div className="profile-avatar"><FiUser size={32} /></div>
           <div>
             <h3>{currentUser.name}</h3>
@@ -749,7 +958,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
           </div>
         </div>
         <nav className="sidebar-nav">
-          {["dashboard", "appointments", "billing", "stats", "payments"].map(tab => (
+          {["dashboard", "appointments", "calendar", "treatment", "billing", "payments", "stats", "chat", "reminders"].map(tab => (
             <button 
               key={tab} 
               className={`nav-link ${activeTab === tab ? "active" : ""}`}
@@ -757,14 +966,22 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
             >
               {tab === "dashboard" && <FiHome />}
               {tab === "appointments" && <FiCalendar />}
+              {tab === "calendar" && <FiClock />}
+              {tab === "treatment" && <FiFileText />}
               {tab === "billing" && <FiCreditCard />}
-              {tab === "stats" && <FiBarChart2 />}
               {tab === "payments" && <FiDollarSign />}
+              {tab === "stats" && <FiBarChart2 />}
+              {tab === "chat" && <FiMessageSquare />}
+              {tab === "reminders" && <FiBell />}
               <span>{
                 tab === "dashboard" ? "Asosiy" :
                 tab === "appointments" ? "Uchrashuvlar" :
+                tab === "calendar" ? "Kalendar" :
+                tab === "treatment" ? "Davolash tarixi" :
                 tab === "billing" ? "To'lovlar" :
-                tab === "payments" ? "To'lov tarixi" : "Statistika"
+                tab === "payments" ? "To'lov tarixi" :
+                tab === "stats" ? "Statistika" :
+                tab === "chat" ? "Chat" : "Eslatmalar"
               }</span>
             </button>
           ))}
@@ -787,59 +1004,68 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
             {mobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
           <h1 className="header-title">SDK DENTAL</h1>
-          <div className="header-notification" onClick={toggleNotifications}>
-            <FiBell size={22} />
-            {notificationBadgeCount > 0 && (
-              <span className="notif-badge">{notificationBadgeCount}</span>
-            )}
-            
-            {/* Desktop Dropdown */}
-            {showNotifications && (
-              <div className="notification-dropdown show">
-                <div className="notification-dropdown-header">
-                  <h3>Xabarlar</h3>
-                  <a 
-                    href="#" 
-                    className="view-all-notifications"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setShowNotifications(false);
-                      setShowNotificationModal(true);
-                    }}
-                  >
-                    Hammasini ko'rish
-                  </a>
-                </div>
-                <div className="notification-dropdown-list">
-                  {notifications.slice(0, 4).map(notification => (
-                    <div 
-                      key={notification.id} 
-                      className={`notification-dropdown-item ${notification.read ? '' : 'unread'}`}
-                      onClick={() => handleNotificationAction(notification)}
+          <div className="header-right" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button 
+              className="header-chat" 
+              onClick={() => setActiveTab('chat')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666' }}
+            >
+              <FiMessageSquare size={20} />
+            </button>
+            <div className="header-notification" onClick={toggleNotifications}>
+              <FiBell size={22} />
+              {notificationBadgeCount > 0 && (
+                <span className="notif-badge">{notificationBadgeCount}</span>
+              )}
+              
+              {/* Desktop Dropdown */}
+              {showNotifications && (
+                <div className="notification-dropdown show">
+                  <div className="notification-dropdown-header">
+                    <h3>Xabarlar</h3>
+                    <a 
+                      href="#" 
+                      className="view-all-notifications"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowNotifications(false);
+                        setShowNotificationModal(true);
+                      }}
                     >
-                      <div className={`notification-dropdown-icon ${notification.type}`}>
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="notification-dropdown-content">
-                        <h4>{notification.title}</h4>
-                        <p>{notification.message}</p>
-                        <div className="notification-dropdown-time">
-                          {notification.time}
+                      Hammasini ko'rish
+                    </a>
+                  </div>
+                  <div className="notification-dropdown-list">
+                    {notifications.slice(0, 4).map(notification => (
+                      <div 
+                        key={notification.id} 
+                        className={`notification-dropdown-item ${notification.read ? '' : 'unread'}`}
+                        onClick={() => handleNotificationAction(notification)}
+                      >
+                        <div className={`notification-dropdown-icon ${notification.type}`}>
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="notification-dropdown-content">
+                          <h4>{notification.title}</h4>
+                          <p>{notification.message}</p>
+                          <div className="notification-dropdown-time">
+                            {notification.time}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                  {notifications.length === 0 && (
-                    <div className="notification-dropdown-item">
-                      <div className="notification-dropdown-content">
-                        <h4>Xabarlar yo'q</h4>
-                        <p>Hozircha yangi xabarlar mavjud emas</p>
+                    ))}
+                    {notifications.length === 0 && (
+                      <div className="notification-dropdown-item">
+                        <div className="notification-dropdown-content">
+                          <h4>Xabarlar yo'q</h4>
+                          <p>Hozircha yangi xabarlar mavjud emas</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </header>
 
@@ -847,7 +1073,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
         {mobileMenuOpen && (
           <div className="mobile-overlay" onClick={() => setMobileMenuOpen(false)}>
             <div className="mobile-sidebar" onClick={e => e.stopPropagation()}>
-              <div className="sidebar-profile">
+              <div className="sidebar-profile" onClick={() => { setShowProfileModal(true); setMobileMenuOpen(false); }} style={{ cursor: 'pointer' }}>
                 <div className="profile-avatar"><FiUser size={32} /></div>
                 <div>
                   <h3>{currentUser.name}</h3>
@@ -859,7 +1085,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                 </div>
               </div>
               <nav className="sidebar-nav">
-                {["dashboard", "appointments", "billing", "stats", "payments"].map(tab => (
+                {["dashboard", "appointments", "calendar", "treatment", "billing", "payments", "stats", "chat", "reminders"].map(tab => (
                   <button 
                     key={tab} 
                     className={`nav-link ${activeTab === tab ? "active" : ""}`}
@@ -870,14 +1096,22 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                   >
                     {tab === "dashboard" && <FiHome />}
                     {tab === "appointments" && <FiCalendar />}
+                    {tab === "calendar" && <FiClock />}
+                    {tab === "treatment" && <FiFileText />}
                     {tab === "billing" && <FiCreditCard />}
-                    {tab === "stats" && <FiBarChart2 />}
                     {tab === "payments" && <FiDollarSign />}
+                    {tab === "stats" && <FiBarChart2 />}
+                    {tab === "chat" && <FiMessageSquare />}
+                    {tab === "reminders" && <FiBell />}
                     <span>{
                       tab === "dashboard" ? "Asosiy" :
                       tab === "appointments" ? "Uchrashuvlar" :
+                      tab === "calendar" ? "Kalendar" :
+                      tab === "treatment" ? "Davolash tarixi" :
                       tab === "billing" ? "To'lovlar" :
-                      tab === "payments" ? "To'lov tarixi" : "Statistika"
+                      tab === "payments" ? "To'lov tarixi" :
+                      tab === "stats" ? "Statistika" :
+                      tab === "chat" ? "Chat" : "Eslatmalar"
                     }</span>
                   </button>
                 ))}
@@ -894,6 +1128,42 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
           </div>
         )}
 
+        {/* Search Bar */}
+        <div className="search-bar" style={{ marginBottom: '20px' }}>
+          <div style={{ position: 'relative' }}>
+            <FiSearch style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
+            <input 
+              type="text" 
+              placeholder="Uchrashuv yoki to'lovlarni qidirish..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ width: '100%', padding: '14px 16px 14px 48px', borderRadius: '30px', border: '1px solid #e0e0e0', fontSize: '14px' }}
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                <FiX size={18} />
+              </button>
+            )}
+          </div>
+          {searchQuery && (searchResults.appointments.length > 0 || searchResults.billings.length > 0) && (
+            <div className="search-results" style={{ marginTop: '12px', background: 'white', borderRadius: '20px', padding: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+              {searchResults.appointments.map(apt => (
+                <div key={apt.id} style={{ padding: '10px', borderBottom: '1px solid #eee', cursor: 'pointer' }} onClick={() => setActiveTab('appointments')}>
+                  <strong>{apt.procedure}</strong> - {apt.date} {apt.time}
+                </div>
+              ))}
+              {searchResults.billings.map(bill => (
+                <div key={bill.id} style={{ padding: '10px', borderBottom: '1px solid #eee', cursor: 'pointer' }} onClick={() => setActiveTab('billing')}>
+                  <strong>{bill.services[0]?.name}</strong> - {bill.total.toLocaleString()} UZS
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Main Container */}
         <main className="main-container">
           {/* Alerts */}
@@ -908,8 +1178,8 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
             </div>
           )}
 
-          {/* Stats Cards */}
-          {(activeTab === "dashboard" || activeTab === "stats") && (
+          {/* Stats Cards - Only on Dashboard */}
+          {(activeTab === "dashboard") && (
             <div className="stats-grid">
               <div className="stat-card gradient-blue">
                 <FiCalendar size={28} />
@@ -956,7 +1226,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
             </div>
           )}
 
-          {/* Charts */}
+          {/* Charts - Stats Tab */}
           {activeTab === "stats" && (
             <div className="charts-wrapper">
               <div className="chart-box">
@@ -992,23 +1262,151 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
               <div className="chart-box full-width">
                 <h3>To'lovlar tarixi</h3>
                 <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={paymentTimeline}>
+                  <AreaChart data={paymentTimeline}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
                     <Tooltip formatter={(value) => [`${value.toLocaleString()} UZS`, 'Summa']} />
-                    <Line 
+                    <Area 
                       type="monotone" 
                       dataKey="amount" 
                       stroke="#10b981" 
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
+                      fill="#10b981" 
+                      fillOpacity={0.2}
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
+          )}
+
+          {/* Calendar View */}
+          {activeTab === "calendar" && (
+            <section className="section-block">
+              <div className="section-title">
+                <h3>Uchrashuvlar kalendarı</h3>
+                <div className="calendar-nav" style={{ display: 'flex', gap: '12px' }}>
+                  <button onClick={() => changeMonth(-1)} className="secondary-button">◀</button>
+                  <span style={{ fontWeight: 500 }}>{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}</span>
+                  <button onClick={() => changeMonth(1)} className="secondary-button">▶</button>
+                  <button onClick={() => setCurrentMonth(new Date())} className="secondary-button">Bugun</button>
+                </div>
+              </div>
+              
+              <div className="calendar-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+                {weekDays.map(day => (
+                  <div key={day} style={{ textAlign: 'center', fontWeight: 600, padding: '12px', color: '#666' }}>{day}</div>
+                ))}
+                {calendarDays.map((date, idx) => {
+                  const apts = date ? getAppointmentsForDate(date) : [];
+                  const isToday = date && date.toDateString() === new Date().toDateString();
+                  const isSelected = date && selectedCalendarDate?.toDateString() === date.toDateString();
+                  
+                  return (
+                    <div 
+                      key={idx} 
+                      onClick={() => handleDateClick(date)}
+                      style={{
+                        minHeight: '100px',
+                        background: isSelected ? 'rgba(67, 97, 238, 0.1)' : isToday ? 'rgba(16, 185, 129, 0.1)' : 'white',
+                        borderRadius: '12px',
+                        padding: '8px',
+                        cursor: date ? 'pointer' : 'default',
+                        border: isToday ? '2px solid #10b981' : '1px solid #e5e7eb',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {date && (
+                        <>
+                          <div style={{ fontWeight: 600, marginBottom: '8px' }}>{date.getDate()}</div>
+                          {apts.map(apt => (
+                            <div key={apt.id} style={{ fontSize: '10px', background: '#4361ee', color: 'white', padding: '4px 6px', borderRadius: '8px', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {apt.time} {apt.procedure?.slice(0, 10)}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {/* Appointment Details Modal */}
+          {showAppointmentDetails && selectedCalendarAppointment && (
+            <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ background: 'white', borderRadius: '24px', padding: '24px', maxWidth: '400px', width: '90%' }}>
+                <h3>Uchrashuv tafsilotlari</h3>
+                <p><strong>Sana:</strong> {selectedCalendarAppointment.date}</p>
+                <p><strong>Vaqt:</strong> {selectedCalendarAppointment.time}</p>
+                <p><strong>Muolaja:</strong> {selectedCalendarAppointment.procedure}</p>
+                <p><strong>Holat:</strong> {selectedCalendarAppointment.status}</p>
+                <button onClick={() => setShowAppointmentDetails(false)} className="primary-button" style={{ marginTop: '20px', width: '100%' }}>Yopish</button>
+              </div>
+            </div>
+          )}
+
+          {/* Treatment History Tab */}
+          {activeTab === "treatment" && (
+            <section className="section-block">
+              <div className="section-title">
+                <h3>Davolash tarixi</h3>
+                <CSVLink data={treatmentCSVData} filename="davolash_tarixi.csv" className="download-btn" style={{ padding: '8px 16px', background: '#4361ee', color: 'white', borderRadius: '20px', textDecoration: 'none', fontSize: '13px' }}>
+                  <FiDownload /> Yuklab olish
+                </CSVLink>
+              </div>
+              
+              <div className="treatment-timeline">
+                {treatmentHistory.map(treatment => {
+                  const statusBadge = getTreatmentStatusBadge(treatment.status);
+                  return (
+                    <div key={treatment.id} className="treatment-item" style={{ display: 'flex', gap: '16px', padding: '16px', borderBottom: '1px solid #eee', background: 'rgba(255,255,255,0.5)', borderRadius: '16px', marginBottom: '12px' }}>
+                      <div className="treatment-date" style={{ minWidth: '100px' }}>
+                        <div style={{ fontWeight: 600 }}>{treatment.date}</div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>{treatment.doctor}</div>
+                      </div>
+                      <div className="treatment-info" style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <h4 style={{ margin: 0 }}>{treatment.type}</h4>
+                          <span style={{ background: statusBadge.color, color: 'white', padding: '2px 10px', borderRadius: '20px', fontSize: '11px' }}>{statusBadge.text}</span>
+                        </div>
+                        {treatment.toothNumber && <p style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}><strong>Tish №:</strong> {treatment.toothNumber}</p>}
+                        <p style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>{treatment.notes}</p>
+                        <p style={{ fontSize: '13px', fontWeight: 500 }}>Narxi: {treatment.cost.toLocaleString()} UZS</p>
+                        {treatment.nextAppointment && (
+                          <p style={{ fontSize: '12px', color: '#f59e0b' }}>🔔 Keyingi uchrashuv: {treatment.nextAppointment}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <div className="tooth-chart" style={{ marginTop: '24px', padding: '16px', background: 'rgba(255,255,255,0.5)', borderRadius: '16px' }}>
+                <h4>Tish kartasi</h4>
+                <div className="tooth-diagram" style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '8px', marginTop: '16px' }}>
+                  {[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28,48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38].map(tooth => {
+                    const hasTreatment = treatmentHistory.some(t => t.toothNumber?.includes(tooth.toString()));
+                    return (
+                      <div key={tooth} style={{ 
+                        textAlign: 'center', 
+                        padding: '8px', 
+                        background: hasTreatment ? 'rgba(67, 97, 238, 0.2)' : 'white', 
+                        borderRadius: '8px',
+                        border: '1px solid #ddd',
+                        fontSize: '12px',
+                        fontWeight: hasTreatment ? 600 : 400,
+                        color: hasTreatment ? '#4361ee' : '#666'
+                      }}>
+                        {tooth}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p style={{ fontSize: '12px', color: '#666', marginTop: '12px', textAlign: 'center' }}>🔵 Moviy rang - davolangan tishlar</p>
+              </div>
+            </section>
           )}
 
           {/* Appointments List */}
@@ -1064,11 +1462,12 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
             <section className="section-block">
               <div className="section-title">
                 <h3>To'lovlar</h3>
-                <div className="section-actions">
+                <div className="section-actions" style={{ display: 'flex', gap: '12px' }}>
                   <CSVLink 
                     data={billingCSVData} 
                     filename="tolovlar.csv" 
                     className="download-btn"
+                    style={{ padding: '8px 16px', background: '#4361ee', color: 'white', borderRadius: '20px', textDecoration: 'none', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
                     <FiDownload /> Yuklab olish
                   </CSVLink>
@@ -1091,6 +1490,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                         generateReceipt(receiptData);
                       }
                     }}
+                    style={{ padding: '8px 16px', background: '#10b981', color: 'white', borderRadius: '20px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
                     <FiPrinter /> Hisobot
                   </button>
@@ -1143,7 +1543,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                         <div className="billing-actions">
                           <span 
                             className="status-badge"
-                            style={{ backgroundColor: getPaymentStatusColor(bill.status) }}
+                            style={{ backgroundColor: getPaymentStatusColor(bill.status), color: 'white' }}
                           >
                             {bill.status}
                           </span>
@@ -1185,32 +1585,23 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
             </section>
           )}
 
-          {/* Payment History */}
+          {/* Payment History Tab */}
           {activeTab === "payments" && (
             <section className="section-block">
               <div className="section-title">
                 <h3>To'lovlar tarixi</h3>
-                <div className="payment-stats">
-                  <div className="payment-stat-card">
+                <div className="payment-stats" style={{ display: 'flex', gap: '16px' }}>
+                  <div className="payment-stat-card" style={{ background: 'rgba(255,255,255,0.5)', padding: '12px 20px', borderRadius: '16px' }}>
                     <span>Jami to'langan</span>
-                    <h3>{paymentStats.totalPaid.toLocaleString()} UZS</h3>
+                    <h3 style={{ margin: 0 }}>{paymentStats.totalPaid.toLocaleString()} UZS</h3>
                   </div>
-                  <div className="payment-stat-card">
+                  <div className="payment-stat-card" style={{ background: 'rgba(255,255,255,0.5)', padding: '12px 20px', borderRadius: '16px' }}>
                     <span>O'rtacha to'lov</span>
-                    <h3>
+                    <h3 style={{ margin: 0 }}>
                       {paymentHistory.length > 0 
                         ? (paymentStats.totalPaid / paymentHistory.length).toLocaleString(undefined, {maximumFractionDigits: 0})
                         : 0
                       } UZS
-                    </h3>
-                  </div>
-                  <div className="payment-stat-card">
-                    <span>So'nggi to'lov</span>
-                    <h3>
-                      {paymentStats.lastPaymentDate 
-                        ? new Date(paymentStats.lastPaymentDate).toLocaleDateString('uz-UZ')
-                        : 'Mavjud emas'
-                      }
                     </h3>
                   </div>
                 </div>
@@ -1219,7 +1610,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                 {paymentHistory.length > 0 ? (
                   paymentHistory.map((payment, index) => (
                     <div key={index} className="payment-history-item">
-                      <div className="payment-icon">
+                      <div className="payment-icon" style={{ fontSize: '28px' }}>
                         {PAYMENT_METHODS.find(m => m.id === payment.method)?.icon || '💰'}
                       </div>
                       <div className="payment-details">
@@ -1239,7 +1630,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                         </div>
                         <div className="payment-amount">
                           <strong>{payment.amount.toLocaleString()} UZS</strong>
-                          <span className={`payment-status ${payment.status}`}>
+                          <span className={`payment-status ${payment.status}`} style={{ background: '#10b98120', color: '#10b981', padding: '2px 8px', borderRadius: '12px', fontSize: '11px' }}>
                             {payment.status}
                           </span>
                         </div>
@@ -1258,12 +1649,14 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                               setShowReceiptModal(true);
                             }
                           }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
                         >
                           <FiEye />
                         </button>
                         <button 
                           className="copy-button"
                           onClick={() => copyReceiptNumber(payment.receiptNo)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
                         >
                           <FiCopy />
                         </button>
@@ -1280,7 +1673,99 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
             </section>
           )}
 
-          {/* Patient Portal */}
+          {/* Chat Section */}
+          {activeTab === "chat" && (
+            <section className="section-block">
+              <div className="section-title">
+                <h3>Doktor bilan chat</h3>
+                <div className="doctor-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div className="doctor-avatar" style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg, #4361ee, #7209b7)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                    <FiUser size={20} />
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0 }}>Dr. Alimova D.</h4>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#10b981' }}>● Online</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="chat-messages" style={{ height: '400px', overflowY: 'auto', padding: '16px', background: 'rgba(255,255,255,0.5)', borderRadius: '20px', marginBottom: '16px' }}>
+                {messages.map(msg => (
+                  <div key={msg.id} style={{ display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start', marginBottom: '12px' }}>
+                    <div style={{ 
+                      maxWidth: '70%', 
+                      background: msg.sender === 'user' ? 'linear-gradient(135deg, #4361ee, #3f37c9)' : 'white', 
+                      color: msg.sender === 'user' ? 'white' : '#333',
+                      padding: '10px 14px', 
+                      borderRadius: msg.sender === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
+                    }}>
+                      <p style={{ margin: 0, fontSize: '14px' }}>{msg.text}</p>
+                      <p style={{ margin: '4px 0 0', fontSize: '10px', opacity: 0.7 }}>{new Date(msg.time).toLocaleTimeString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="chat-input" style={{ display: 'flex', gap: '12px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Xabar yozing..." 
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  style={{ flex: 1, padding: '14px', borderRadius: '30px', border: '1px solid #e0e0e0', fontSize: '14px' }}
+                />
+                <button onClick={sendMessage} className="primary-button" style={{ padding: '12px 24px' }}>
+                  <FiMessageSquare /> Yuborish
+                </button>
+              </div>
+            </section>
+          )}
+
+          {/* Reminders Section */}
+          {activeTab === "reminders" && (
+            <section className="section-block">
+              <div className="section-title">
+                <h3>Eslatmalar</h3>
+                <button onClick={() => setShowReminderModal(true)} className="primary-button" style={{ padding: '8px 20px' }}>
+                  <FiPlus /> Qo'shish
+                </button>
+              </div>
+              
+              <div className="reminders-list">
+                {reminders.map(reminder => (
+                  <div key={reminder.id} className="reminder-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'rgba(255,255,255,0.5)', borderRadius: '16px', marginBottom: '12px' }}>
+                    <div className="reminder-info">
+                      <h4 style={{ margin: 0, textDecoration: reminder.active ? 'none' : 'line-through', opacity: reminder.active ? 1 : 0.5 }}>{reminder.title}</h4>
+                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
+                        {new Date(reminder.date).toLocaleDateString('uz-UZ')} {reminder.time}
+                      </p>
+                      <span className="reminder-type" style={{ fontSize: '11px', background: reminder.type === 'appointment' ? '#4361ee20' : reminder.type === 'payment' ? '#10b98120' : '#f59e0b20', padding: '2px 8px', borderRadius: '12px', marginTop: '6px', display: 'inline-block' }}>
+                        {reminder.type === 'appointment' ? '📅 Uchrashuv' : reminder.type === 'payment' ? '💰 To\'lov' : '💊 Dori'}
+                      </span>
+                    </div>
+                    <div className="reminder-actions" style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => toggleReminder(reminder.id)} className="reminder-toggle" style={{ background: reminder.active ? '#10b981' : '#999', border: 'none', width: '40px', height: '40px', borderRadius: '20px', color: 'white', cursor: 'pointer' }}>
+                        {reminder.active ? <FiCheck /> : <FiX />}
+                      </button>
+                      <button onClick={() => deleteReminder(reminder.id)} className="reminder-delete" style={{ background: '#ef4444', border: 'none', width: '40px', height: '40px', borderRadius: '20px', color: 'white', cursor: 'pointer' }}>
+                        <FiTrash2 />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {reminders.length === 0 && (
+                  <div className="empty-placeholder">
+                    <FiBell size={48} />
+                    <p>Eslatmalar yo'q</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Patient Portal - Only on Dashboard */}
           {activeTab === "dashboard" && (
             <section className="section-block">
               <h3 className="section-title">Mijoz Portali</h3>
@@ -1304,6 +1789,12 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                     />
                     <input 
                       type="text" 
+                      placeholder="Manzil" 
+                      value={newPatient.address} 
+                      onChange={e => setNewPatient({...newPatient, address: e.target.value})} 
+                    />
+                    <input 
+                      type="text" 
                       placeholder="Telegram Chat ID (ixtiyoriy)" 
                       value={newPatient.telegram} 
                       onChange={e => setNewPatient({...newPatient, telegram: e.target.value})} 
@@ -1321,6 +1812,20 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                       onChange={e => setSelectedDate(e.target.value)} 
                       min={new Date().toISOString().split('T')[0]}
                     />
+                    
+                    <div className="treatment-select" style={{ marginBottom: '16px' }}>
+                      <select 
+                        value={selectedTreatment} 
+                        onChange={(e) => setSelectedTreatment(e.target.value)}
+                        style={{ width: '100%', padding: '12px', borderRadius: '14px', border: '1px solid #e0e0e0' }}
+                      >
+                        <option value="">Muolajani tanlang</option>
+                        {TREATMENT_TYPES.map(t => (
+                          <option key={t.id} value={t.name}>{t.name} - {t.price.toLocaleString()} UZS</option>
+                        ))}
+                      </select>
+                    </div>
+                    
                     <div className="time-grid">
                       {slots.map(s => (
                         <button 
@@ -1337,8 +1842,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                     <form onSubmit={handleBookAppointment}>
                       <input 
                         type="text" 
-                        placeholder="Muolaja nomi" 
-                        required 
+                        placeholder="Yoki muolaja nomini yozing" 
                         value={procedure} 
                         onChange={e => setProcedure(e.target.value)} 
                       />
@@ -1361,7 +1865,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
             </section>
           )}
 
-          {/* News Section */}
+          {/* News Section - Only on Dashboard */}
           {activeTab === "dashboard" && (
             <section className="section-block">
               <h3 className="section-title">Yangiliklar</h3>
@@ -1382,26 +1886,105 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
 
         {/* Bottom Navigation (Mobile Only) */}
         <nav className="bottom-nav">
-          {["dashboard", "appointments", "billing", "payments", "stats"].map(tab => (
+          {["dashboard", "appointments", "calendar", "treatment", "billing", "payments", "chat", "reminders"].map(tab => (
             <button 
               key={tab} 
               className={activeTab === tab ? "nav-active" : ""} 
               onClick={() => setActiveTab(tab)}
             >
-              {tab === "dashboard" && <FiHome size={22} />}
-              {tab === "appointments" && <FiCalendar size={22} />}
-              {tab === "billing" && <FiCreditCard size={22} />}
-              {tab === "payments" && <FiDollarSign size={22} />}
-              {tab === "stats" && <FiBarChart2 size={22} />}
-              <span>{
+              {tab === "dashboard" && <FiHome size={20} />}
+              {tab === "appointments" && <FiCalendar size={20} />}
+              {tab === "calendar" && <FiClock size={20} />}
+              {tab === "treatment" && <FiFileText size={20} />}
+              {tab === "billing" && <FiCreditCard size={20} />}
+              {tab === "payments" && <FiDollarSign size={20} />}
+              {tab === "chat" && <FiMessageSquare size={20} />}
+              {tab === "reminders" && <FiBell size={20} />}
+              <span style={{ fontSize: '10px' }}>{
                 tab === "dashboard" ? "Asosiy" :
                 tab === "appointments" ? "Uchrashuv" :
+                tab === "calendar" ? "Kalendar" :
+                tab === "treatment" ? "Tarix" :
                 tab === "billing" ? "To'lov" :
-                tab === "payments" ? "Tarix" : "Stat"
+                tab === "payments" ? "Tarix" :
+                tab === "chat" ? "Chat" : "Eslatma"
               }</span>
             </button>
           ))}
         </nav>
+
+        {/* Profile Modal */}
+        {showProfileModal && (
+          <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div className="profile-modal" style={{ background: 'white', borderRadius: '32px', width: '90%', maxWidth: '500px', maxHeight: '85vh', overflowY: 'auto' }}>
+              <div className="profile-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #eee' }}>
+                <h3 style={{ margin: 0 }}>Profil ma'lumotlari</h3>
+                <button onClick={() => { setShowProfileModal(false); setEditingProfile(false); }} className="close-modal-btn" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                  <AiOutlineClose size={20} />
+                </button>
+              </div>
+              <div className="profile-modal-body" style={{ padding: '24px' }}>
+                {editingProfile ? (
+                  <>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#666' }}>Ism</label>
+                      <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd' }} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#666' }}>Email</label>
+                      <input type="email" value={profileData.email} onChange={(e) => setProfileData({...profileData, email: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd' }} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#666' }}>Telefon</label>
+                      <input type="tel" value={profileData.phone} onChange={(e) => setProfileData({...profileData, phone: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd' }} />
+                    </div>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', color: '#666' }}>Manzil</label>
+                      <input type="text" value={profileData.address} onChange={(e) => setProfileData({...profileData, address: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd' }} />
+                    </div>
+                    <div className="profile-actions" style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                      <button onClick={handleProfileUpdate} className="primary-button" style={{ flex: 1 }}>Saqlash</button>
+                      <button onClick={() => setEditingProfile(false)} className="secondary-button" style={{ flex: 1 }}>Bekor qilish</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="profile-info" style={{ textAlign: 'center', marginBottom: '24px' }}>
+                      <div className="profile-avatar-large" style={{ width: '80px', height: '80px', background: 'linear-gradient(135deg, #4361ee, #7209b7)', borderRadius: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'white' }}>
+                        <FiUser size={40} />
+                      </div>
+                      <h3 style={{ margin: 0 }}>{profileData.name}</h3>
+                      <p style={{ color: '#666', margin: '4px 0 0' }}>Mijoz</p>
+                    </div>
+                    <div className="profile-details" style={{ background: '#f8f9fa', borderRadius: '20px', padding: '16px' }}>
+                      <div className="detail-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #eee' }}>
+                        <span style={{ color: '#666' }}>📧 Email</span>
+                        <span>{profileData.email}</span>
+                      </div>
+                      <div className="detail-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #eee' }}>
+                        <span style={{ color: '#666' }}>📞 Telefon</span>
+                        <span>{profileData.phone}</span>
+                      </div>
+                      <div className="detail-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #eee' }}>
+                        <span style={{ color: '#666' }}>📍 Manzil</span>
+                        <span>{profileData.address}</span>
+                      </div>
+                      <div className="detail-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+                        <span style={{ color: '#666' }}>🎂 Tug'ilgan kun</span>
+                        <span>{profileData.birthday}</span>
+                      </div>
+                    </div>
+                    <div className="profile-actions" style={{ marginTop: '20px' }}>
+                      <button onClick={() => setEditingProfile(true)} className="primary-button" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <FiEdit2 /> Tahrirlash
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Payment Modal */}
         {showPaymentModal && selectedBill && (
@@ -1451,87 +2034,51 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                     max={calculateRemainingAmount(selectedBill)}
                     disabled={paymentProcessing}
                   />
-                  <div className="amount-suggestions">
-                    <button 
-                      onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.25))}
-                      disabled={paymentProcessing}
-                    >
-                      25%
-                    </button>
-                    <button 
-                      onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.5))}
-                      disabled={paymentProcessing}
-                    >
-                      50%
-                    </button>
-                    <button 
-                      onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.75))}
-                      disabled={paymentProcessing}
-                    >
-                      75%
-                    </button>
-                    <button 
-                      onClick={() => setPaymentAmount(calculateRemainingAmount(selectedBill))}
-                      disabled={paymentProcessing}
-                    >
-                      100%
-                    </button>
+                  <div className="amount-suggestions" style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <button onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.25))} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #ddd', background: 'white' }}>25%</button>
+                    <button onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.5))} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #ddd', background: 'white' }}>50%</button>
+                    <button onClick={() => setPaymentAmount(Math.ceil(calculateRemainingAmount(selectedBill) * 0.75))} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #ddd', background: 'white' }}>75%</button>
+                    <button onClick={() => setPaymentAmount(calculateRemainingAmount(selectedBill))} style={{ padding: '6px 12px', borderRadius: '20px', border: '1px solid #ddd', background: 'white' }}>100%</button>
                   </div>
                 </div>
                 
                 <div className="payment-methods">
                   <h4>To'lov usulini tanlang</h4>
-                  <div className="method-grid">
+                  <div className="method-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '12px', marginTop: '12px' }}>
                     {PAYMENT_METHODS.map(method => (
                       <button
                         key={method.id}
                         className={`method-btn ${paymentMethod === method.id ? 'selected' : ''}`}
                         onClick={() => !paymentProcessing && setPaymentMethod(method.id)}
                         disabled={paymentProcessing}
+                        style={{ padding: '10px', borderRadius: '16px', border: paymentMethod === method.id ? '2px solid #4361ee' : '1px solid #ddd', background: 'white', cursor: 'pointer' }}
                       >
-                        <span className="method-icon">{method.icon}</span>
+                        <span className="method-icon" style={{ fontSize: '24px' }}>{method.icon}</span>
                         <span>{method.name}</span>
-                        <span className="method-fee">{method.fee}%</span>
                       </button>
                     ))}
                   </div>
                 </div>
-                
-                {paymentMethod === 'card' && (
-                  <div className="card-details">
-                    <h4>Karta ma'lumotlari</h4>
-                    <div className="card-inputs">
-                      <input type="text" placeholder="Karta raqami" disabled={paymentProcessing} />
-                      <div className="card-row">
-                        <input type="text" placeholder="MM/YY" disabled={paymentProcessing} />
-                        <input type="text" placeholder="CVV" disabled={paymentProcessing} />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
               
-              <div className="payment-modal-footer">
-                <div className="payment-summary">
-                  <div className="summary-item">
+              <div className="payment-modal-footer" style={{ padding: '20px 24px', borderTop: '1px solid #eee' }}>
+                <div className="payment-summary" style={{ background: '#f8f9fa', padding: '16px', borderRadius: '20px', marginBottom: '20px' }}>
+                  <div className="summary-item" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span>To'lov summasi:</span>
                     <strong>{paymentAmount.toLocaleString()} UZS</strong>
                   </div>
-                  <div className="summary-item">
-                    <span>Komissiya ({PAYMENT_METHODS.find(m => m.id === paymentMethod)?.fee || 0}%):</span>
-                    <strong>{(paymentAmount * (PAYMENT_METHODS.find(m => m.id === paymentMethod)?.fee || 0) / 100).toLocaleString()} UZS</strong>
-                  </div>
-                  <div className="summary-item total">
+                  <div className="summary-item total" style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', borderTop: '1px solid #ddd', paddingTop: '12px', marginTop: '8px' }}>
                     <span>Jami to'lanadi:</span>
                     <strong>{(paymentAmount * (1 + (PAYMENT_METHODS.find(m => m.id === paymentMethod)?.fee || 0) / 100)).toLocaleString()} UZS</strong>
                   </div>
                 </div>
                 
-                <div className="payment-actions">
+                <div className="payment-actions" style={{ display: 'flex', gap: '12px' }}>
                   <button 
                     className="cancel-payment-btn"
                     onClick={() => !paymentProcessing && setShowPaymentModal(false)}
                     disabled={paymentProcessing}
+                    style={{ flex: 1, padding: '12px', borderRadius: '30px', border: '1px solid #ddd', background: 'white', cursor: 'pointer' }}
                   >
                     Bekor qilish
                   </button>
@@ -1539,10 +2086,11 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
                     className={`confirm-payment-btn ${paymentProcessing ? 'processing' : ''}`}
                     onClick={processPayment}
                     disabled={paymentProcessing || paymentAmount <= 0 || paymentAmount > calculateRemainingAmount(selectedBill)}
+                    style={{ flex: 1, padding: '12px', borderRadius: '30px', background: 'linear-gradient(135deg, #10b981, #34d399)', color: 'white', border: 'none', cursor: 'pointer' }}
                   >
                     {paymentProcessing ? (
                       <>
-                        <div className="payment-spinner"></div>
+                        <div className="payment-spinner" style={{ display: 'inline-block', width: '16px', height: '16px', border: '2px solid white', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite', marginRight: '8px' }}></div>
                         To'lov amalga oshirilmoqda...
                       </>
                     ) : (
@@ -1558,107 +2106,113 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
         {/* Receipt Modal */}
         {showReceiptModal && selectedReceipt && (
           <div className="receipt-modal-overlay" onClick={() => setShowReceiptModal(false)}>
-            <div className="receipt-modal" onClick={e => e.stopPropagation()}>
-              <div className="receipt-modal-header">
+            <div className="receipt-modal" onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '32px', width: '90%', maxWidth: '500px', maxHeight: '85vh', overflowY: 'auto' }}>
+              <div className="receipt-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #eee' }}>
                 <h3>To'lov kvitansiyasi</h3>
-                <button 
-                  className="close-modal-btn"
-                  onClick={() => setShowReceiptModal(false)}
-                >
+                <button className="close-modal-btn" onClick={() => setShowReceiptModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                   <AiOutlineClose size={20} />
                 </button>
               </div>
               
-              <div className="receipt-modal-body">
-                <div className="receipt-logo">
-                  <h2>SDK DENTAL</h2>
+              <div className="receipt-modal-body" style={{ padding: '24px' }}>
+                <div className="receipt-logo" style={{ textAlign: 'center', marginBottom: '24px' }}>
+                  <h2 style={{ fontSize: '28px', background: 'linear-gradient(135deg, #4361ee, #7209b7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SDK DENTAL</h2>
                   <p>To'lov kvitansiyasi</p>
                 </div>
                 
-                <div className="receipt-details">
-                  <div className="receipt-row">
+                <div className="receipt-details" style={{ background: '#f8f9fa', borderRadius: '20px', padding: '16px', marginBottom: '20px' }}>
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px dashed #ddd' }}>
                     <span>Kvitanciya №:</span>
                     <strong>{selectedReceipt.payment.receiptNo}</strong>
                   </div>
-                  <div className="receipt-row">
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px dashed #ddd' }}>
                     <span>Sana:</span>
                     <strong>{new Date(selectedReceipt.payment.date).toLocaleDateString('uz-UZ')}</strong>
                   </div>
-                  <div className="receipt-row">
-                    <span>Vaqt:</span>
-                    <strong>{new Date(selectedReceipt.payment.date).toLocaleTimeString('uz-UZ')}</strong>
-                  </div>
-                  <div className="receipt-row">
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px dashed #ddd' }}>
                     <span>Mijoz:</span>
                     <strong>{selectedReceipt.patientName}</strong>
                   </div>
-                  <div className="receipt-row">
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px dashed #ddd' }}>
                     <span>To'lov summasi:</span>
-                    <strong className="receipt-amount">
-                      {selectedReceipt.payment.amount.toLocaleString()} UZS
-                    </strong>
+                    <strong style={{ color: '#10b981' }}>{selectedReceipt.payment.amount.toLocaleString()} UZS</strong>
                   </div>
-                  <div className="receipt-row">
-                    <span>To'lov usuli:</span>
-                    <strong>{selectedReceipt.payment.methodName}</strong>
-                  </div>
-                  <div className="receipt-row">
-                    <span>Qoldiq summa:</span>
-                    <strong className="receipt-remaining">
-                      {selectedReceipt.remaining.toLocaleString()} UZS
-                    </strong>
-                  </div>
-                  <div className="receipt-row">
+                  <div className="receipt-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
                     <span>Holati:</span>
-                    <strong className="receipt-status success">To'langan</strong>
+                    <strong style={{ color: '#10b981' }}>To'langan</strong>
                   </div>
                 </div>
                 
-                <div className="receipt-services">
+                <div className="receipt-services" style={{ marginBottom: '20px' }}>
                   <h4>Xizmatlar:</h4>
                   {selectedReceipt.services.map((service, index) => (
-                    <div key={index} className="service-row">
+                    <div key={index} className="service-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
                       <span>{service.name}</span>
                       <span>{service.cost.toLocaleString()} UZS</span>
                     </div>
                   ))}
                 </div>
                 
-                <div className="receipt-footer">
-                  <div className="receipt-total">
+                <div className="receipt-footer" style={{ background: '#f8f9fa', borderRadius: '20px', padding: '16px' }}>
+                  <div className="receipt-total" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <span>Umumiy summa:</span>
                     <strong>{selectedReceipt.total.toLocaleString()} UZS</strong>
                   </div>
-                  <div className="receipt-total">
-                    <span>To'langan:</span>
-                    <strong>{(selectedReceipt.paid || 0).toLocaleString()} UZS</strong>
-                  </div>
-                  <div className="receipt-total">
+                  <div className="receipt-total" style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Qoldiq:</span>
                     <strong>{selectedReceipt.remaining.toLocaleString()} UZS</strong>
                   </div>
                 </div>
               </div>
               
-              <div className="receipt-modal-actions">
-                <button 
-                  className="receipt-action-btn"
-                  onClick={() => generateReceipt(selectedReceipt)}
-                >
-                  <FiDownload /> Yuklab olish (TXT)
+              <div className="receipt-modal-actions" style={{ display: 'flex', gap: '12px', padding: '20px 24px', borderTop: '1px solid #eee' }}>
+                <button onClick={() => generateReceipt(selectedReceipt)} className="primary-button" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <FiDownload /> Yuklab olish
                 </button>
-                <button 
-                  className="receipt-action-btn secondary"
-                  onClick={() => copyReceiptNumber(selectedReceipt.payment.receiptNo)}
-                >
-                  <FiCopy /> Raqamni nusxalash
+                <button onClick={() => copyReceiptNumber(selectedReceipt.payment.receiptNo)} className="secondary-button" style={{ flex: 1, padding: '12px', borderRadius: '30px', border: '1px solid #ddd', background: 'white', cursor: 'pointer' }}>
+                  <FiCopy /> Nusxalash
                 </button>
-                <button 
-                  className="receipt-action-btn outline"
-                  onClick={() => setShowReceiptModal(false)}
-                >
-                  Yopish
-                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reminder Modal */}
+        {showReminderModal && (
+          <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div style={{ background: 'white', borderRadius: '32px', width: '90%', maxWidth: '400px', padding: '24px' }}>
+              <h3>Yangi eslatma</h3>
+              <input 
+                type="text" 
+                placeholder="Eslatma nomi" 
+                value={newReminder.title}
+                onChange={(e) => setNewReminder({...newReminder, title: e.target.value})}
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '12px' }}
+              />
+              <input 
+                type="date" 
+                value={newReminder.date}
+                onChange={(e) => setNewReminder({...newReminder, date: e.target.value})}
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '12px' }}
+              />
+              <input 
+                type="time" 
+                value={newReminder.time}
+                onChange={(e) => setNewReminder({...newReminder, time: e.target.value})}
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '12px' }}
+              />
+              <select 
+                value={newReminder.type}
+                onChange={(e) => setNewReminder({...newReminder, type: e.target.value})}
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd', marginBottom: '20px' }}
+              >
+                <option value="appointment">📅 Uchrashuv</option>
+                <option value="payment">💰 To'lov</option>
+                <option value="medicine">💊 Dori</option>
+              </select>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button onClick={addReminder} className="primary-button" style={{ flex: 1 }}>Qo'shish</button>
+                <button onClick={() => setShowReminderModal(false)} className="secondary-button" style={{ flex: 1, background: 'white', border: '1px solid #ddd', borderRadius: '30px', padding: '12px', cursor: 'pointer' }}>Bekor qilish</button>
               </div>
             </div>
           </div>
@@ -1666,58 +2220,48 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
 
         {/* Logout Confirmation Modal */}
         {showLogoutConfirm && (
-          <div className="logout-modal-overlay">
-            <div className="logout-modal">
-              <div className="logout-modal-icon">
+          <div className="logout-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div className="logout-modal" style={{ background: 'white', borderRadius: '32px', width: '90%', maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
+              <div className="logout-modal-icon" style={{ color: '#ef4444', marginBottom: '16px' }}>
                 <FiLogOut size={48} />
               </div>
               <h3>Chiqishni tasdiqlaysizmi?</h3>
               <p>Hisobingizdan chiqish arafasidasiz. Avtomatik ravishda {logoutTimer} soniyadan so'ng chiqiladi.</p>
               
-              <div className="logout-reason">
-                <label>Chiqish sababi (ixtiyoriy):</label>
+              <div className="logout-reason" style={{ margin: '20px 0' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', color: '#666' }}>Chiqish sababi (ixtiyoriy):</label>
                 <select 
                   value={logoutReason} 
                   onChange={(e) => setLogoutReason(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #ddd' }}
                 >
                   <option value="">Tanlang...</option>
                   <option value="ish_tugadi">Ish tugadi</option>
                   <option value="tanaffus">Tanaffus</option>
                   <option value="boshqa_device">Boshqa qurilmada kirish</option>
                   <option value="xavfsizlik">Xavfsizlik sabablari</option>
-                  <option value="boshqa">Boshqa</option>
                 </select>
               </div>
               
-              <div className="logout-timer">
-                <div className="timer-circle">
-                  <svg width="100" height="100" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+              <div className="logout-timer" style={{ margin: '20px 0' }}>
+                <div className="timer-circle" style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto' }}>
+                  <svg width="80" height="80" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" strokeWidth="6" />
                     <circle 
                       cx="50" cy="50" r="45" fill="none" 
-                      stroke="#ef4444" strokeWidth="8" strokeLinecap="round"
+                      stroke="#ef4444" strokeWidth="6" strokeLinecap="round"
                       strokeDasharray="283"
                       strokeDashoffset={283 - (283 * (logoutTimer / 30))}
                       transform="rotate(-90 50 50)"
                     />
                   </svg>
-                  <span className="timer-text">{logoutTimer}s</span>
+                  <span className="timer-text" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '18px', fontWeight: 'bold' }}>{logoutTimer}s</span>
                 </div>
               </div>
               
-              <div className="logout-modal-actions">
-                <button 
-                  className="cancel-logout-btn"
-                  onClick={handleCancelLogout}
-                >
-                  Bekor qilish
-                </button>
-                <button 
-                  className="confirm-logout-btn"
-                  onClick={handleLogoutClick}
-                >
-                  Chiqish
-                </button>
+              <div className="logout-modal-actions" style={{ display: 'flex', gap: '12px' }}>
+                <button className="cancel-logout-btn" onClick={handleCancelLogout} style={{ flex: 1, padding: '12px', borderRadius: '30px', border: '1px solid #ddd', background: 'white', cursor: 'pointer' }}>Bekor qilish</button>
+                <button className="confirm-logout-btn" onClick={handleLogoutClick} style={{ flex: 1, padding: '12px', borderRadius: '30px', background: '#ef4444', color: 'white', border: 'none', cursor: 'pointer' }}>Chiqish</button>
               </div>
             </div>
           </div>
@@ -1725,61 +2269,39 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
 
         {/* Notification Modal */}
         {showNotificationModal && (
-          <div className="notification-modal" onClick={() => setShowNotificationModal(false)}>
-            <div className="notification-modal-content" onClick={e => e.stopPropagation()}>
-              <div className="notification-modal-header">
+          <div className="notification-modal" onClick={() => setShowNotificationModal(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div className="notification-modal-content" onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '32px', width: '90%', maxWidth: '500px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+              <div className="notification-modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid #eee' }}>
                 <h3>Xabarlar</h3>
-                <button 
-                  className="close-notification-modal"
-                  onClick={() => setShowNotificationModal(false)}
-                >
+                <button className="close-notification-modal" onClick={() => setShowNotificationModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                   <AiOutlineClose size={20} />
                 </button>
               </div>
               
-              <div className="notification-list">
+              <div className="notification-list" style={{ flex: 1, overflowY: 'auto' }}>
                 {notifications.length > 0 ? (
                   notifications.map(notification => (
                     <div 
                       key={notification.id} 
                       className={`notification-item ${notification.read ? '' : 'unread'}`}
                       onClick={() => handleNotificationAction(notification)}
+                      style={{ display: 'flex', gap: '14px', padding: '16px', borderBottom: '1px solid #eee' }}
                     >
-                      <div className={`notification-icon ${notification.type}`}>
+                      <div className={`notification-icon ${notification.type}`} style={{ width: '44px', height: '44px', borderRadius: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: notification.type === 'appointment' ? '#4361ee20' : '#10b98120', flexShrink: 0 }}>
                         {getNotificationIcon(notification.type)}
                       </div>
-                      <div className="notification-content">
-                        <h4>{notification.title}</h4>
-                        <p>{notification.message}</p>
-                        <div className="notification-time">
-                          {!notification.read && <span className="notification-dot"></span>}
+                      <div className="notification-content" style={{ flex: 1 }}>
+                        <h4 style={{ margin: 0 }}>{notification.title}</h4>
+                        <p style={{ margin: '4px 0', fontSize: '13px', color: '#666' }}>{notification.message}</p>
+                        <div className="notification-time" style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                          {!notification.read && <span className="notification-dot" style={{ display: 'inline-block', width: '6px', height: '6px', background: '#4361ee', borderRadius: '3px', marginRight: '6px' }}></span>}
                           {notification.time}
-                        </div>
-                        <div className="notification-actions">
-                          <button 
-                            className="notification-action-btn primary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              markAsRead(notification.id);
-                            }}
-                          >
-                            <FiCheck /> O'qildi
-                          </button>
-                          <button 
-                            className="notification-action-btn secondary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteNotification(notification.id);
-                            }}
-                          >
-                            <FiTrash2 /> O'chirish
-                          </button>
                         </div>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <div className="notification-empty">
+                  <div className="notification-empty" style={{ textAlign: 'center', padding: '48px', color: '#999' }}>
                     <FiBell size={48} />
                     <h4>Xabarlar yo'q</h4>
                     <p>Hozircha yangi xabarlar mavjud emas</p>
@@ -1788,11 +2310,11 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
               </div>
               
               {notifications.length > 0 && (
-                <div className="notification-actions-bar">
-                  <button className="mark-all-read-btn" onClick={markAllAsRead}>
+                <div className="notification-actions-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderTop: '1px solid #eee' }}>
+                  <button className="mark-all-read-btn" onClick={markAllAsRead} style={{ background: 'none', border: 'none', color: '#4361ee', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <FiCheck /> Hammasini o'qilgan qilish
                   </button>
-                  <div className="notification-count">
+                  <div className="notification-count" style={{ fontSize: '13px', color: '#666' }}>
                     {notificationBadgeCount} ta o'qilmagan
                   </div>
                 </div>
@@ -1803,8 +2325,8 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
 
         {/* Loading Overlay */}
         {isLoading && (
-          <div className="loading-screen">
-            <div className="loader"></div>
+          <div className="loading-screen" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+            <div className="loader" style={{ width: '48px', height: '48px', border: '3px solid #e0e0e0', borderTopColor: '#4361ee', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
           </div>
         )}
       </div>
