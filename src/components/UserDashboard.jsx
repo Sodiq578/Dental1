@@ -1129,7 +1129,7 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
         )}
 
         {/* Search Bar */}
-        <div className="search-bar" style={{ marginBottom: '20px' }}>
+        <div className=" " style={{ marginBottom: '20px' }}>
           <div style={{ position: 'relative' }}>
             <FiSearch style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
             <input 
@@ -1227,54 +1227,30 @@ Tashakkur! Sizning to'lovingiz muvaffaqiyatli qabul qilindi.
           )}
 
           {/* Charts - Stats Tab */}
-          {activeTab === "stats" && (
+       {activeTab === "stats" && (
             <div className="charts-wrapper">
               <div className="chart-box">
                 <h3>Oylar bo'yicha uchrashuvlar</h3>
                 <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={treatmentsByMonth}>
+                  <BarChart data={[{ month: 'Yan', count: 2 }, { month: 'Fev', count: 3 }, { month: 'Mar', count: 1 }, { month: 'Apr', count: 4 }, { month: 'May', count: 2 }, { month: 'Iyun', count: 3 }]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`${value} ta`, 'Soni']} />
-                    <Bar dataKey="count" fill="#4361ee" radius={[8, 8, 0, 0]} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#4361ee" radius={[8,8,0,0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div className="chart-box">
-                <h3>Muolaja turlari</h3>
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie 
-                      data={treatmentTypes} 
-                      dataKey="value" 
-                      outerRadius={90} 
-                      label={({name, percent}) => `${name} ${(percent*100).toFixed(0)}%`}
-                    >
-                      {treatmentTypes.map((_, i) => (
-                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${value} ta`, 'Soni']} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="chart-box full-width">
                 <h3>To'lovlar tarixi</h3>
                 <ResponsiveContainer width="100%" height={280}>
-                  <AreaChart data={paymentTimeline}>
+                  <LineChart data={paymentHistory.length > 0 ? paymentHistory : [{ date: 'Yan', amount: 500000 }, { date: 'Fev', amount: 750000 }]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`${value.toLocaleString()} UZS`, 'Summa']} />
-                    <Area 
-                      type="monotone" 
-                      dataKey="amount" 
-                      stroke="#10b981" 
-                      fill="#10b981" 
-                      fillOpacity={0.2}
-                    />
-                  </AreaChart>
+                    <Tooltip />
+                    <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={2} />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </div>
