@@ -94,7 +94,7 @@ h1, h2, h3, h4, h5, h6 {
     width: calc(100% - var(--sidebar-width));
 }
 
-/* Patient main stillari (Sidebarsiz) */
+
 .patient-main {
     margin-left: 0;
     width: 100%;
