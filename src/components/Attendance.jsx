@@ -25,7 +25,8 @@ import {
   FaSave,
   FaTimesCircle,
   FaArrowLeft,
-  FaArrowRight
+  FaArrowRight,
+  FaPrint
 } from "react-icons/fa";
 import "./Attendance.css";
 
@@ -447,7 +448,26 @@ const Attendance = () => {
 
         {activeTab === 'reports' && (
           <div className="reports-section">
-            <div className="section-header"><h2><FaChartBar /> Hisobotlar</h2><div className="report-actions"><button className="report-btn"><FaPrint /> Chop etish</button><button className="report-btn"><FaDownload /> Yuklab olish</button></div></div>
+            <div className="section-header">
+              <h2><FaChartBar /> Hisobotlar</h2>
+              <div className="report-actions">
+                <button className="report-btn" onClick={() => window.print()}><FaPrint /> Chop etish</button>
+                <button className="report-btn" onClick={() => {
+                  const reportData = {
+                    presentCount, lateCount, absentCount,
+                    totalRecords: records.length,
+                    employees: employees.length
+                  };
+                  const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `hisobot_${today}.json`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}><FaDownload /> Yuklab olish</button>
+              </div>
+            </div>
             <div className="stats-cards">
               <div className="stat-card"><div className="stat-icon present"><FaUsers /></div><div className="stat-content"><h3>{presentCount}</h3><p>Bugun Kelgan</p></div></div>
               <div className="stat-card"><div className="stat-icon late"><FaClock /></div><div className="stat-content"><h3>{lateCount}</h3><p>Kechikkan</p></div></div>
@@ -465,10 +485,23 @@ const Attendance = () => {
       {showCamera && (
         <div className="camera-modal">
           <div className="camera-content">
-            <div className="camera-header"><h3><FaCameraRetro /> {photoFor?.type === 'employee' ? 'Xodim rasmi' : photoFor?.type === 'checkin' ? 'Kirish rasmi' : 'Chiqish rasmi'}</h3><button className="close-btn" onClick={() => { setShowCamera(false); if (videoRef.current?.srcObject) { videoRef.current.srcObject.getTracks().forEach(track => track.stop()); } }}><FaTimes /></button></div>
-            <div className="camera-preview"><video ref={videoRef} autoPlay playsInline className="camera-video" /><canvas ref={canvasRef} width="640" height="480" style={{display: 'none'}} /></div>
-            <div className="camera-controls"><button className="capture-btn" onClick={capturePhoto}><FaCamera /> Rasm Tushirish</button><button className="cancel-btn" onClick={() => { setShowCamera(false); if (videoRef.current?.srcObject) { videoRef.current.srcObject.getTracks().forEach(track => track.stop()); } }}><FaTimes /> Bekor qilish</button></div>
-            <div className="camera-instructions"><p>📸 Yuzingizni kameraga to'g'ri yo'naltiring</p><p>🌞 Yorug'lik yaxshi bo'lsin</p><p>😊 Tabassim qiling</p></div>
+            <div className="camera-header">
+              <h3><FaCameraRetro /> {photoFor?.type === 'employee' ? 'Xodim rasmi' : photoFor?.type === 'checkin' ? 'Kirish rasmi' : 'Chiqish rasmi'}</h3>
+              <button className="close-btn" onClick={() => { setShowCamera(false); if (videoRef.current?.srcObject) { videoRef.current.srcObject.getTracks().forEach(track => track.stop()); } }}><FaTimes /></button>
+            </div>
+            <div className="camera-preview">
+              <video ref={videoRef} autoPlay playsInline className="camera-video" />
+              <canvas ref={canvasRef} width="640" height="480" style={{display: 'none'}} />
+            </div>
+            <div className="camera-controls">
+              <button className="capture-btn" onClick={capturePhoto}><FaCamera /> Rasm Tushirish</button>
+              <button className="cancel-btn" onClick={() => { setShowCamera(false); if (videoRef.current?.srcObject) { videoRef.current.srcObject.getTracks().forEach(track => track.stop()); } }}><FaTimes /> Bekor qilish</button>
+            </div>
+            <div className="camera-instructions">
+              <p>📸 Yuzingizni kameraga to'g'ri yo'naltiring</p>
+              <p>🌞 Yorug'lik yaxshi bo'lsin</p>
+              <p>😊 Tabassim qiling</p>
+            </div>
           </div>
         </div>
       )}
@@ -476,18 +509,40 @@ const Attendance = () => {
       {showPhotoModal && capturedPhoto && (
         <div className="photo-modal">
           <div className="photo-content">
-            <div className="photo-header"><h3>Rasmni Ko'rish</h3><button className="close-btn" onClick={() => { setShowPhotoModal(false); setCapturedPhoto(null); }}><FaTimes /></button></div>
-            <div className="photo-preview"><img src={capturedPhoto} alt="Captured" ref={photoRef} /></div>
-            <div className="photo-actions"><button className="save-btn" onClick={savePhoto}><FaSave /> Saqlash</button><button className="retake-btn" onClick={() => { setShowPhotoModal(false); setShowCamera(true); startCamera(); }}><FaCamera /> Qayta Tushirish</button><button className="cancel-btn" onClick={() => { setShowPhotoModal(false); setCapturedPhoto(null); setPhotoFor(null); }}><FaTimesCircle /> Bekor qilish</button></div>
+            <div className="photo-header">
+              <h3>Rasmni Ko'rish</h3>
+              <button className="close-btn" onClick={() => { setShowPhotoModal(false); setCapturedPhoto(null); }}><FaTimes /></button>
+            </div>
+            <div className="photo-preview">
+              <img src={capturedPhoto} alt="Captured" ref={photoRef} />
+            </div>
+            <div className="photo-actions">
+              <button className="save-btn" onClick={savePhoto}><FaSave /> Saqlash</button>
+              <button className="retake-btn" onClick={() => { setShowPhotoModal(false); setShowCamera(true); startCamera(); }}><FaCamera /> Qayta Tushirish</button>
+              <button className="cancel-btn" onClick={() => { setShowPhotoModal(false); setCapturedPhoto(null); setPhotoFor(null); }}><FaTimesCircle /> Bekor qilish</button>
+            </div>
           </div>
         </div>
       )}
 
       <footer className="app-footer">
         <div className="footer-content">
-          <div className="footer-info"><FaMobileAlt className="footer-icon" /><div><h4>Smart Attendance System</h4><p>Avtomatik rasmli ish vaqti monitoringi</p></div></div>
-          <div className="footer-stats"><div className="footer-stat"><FaUsers /><span>{employees.length} xodim</span></div><div className="footer-stat"><FaDatabase /><span>{records.length} yozuv</span></div><div className="footer-stat"><FaCamera /><span>{records.filter(r => r.photo).length} rasm</span></div></div>
-          <div className="footer-actions"><button className="footer-btn" onClick={() => setActiveTab('checkin')}><FaSignInAlt /> Kirish</button><button className="footer-btn" onClick={() => { const randomEmp = employees[Math.floor(Math.random() * employees.length)]; setPhotoFor({ type: 'checkin', employeeId: randomEmp.id, method: 'demo' }); setShowCamera(true); startCamera(); }}><FaCamera /> Demo</button></div>
+          <div className="footer-info">
+            <FaMobileAlt className="footer-icon" />
+            <div>
+              <h4>Smart Attendance System</h4>
+              <p>Avtomatik rasmli ish vaqti monitoringi</p>
+            </div>
+          </div>
+          <div className="footer-stats">
+            <div className="footer-stat"><FaUsers /><span>{employees.length} xodim</span></div>
+            <div className="footer-stat"><FaDatabase /><span>{records.length} yozuv</span></div>
+            <div className="footer-stat"><FaCamera /><span>{records.filter(r => r.photo).length} rasm</span></div>
+          </div>
+          <div className="footer-actions">
+            <button className="footer-btn" onClick={() => setActiveTab('checkin')}><FaSignInAlt /> Kirish</button>
+            <button className="footer-btn" onClick={() => { const randomEmp = employees[Math.floor(Math.random() * employees.length)]; setPhotoFor({ type: 'checkin', employeeId: randomEmp.id, method: 'demo' }); setShowCamera(true); startCamera(); }}><FaCamera /> Demo</button>
+          </div>
         </div>
       </footer>
     </div>
