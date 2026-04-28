@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  FiEdit, FiTrash2, FiPlus, FiX, FiSearch, 
+  FiEdit, FiTrash2, FiPlus, FiX, 
   FiCalendar, FiClock, FiUser, FiPhone, 
-  FiActivity, FiArrowRight, FiDownload, FiUpload,
+  FiActivity, FiArrowRight,
   FiChevronLeft, FiChevronRight
 } from 'react-icons/fi';
 import { 
@@ -10,11 +10,7 @@ import {
   saveToLocalStorage, 
   validateStoredPatients, 
   sanitizePatientData, 
-  validatePatientData, 
-  exportPatientsData, 
-  importPatientsData,
-  exportAppointmentsData,
-  importAppointmentsData,
+  validatePatientData,
   sendTelegramMessage
 } from '../utils';
 import './Appointments.css';
@@ -58,6 +54,40 @@ const Appointments = () => {
     saveToLocalStorage('patients', patients);
   }, [patients]);
 
+  const sendSmsReminder = useCallback((app) => {
+    const patientName = getPatientName(app.patientId);
+    const message = `Eslatma: Hurmatli ${patientName}, uchrashuvingiz ${app.date} ${app.time} da. Telefon: ${app.phone}`;
+    console.log(`SMS yuborildi: ${message}`);
+    alert(`SMS yuborildi: ${message}`);
+    const patient = patients.find(p => String(p.id) === String(app.patientId));
+    if (patient && patient.telegram) {
+      sendTelegramMessage(patient.telegram, message);
+    } else {
+      sendTelegramMessage('5838205785', `Bemor ${patientName} uchun eslatma: ${message} (Telegram yoq)`);
+    }
+  }, [patients]);
+
+  const setupSmsReminder = useCallback((app) => {
+    const appDateTime = new Date(`${app.date}T${app.time}`);
+    const now = new Date();
+    const reminderTime = new Date(appDateTime.getTime() - (2 * 60 * 1000));
+    if (reminderTime > now) {
+      const timeoutId = setTimeout(() => {
+        sendSmsReminder(app);
+      }, reminderTime - now);
+      setSmsTimers((prev) => ({ ...prev, [app.id]: timeoutId }));
+    }
+  }, [sendSmsReminder]);
+
+  useEffect(() => {
+    appointments.forEach(app => {
+      setupSmsReminder(app);
+    });
+    return () => {
+      Object.values(smsTimers).forEach(timer => clearTimeout(timer));
+    };
+  }, [appointments, setupSmsReminder]);
+
   const openModal = (app = null, slotTime = null) => {
     const appData = app
       ? { ...app, prescription: app.prescription || '' }
@@ -98,16 +128,6 @@ const Appointments = () => {
     setError('');
     setSuccessMessage('');
     setNewPatientMode(false);
-    setNewPatient({
-      name: '',
-      phone: '',
-      gender: '',
-      address: '',
-      dob: '',
-      note: '',
-      telegram: '',
-      prescriptions: []
-    });
     setSelectedPatient(null);
     setOriginalApp(null);
   };
@@ -120,6 +140,12 @@ const Appointments = () => {
   const closeDetailsModal = () => {
     setDetailsModalOpen(false);
     setSelectedDetailsApp(null);
+  };
+
+  const getPatientName = (id) => {
+    if (!id) return 'Noma’lum bemor';
+    const p = patients.find((p) => String(p.id) === String(id));
+    return p ? p.name || 'Noma’lum bemor' : 'Noma’lum bemor';
   };
 
   const handleSubmit = (e) => {
@@ -176,14 +202,14 @@ const Appointments = () => {
     const prescriptionChanged = newApp.prescription.trim() !== '' && 
       (isNewApp || newApp.prescription !== (originalApp?.prescription || ''));
 
-    if (prescriptionChanged) {
+    if (prescriptionChanged && patientIndex !== -1) {
       const newPrescription = {
         appointmentId: newApp.id,
         date: newApp.date,
         procedure: newApp.procedure,
         text: newApp.prescription
       };
-      updatedPatients[patientIndex].prescriptions.push(newPrescription);
+      updatedPatients[patientIndex].prescriptions = [...(updatedPatients[patientIndex].prescriptions || []), newPrescription];
       updatedPatients[patientIndex].updatedAt = new Date().toISOString();
     }
 
@@ -200,82 +226,41 @@ const Appointments = () => {
 
     const patient = newPatientMode ? newPatient : patients.find(p => String(p.id) === String(patientId));
     const adminChatId = '5838205785';
-    const isNew = !currentApp.id;
 
- if (patient) {
-  let messageParts = [];
-
-  if (isNew) {
-    messageParts.push(`✅ Sizning uchrashuvingiz ${newApp.date} kuni, soat ${newApp.time} da rejalashtirildi.\n🔹 Jarayon: ${newApp.procedure}.`);
-  } else {
-    messageParts.push(`✏️ Uchrashuvingiz yangilandi:\n📅 Sana: ${newApp.date}\n🕒 Vaqt: ${newApp.time}\n🔹 Jarayon: ${newApp.procedure}`);
-  }
-
-  if (newApp.nextVisit && (isNew || newApp.nextVisit !== (originalApp?.nextVisit || ''))) {
-    messageParts.push(`📌 Keyingi kelish sanasi: ${newApp.nextVisit}`);
-  }
-
-  if (prescriptionChanged) {
-    messageParts.push(`💊 Retsept: ${newApp.prescription}`);
-  }
-
-  if (!isNew && newApp.status !== originalApp.status) {
-    messageParts.push(`📋 Uchrashuv statusi: ${newApp.status}`);
-  }
-
-  const footer = "\n\n📍 SDK DENTAL klinikasi\n📞 Qo‘shimcha ma’lumot uchun bog‘laning: +998 ** *** ** **\n\n🦷 Sog‘lig’ingiz biz uchun muhim!";
-
-  if (patient.telegram) {
-    if (messageParts.length > 0) {
-      const message = `Hurmatli ${patient.name},\n\n${messageParts.join('\n')}${footer}`;
-      sendTelegramMessage(patient.telegram, message);
+    if (patient) {
+      let messageParts = [];
+      if (isNewApp) {
+        messageParts.push(`✅ Sizning uchrashuvingiz ${newApp.date} kuni, soat ${newApp.time} da rejalashtirildi.\n🔹 Jarayon: ${newApp.procedure}.`);
+      } else {
+        messageParts.push(`✏️ Uchrashuvingiz yangilandi:\n📅 Sana: ${newApp.date}\n🕒 Vaqt: ${newApp.time}\n🔹 Jarayon: ${newApp.procedure}`);
+      }
+      if (newApp.nextVisit && (isNewApp || newApp.nextVisit !== (originalApp?.nextVisit || ''))) {
+        messageParts.push(`📌 Keyingi kelish sanasi: ${newApp.nextVisit}`);
+      }
+      if (prescriptionChanged) {
+        messageParts.push(`💊 Retsept: ${newApp.prescription}`);
+      }
+      if (!isNewApp && newApp.status !== (originalApp?.status || '')) {
+        messageParts.push(`📋 Uchrashuv statusi: ${newApp.status}`);
+      }
+      const footer = "\n\n📍 SDK DENTAL klinikasi\n📞 Qo‘shimcha ma’lumot uchun bog‘laning: +998 ** *** ** **\n\n🦷 Sog‘lig’ingiz biz uchun muhim!";
+      if (patient.telegram) {
+        if (messageParts.length > 0) {
+          const message = `Hurmatli ${patient.name},\n\n${messageParts.join('\n')}${footer}`;
+          sendTelegramMessage(patient.telegram, message);
+        }
+      } else {
+        const adminMessage = `📢 Yangi uchrashuv qo‘shildi/yangilandi:\n\n👤 Bemor: ${patient.name}\n📅 Sana: ${newApp.date}\n🕒 Vaqt: ${newApp.time}\n🔹 Jarayon: ${newApp.procedure}\n⚠️ Telegram mavjud emas` +
+          (messageParts.length > 1 ? `\n\n${messageParts.slice(1).join('\n')}` : '') +
+          `\n\n🦷 SDK DENTAL tizimi`;
+        sendTelegramMessage(adminChatId, adminMessage);
+      }
     }
-  } else {
-    const adminMessage = `📢 Yangi uchrashuv qo‘shildi/yangilandi:\n\n👤 Bemor: ${patient.name}\n📅 Sana: ${newApp.date}\n🕒 Vaqt: ${newApp.time}\n🔹 Jarayon: ${newApp.procedure}\n⚠️ Telegram mavjud emas` +
-      (messageParts.length > 1 ? `\n\n${messageParts.slice(1).join('\n')}` : '') +
-      `\n\n🦷 SDK DENTAL tizimi`;
-    sendTelegramMessage(adminChatId, adminMessage);
-  }
-}
-
 
     setTimeout(() => {
       setSuccessMessage('');
       if (!error) closeModal();
     }, 3000);
-
-    setupSmsReminder(newApp);
-  };
-
-  const setupSmsReminder = (app) => {
-    const appDateTime = new Date(`${app.date}T${app.time}`);
-    const now = new Date();
-    const reminderTime = new Date(appDateTime.getTime() - (2 * 60 * 1000));
-    if (reminderTime > now) {
-      const timeoutId = setTimeout(() => {
-        sendSmsReminder(app);
-      }, reminderTime - now);
-      setSmsTimers((prev) => ({ ...prev, [app.id]: timeoutId }));
-    }
-  };
-
-  const sendSmsReminder = (app) => {
-    const patientName = getPatientName(app.patientId);
-    const message = `Eslatma: Hurmatli ${patientName}, uchrashuvingiz ${app.date} ${app.time} da. Telefon: ${app.phone}`;
-    console.log(`SMS yuborildi: ${message}`);
-    alert(`SMS yuborildi: ${message}`);
-    const patient = patients.find(p => String(p.id) === String(app.patientId));
-    if (patient && patient.telegram) {
-      sendTelegramMessage(patient.telegram, message);
-    } else {
-      sendTelegramMessage('5838205785', `Bemor ${patientName} uchun eslatma: ${message} (Telegram yoq)`);
-    }
-  };
-
-  const getPatientName = (id) => {
-    if (!id) return 'Noma’lum bemor';
-    const p = patients.find((p) => String(p.id) === String(id));
-    return p ? p.name || 'Noma’lum bemor' : 'Noma’lum bemor';
   };
 
   const deleteAppointment = (id) => {
@@ -286,7 +271,9 @@ const Appointments = () => {
       setTimeout(() => setSuccessMessage(''), 3000);
       if (smsTimers[id]) {
         clearTimeout(smsTimers[id]);
-        setSmsTimers((prev) => { delete prev[id]; return { ...prev }; });
+        const newTimers = { ...smsTimers };
+        delete newTimers[id];
+        setSmsTimers(newTimers);
       }
     }
   };
@@ -302,8 +289,7 @@ const Appointments = () => {
 
   const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedAppointments = filteredAppointments.slice(startIndex, endIndex);
+  const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + itemsPerPage);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -350,10 +336,6 @@ const Appointments = () => {
     return () => clearInterval(interval);
   }, [appointments]);
 
-  useEffect(() => {
-    appointments.forEach(setupSmsReminder);
-  }, [appointments]);
-
   const generateTimeSlots = () => {
     const slots = [];
     for (let hour = 9; hour < 18; hour++) {
@@ -379,69 +361,6 @@ const Appointments = () => {
 
   const slots = getSlotsForDate(selectedDate);
 
-  const handleExportPatients = () => {
-    const success = exportPatientsData();
-    if (success) {
-      setSuccessMessage('Bemorlar muvaffaqiyatli eksport qilindi');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
-  };
-
-  const handleImportPatients = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      importPatientsData(file, (success, message) => {
-        if (success) {
-          setPatients(validateStoredPatients(getFromLocalStorage('patients', [])));
-          setSuccessMessage(message);
-        } else {
-          setError(message);
-        }
-        setTimeout(() => {
-          setSuccessMessage('');
-          setError('');
-        }, 3000);
-      });
-    }
-  };
-
-  const handleExportAppointments = () => {
-    const success = exportAppointmentsData();
-    if (success) {
-      setSuccessMessage('Uchrashuvlar muvaffaqiyatli eksport qilindi');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
-  };
-
-  const handleImportAppointments = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      importAppointmentsData(file, (success, message) => {
-        if (success) {
-          setAppointments(getFromLocalStorage('appointments', []));
-          setSuccessMessage(message);
-        } else {
-          setError(message);
-        }
-        setTimeout(() => {
-          setSuccessMessage('');
-          setError('');
-        }, 3000);
-      });
-    }
-  };
-
-  const clearStorage = () => {
-    if (window.confirm('Barcha ma\'lumotlarni o\'chirishni xohlaysizmi?')) {
-      saveToLocalStorage('appointments', []);
-      saveToLocalStorage('patients', []);
-      setAppointments([]);
-      setPatients([]);
-      setSuccessMessage('Ma\'lumotlar muvaffaqiyatli tozalandi');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
-  };
-
   return (
     <div className="app-container">
       <div className="app-header">
@@ -455,7 +374,6 @@ const Appointments = () => {
       <div className="app-controls">
         <div className="search-bar">
           <input
-            id="search-input"
             type="text"
             placeholder="Bemor ismi yoki jarayon boʻyicha qidirish..."
             value={searchTerm}
@@ -550,7 +468,7 @@ const Appointments = () => {
             </thead>
             <tbody>
               {paginatedAppointments.map((app) => (
-                <tr key={app.id} onClick={() => openDetailsModal(app)}>
+                <tr key={app.id} onClick={() => openDetailsModal(app)} style={{ cursor: 'pointer' }}>
                   <td>{getPatientName(app.patientId)}</td>
                   <td>{app.date} {app.time}</td>
                   <td>{app.procedure}</td>
@@ -579,23 +497,9 @@ const Appointments = () => {
           </table>
           {totalPages > 1 && (
             <div className="pagination">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="pagination-button"
-              >
-                <FiChevronLeft /> Oldingi
-              </button>
-              <span className="pagination-info">
-                {currentPage} / {totalPages}
-              </span>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="pagination-button"
-              >
-                Keyingi <FiChevronRight />
-              </button>
+              <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className="pagination-button"><FiChevronLeft /> Oldingi</button>
+              <span className="pagination-info">{currentPage} / {totalPages}</span>
+              <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className="pagination-button">Keyingi <FiChevronRight /></button>
             </div>
           )}
         </div>
@@ -606,274 +510,46 @@ const Appointments = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <form onSubmit={handleSubmit}>
               <div className="modal-header">
-                <h2>{currentApp.id ? 'Uchrashuvni tahrirlash' : 'Yangi uchrashuv qoʻshish'}</h2>
-                <button type="button" onClick={closeModal} className="modal-close-button">
-                  <FiX />
-                </button>
+                <h2>{currentApp?.id ? 'Uchrashuvni tahrirlash' : 'Yangi uchrashuv qoʻshish'}</h2>
+                <button type="button" onClick={closeModal} className="modal-close-button"><FiX /></button>
               </div>
-
               {error && <div className="error-alert">{error}</div>}
-              {successMessage && <div className="success-alert">{successMessage}</div>}
-
               <div className="form-group">
-                <label htmlFor="patient-select" className="input-label">
-                  <FiUser className="input-icon" /> Bemor ismi *
-                </label>
+                <label className="input-label"><FiUser /> Bemor ismi *</label>
                 {!newPatientMode ? (
                   <>
-                    <select
-                      id="patient-select"
-                      value={currentApp.patientId}
-                      onChange={(e) => {
-                        const selPatient = patients.find((p) => String(p.id) === String(e.target.value));
-                        setSelectedPatient(selPatient);
-                        setCurrentApp({
-                          ...currentApp,
-                          patientId: e.target.value,
-                          phone: selPatient?.phone || '',
-                        });
-                      }}
-                      required={!newPatientMode}
-                    >
+                    <select value={currentApp?.patientId || ''} onChange={(e) => {
+                      const selPatient = patients.find((p) => String(p.id) === String(e.target.value));
+                      setSelectedPatient(selPatient);
+                      setCurrentApp({ ...currentApp, patientId: e.target.value, phone: selPatient?.phone || '' });
+                    }} required>
                       <option value="">Bemor tanlang</option>
-                      {patients.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name || `Bemor ID: ${p.id}`} {p.phone ? `(${formatPhoneNumber(p.phone)})` : ''}
-                        </option>
-                      ))}
+                      {patients.map((p) => (<option key={p.id} value={p.id}>{p.name || `Bemor ID: ${p.id}`} {p.phone ? `(${formatPhoneNumber(p.phone)})` : ''}</option>))}
                     </select>
-                    <button
-                      type="button"
-                      className="action-button switch-button"
-                      onClick={() => setNewPatientMode(true)}
-                    >
-                      Yangi bemor kiritish
-                    </button>
-                    {selectedPatient && selectedPatient.prescriptions.length > 0 && (
-                      <div className="previous-prescriptions">
-                        <h4>Oldingi retseptlar:</h4>
-                        <ul>
-                          {selectedPatient.prescriptions.sort((a, b) => new Date(b.date) - new Date(a.date)).map((pres, index) => (
-                            <li key={index}>
-                              {pres.date} - {pres.procedure}: {pres.text}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    <button type="button" className="action-button switch-button" onClick={() => setNewPatientMode(true)}>Yangi bemor kiritish</button>
+                    {selectedPatient?.prescriptions?.length > 0 && (<div className="previous-prescriptions"><h4>Oldingi retseptlar:</h4><ul>{selectedPatient.prescriptions.sort((a, b) => new Date(b.date) - new Date(a.date)).map((pres, index) => (<li key={index}>{pres.date} - {pres.procedure}: {pres.text}</li>))}</ul></div>)}
                   </>
                 ) : (
                   <>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label htmlFor="new-patient-name" className="input-label">Ism *</label>
-                        <input
-                          id="new-patient-name"
-                          type="text"
-                          placeholder="Bemor ismi"
-                          value={newPatient.name}
-                          onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label htmlFor="new-patient-phone" className="input-label">Telefon *</label>
-                        <input
-                          id="new-patient-phone"
-                          type="tel"
-                          placeholder="+998 90 123 45 67"
-                          value={newPatient.phone}
-                          onChange={(e) => {
-                            setNewPatient({ ...newPatient, phone: e.target.value });
-                            setCurrentApp({ ...currentApp, phone: e.target.value });
-                          }}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label htmlFor="new-patient-gender" className="input-label">Jins</label>
-                        <select
-                          id="new-patient-gender"
-                          value={newPatient.gender}
-                          onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}
-                        >
-                          <option value="">Jinsni tanlang</option>
-                          <option value="male">Erkak</option>
-                          <option value="female">Ayol</option>
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label htmlFor="new-patient-dob" className="input-label">Tug'ilgan sana</label>
-                        <input
-                          id="new-patient-dob"
-                          type="date"
-                          value={newPatient.dob}
-                          onChange={(e) => setNewPatient({ ...newPatient, dob: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="new-patient-address" className="input-label">Manzil</label>
-                      <input
-                        id="new-patient-address"
-                        type="text"
-                        placeholder="Bemor manzili"
-                        value={newPatient.address}
-                        onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="new-patient-telegram" className="input-label">Telegram Chat ID</label>
-                      <input
-                        id="new-patient-telegram"
-                        type="text"
-                        placeholder="Telegram Chat ID (masalan: 5838205785)"
-                        value={newPatient.telegram}
-                        onChange={(e) => setNewPatient({ ...newPatient, telegram: e.target.value })}
-                      />
-                      <div className="input-hint">Bemor botga start bosgandan keyin olingan Chat ID ni kiriting</div>
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="new-patient-note" className="input-label">Izoh</label>
-                      <textarea
-                        id="new-patient-note"
-                        placeholder="Bemor haqida qoshimcha izohlar"
-                        value={newPatient.note}
-                        onChange={(e) => setNewPatient({ ...newPatient, note: e.target.value })}
-                        rows="3"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className="action-button switch-button"
-                      onClick={() => setNewPatientMode(false)}
-                    >
-                      Mavjud bemorni tanlash
-                    </button>
+                    <div className="form-grid"><div className="form-group"><label>Ism *</label><input type="text" placeholder="Bemor ismi" value={newPatient.name} onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })} required /></div><div className="form-group"><label>Telefon *</label><input type="tel" placeholder="+998 90 123 45 67" value={newPatient.phone} onChange={(e) => { setNewPatient({ ...newPatient, phone: e.target.value }); setCurrentApp({ ...currentApp, phone: e.target.value }); }} required /></div></div>
+                    <div className="form-grid"><div className="form-group"><label>Jins</label><select value={newPatient.gender} onChange={(e) => setNewPatient({ ...newPatient, gender: e.target.value })}><option value="">Jinsni tanlang</option><option value="male">Erkak</option><option value="female">Ayol</option></select></div><div className="form-group"><label>Tug'ilgan sana</label><input type="date" value={newPatient.dob} onChange={(e) => setNewPatient({ ...newPatient, dob: e.target.value })} /></div></div>
+                    <div className="form-group"><label>Manzil</label><input type="text" placeholder="Bemor manzili" value={newPatient.address} onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })} /></div>
+                    <div className="form-group"><label>Telegram Chat ID</label><input type="text" placeholder="Telegram Chat ID (masalan: 5838205785)" value={newPatient.telegram} onChange={(e) => setNewPatient({ ...newPatient, telegram: e.target.value })} /><div className="input-hint">Bemor botga start bosgandan keyin olingan Chat ID ni kiriting</div></div>
+                    <div className="form-group"><label>Izoh</label><textarea placeholder="Bemor haqida qoshimcha izohlar" value={newPatient.note} onChange={(e) => setNewPatient({ ...newPatient, note: e.target.value })} rows="3" /></div>
+                    <button type="button" className="action-button switch-button" onClick={() => setNewPatientMode(false)}>Mavjud bemorni tanlash</button>
                   </>
                 )}
-                <div className="input-hint">
-                  {!newPatientMode ? 'Uchrashuv uchun bemorni tanlang' : 'Yangi bemor ma\'lumotlarini kiriting'}
-                </div>
               </div>
-
-              {!newPatientMode && (
-                <div className="form-group">
-                  <label htmlFor="phone-input" className="input-label">
-                    <FiPhone className="input-icon" /> Telefon raqami
-                  </label>
-                  <input
-                    id="phone-input"
-                    type="tel"
-                    placeholder="Telefon raqami (masalan: +998 90 123 45 67)"
-                    value={currentApp.phone}
-                    onChange={(e) => setCurrentApp({ ...currentApp, phone: e.target.value })}
-                  />
-                  <div className="input-hint">Xalqaro formatda kiriting, majburiy emas</div>
-                </div>
-              )}
-
               <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="date-input" className="input-label">
-                    <FiCalendar className="input-icon" /> Uchrashuv sanasi *
-                  </label>
-                  <input
-                    id="date-input"
-                    type="date"
-                    value={currentApp.date}
-                    onChange={(e) => setCurrentApp({ ...currentApp, date: e.target.value })}
-                    required
-                  />
-                  <div className="input-hint">Uchrashuv bo‘ladigan sanani tanlang</div>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="time-input" className="input-label">
-                    <FiClock className="input-icon" /> Uchrashuv vaqti *
-                  </label>
-                  <input
-                    id="time-input"
-                    type="time"
-                    value={currentApp.time}
-                    onChange={(e) => setCurrentApp({ ...currentApp, time: e.target.value })}
-                    required
-                  />
-                  <div className="input-hint">Uchrashuv vaqtini kiriting</div>
-                </div>
+                <div className="form-group"><label><FiCalendar /> Uchrashuv sanasi *</label><input type="date" value={currentApp?.date || ''} onChange={(e) => setCurrentApp({ ...currentApp, date: e.target.value })} required /></div>
+                <div className="form-group"><label><FiClock /> Uchrashuv vaqti *</label><input type="time" value={currentApp?.time || ''} onChange={(e) => setCurrentApp({ ...currentApp, time: e.target.value })} required /></div>
               </div>
-
-              <div className="form-group">
-                <label htmlFor="procedure-input" className="input-label">
-                  <FiActivity className="input-icon" /> Jarayon nomi *
-                </label>
-                <input
-                  id="procedure-input"
-                  type="text"
-                  placeholder="Jarayon nomi (masalan: tish tekshiruvi)"
-                  value={currentApp.procedure}
-                  onChange={(e) => setCurrentApp({ ...currentApp, procedure: e.target.value })}
-                  required
-                />
-                <div className="input-hint">Bemor uchun rejalashtirilgan jarayonni kiriting</div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="status-input" className="input-label">Uchrashuv holati</label>
-                <select
-                  id="status-input"
-                  value={currentApp.status}
-                  onChange={(e) => setCurrentApp({ ...currentApp, status: e.target.value })}
-                >
-                  <option value="kutilmoqda">Kutilmoqda</option>
-                  <option value="amalga oshirildi">Amalga oshirildi</option>
-                  <option value="bekor qilindi">Bekor qilindi</option>
-                </select>
-                <div className="input-hint">Uchrashuvning joriy holatini tanlang</div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="next-visit-input" className="input-label">
-                  <FiArrowRight className="input-icon" /> Keyingi kelish sanasi
-                </label>
-                <input
-                  id="next-visit-input"
-                  type="date"
-                  value={currentApp.nextVisit}
-                  onChange={(e) => setCurrentApp({ ...currentApp, nextVisit: e.target.value })}
-                />
-                <div className="input-hint">Keyingi uchrashuv sanasini kiriting</div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="prescription-input" className="input-label">Retsept</label>
-                <textarea
-                  id="prescription-input"
-                  placeholder="Retsept ma'lumotlari (dorilar, tavsiyalar)"
-                  value={currentApp.prescription || ''}
-                  onChange={(e) => setCurrentApp({ ...currentApp, prescription: e.target.value })}
-                  rows="4"
-                />
-                <div className="input-hint">Retseptni kiriting (majburiy emas)</div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="notes-input" className="input-label">Izohlar</label>
-                <textarea
-                  id="notes-input"
-                  placeholder="Bemorning shikoyatlari yoki tavsiyalar"
-                  value={currentApp.notes}
-                  onChange={(e) => setCurrentApp({ ...currentApp, notes: e.target.value })}
-                  rows="4"
-                />
-                <div className="input-hint">Qo‘shimcha ma’lumotlarni kiriting</div>
-              </div>
-
-              <div className="modal-actions">
-                <button type="submit" className="primary-button">Saqlash</button>
-                <button type="button" onClick={closeModal} className="action-button">Bekor qilish</button>
-              </div>
+              <div className="form-group"><label><FiActivity /> Jarayon nomi *</label><input type="text" placeholder="Jarayon nomi (masalan: tish tekshiruvi)" value={currentApp?.procedure || ''} onChange={(e) => setCurrentApp({ ...currentApp, procedure: e.target.value })} required /></div>
+              <div className="form-group"><label>Uchrashuv holati</label><select value={currentApp?.status || 'kutilmoqda'} onChange={(e) => setCurrentApp({ ...currentApp, status: e.target.value })}><option value="kutilmoqda">Kutilmoqda</option><option value="amalga oshirildi">Amalga oshirildi</option><option value="bekor qilindi">Bekor qilindi</option></select></div>
+              <div className="form-group"><label><FiArrowRight /> Keyingi kelish sanasi</label><input type="date" value={currentApp?.nextVisit || ''} onChange={(e) => setCurrentApp({ ...currentApp, nextVisit: e.target.value })} /></div>
+              <div className="form-group"><label>Retsept</label><textarea placeholder="Retsept ma'lumotlari (dorilar, tavsiyalar)" value={currentApp?.prescription || ''} onChange={(e) => setCurrentApp({ ...currentApp, prescription: e.target.value })} rows="4" /></div>
+              <div className="form-group"><label>Izohlar</label><textarea placeholder="Bemorning shikoyatlari yoki tavsiyalar" value={currentApp?.notes || ''} onChange={(e) => setCurrentApp({ ...currentApp, notes: e.target.value })} rows="4" /></div>
+              <div className="modal-actions"><button type="submit" className="primary-button">Saqlash</button><button type="button" onClick={closeModal} className="action-button">Bekor qilish</button></div>
             </form>
           </div>
         </div>
@@ -882,12 +558,7 @@ const Appointments = () => {
       {detailsModalOpen && selectedDetailsApp && (
         <div className="modal-overlay" onClick={closeDetailsModal}>
           <div className="details-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="details-modal-header">
-              <h2>Uchrashuv tafsilotlari</h2>
-              <button type="button" onClick={closeDetailsModal} className="details-close-button">
-                <FiX />
-              </button>
-            </div>
+            <div className="details-modal-header"><h2>Uchrashuv tafsilotlari</h2><button type="button" onClick={closeDetailsModal} className="details-close-button"><FiX /></button></div>
             <div className="details-modal-content">
               <p><strong>Bemor:</strong> {getPatientName(selectedDetailsApp.patientId)}</p>
               <p><strong>Sana va Vaqt:</strong> {selectedDetailsApp.date} {selectedDetailsApp.time}</p>
@@ -901,14 +572,7 @@ const Appointments = () => {
               <p><strong>Yaratilgan sana:</strong> {new Date(selectedDetailsApp.createdAt).toLocaleString()}</p>
               <p><strong>Yangilangan sana:</strong> {selectedDetailsApp.updatedAt ? new Date(selectedDetailsApp.updatedAt).toLocaleString() : 'Yo\'q'}</p>
             </div>
-            <div className="modal-actions">
-              <button onClick={() => { closeDetailsModal(); openModal(selectedDetailsApp); }} className="primary-button">
-                Tahrirlash
-              </button>
-              <button onClick={closeDetailsModal} className="action-button">
-                Yopish
-              </button>
-            </div>
+            <div className="modal-actions"><button onClick={() => { closeDetailsModal(); openModal(selectedDetailsApp); }} className="primary-button">Tahrirlash</button><button onClick={closeDetailsModal} className="action-button">Yopish</button></div>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { FiCalendar, FiClock, FiUser, FiPhone, FiPlus, FiSearch } from 'react-icons/fi';
+import { FiCalendar, FiClock, FiUser, FiPhone, FiPlus } from 'react-icons/fi';
 import { AppContext } from '../App';
-import { addNewPatient, sendTelegramMessage, getFromLocalStorage } from '../utils';
+import { addNewPatient, sendTelegramMessage } from '../utils';
 import './PatientPortal.css';
 
 const PatientPortal = () => {
@@ -24,7 +24,6 @@ const PatientPortal = () => {
   const [selectedTime, setSelectedTime] = useState('');
   const [procedure, setProcedure] = useState('');
 
-  // Generate time slots (9:00 to 18:00, 30-minute intervals)
   const generateTimeSlots = () => {
     const slots = [];
     for (let hour = 9; hour < 18; hour++) {
@@ -36,41 +35,29 @@ const PatientPortal = () => {
     return slots;
   };
 
-  // Get available slots for the selected date
   const getSlotsForDate = (date) => {
     const timeSlots = generateTimeSlots();
     const booked = appointments
       .filter((app) => app.date === date && app.status !== 'bekor qilindi')
       .map((app) => app.time);
-
-    return timeSlots.map((slot) => ({
-      time: slot,
-      isBooked: booked.includes(slot),
-    }));
+    return timeSlots.map((slot) => ({ time: slot, isBooked: booked.includes(slot) }));
   };
 
   const slots = getSlotsForDate(selectedDate);
 
-  // Find the next available slot
   const findNextAvailableSlot = () => {
-    const today = new Date();
     let currentDate = new Date(selectedDate);
-    let foundSlot = null;
-
-    for (let i = 0; i < 30; i++) { // Check next 30 days
+    for (let i = 0; i < 30; i++) {
       const dateString = currentDate.toISOString().split('T')[0];
       const availableSlots = getSlotsForDate(dateString).filter(slot => !slot.isBooked);
       if (availableSlots.length > 0) {
-        foundSlot = { date: dateString, time: availableSlots[0].time };
-        break;
+        return { date: dateString, time: availableSlots[0].time };
       }
       currentDate.setDate(currentDate.getDate() + 1);
     }
-
-    return foundSlot;
+    return null;
   };
 
-  // Handle patient registration
   const handleRegister = (e) => {
     e.preventDefault();
     setError('');
@@ -90,85 +77,56 @@ const PatientPortal = () => {
     });
   };
 
-  // Handle appointment booking
-const handleBookAppointment = (e) => {
-  e.preventDefault();
-  setError('');
-  setSuccessMessage('');
+  const handleBookAppointment = (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
 
-  // 🔍 Validatsiya
-  if (!patientId) {
-    setError('Iltimos, avval roʻyxatdan oʻting.');
-    return;
-  }
-  if (!selectedTime) {
-    setError('Iltimos, vaqtni tanlang.');
-    return;
-  }
-  if (!procedure.trim()) {
-    setError('Iltimos, jarayon nomini kiriting.');
-    return;
-  }
+    if (!patientId) {
+      setError('Iltimos, avval roʻyxatdan oʻting.');
+      return;
+    }
+    if (!selectedTime) {
+      setError('Iltimos, vaqtni tanlang.');
+      return;
+    }
+    if (!procedure.trim()) {
+      setError('Iltimos, jarayon nomini kiriting.');
+      return;
+    }
 
-  // 🆕 Yangi uchrashuvni yaratish
-  const newAppointment = {
-    id: Date.now(),
-    patientId,
-    date: selectedDate,
-    time: selectedTime,
-    procedure,
-    status: 'kutilmoqda',
-    notes: '',
-    prescription: '',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    const newAppointment = {
+      id: Date.now(),
+      patientId,
+      date: selectedDate,
+      time: selectedTime,
+      procedure,
+      status: 'kutilmoqda',
+      notes: '',
+      prescription: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setAppointments([...appointments, newAppointment]);
+    setSuccessMessage('✅ Uchrashuv muvaffaqiyatli band qilindi!');
+
+    const patientMessage = `Hurmatli ${newPatient.name},\n\n✅ Sizning uchrashuvingiz ${selectedDate} kuni, soat ${selectedTime} da rejalashtirildi.\n🔹 Jarayon: ${procedure}\n\n📍 SDK DENTAL klinikasi\n📞 Qo‘shimcha ma’lumot uchun bog‘laning: +998 ***\n\n🦷 Sog‘lig’ingiz biz uchun muhim!`;
+
+    if (newPatient.telegram) {
+      sendTelegramMessage(newPatient.telegram, patientMessage);
+    }
+
+    const adminMessage = `📢 Yangi uchrashuv band qilindi:\n\n👤 Bemor: ${newPatient.name}\n📅 Sana: ${selectedDate}\n🕒 Vaqt: ${selectedTime}\n🔹 Jarayon: ${procedure}\n\n🦷 SDK DENTAL tizimi`;
+    sendTelegramMessage('5838205785', adminMessage);
+
+    setTimeout(() => {
+      setSuccessMessage('');
+      setSelectedTime('');
+      setProcedure('');
+    }, 3000);
   };
 
-  // 📋 Uchrashuvlar ro'yxatiga qo'shish
-  setAppointments([...appointments, newAppointment]);
-  setSuccessMessage('✅ Uchrashuv muvaffaqiyatli band qilindi!');
-
-  // 📲 Telegram xabari - Bemor uchun
-  const patientMessage = `
-Hurmatli ${newPatient.name},
-
-✅ Sizning uchrashuvingiz ${selectedDate} kuni, soat ${selectedTime} da rejalashtirildi.
-🔹 Jarayon: ${procedure}
-
-📍 SDK DENTAL klinikasi
-📞 Qo‘shimcha ma’lumot uchun bog‘laning: +998 ***
-
-🦷 Sog‘lig’ingiz biz uchun muhim!
-  `.trim();
-
-  if (newPatient.telegram) {
-    sendTelegramMessage(newPatient.telegram, patientMessage);
-  }
-
-  // 👩‍⚕️ Telegram xabari - Admin uchun
-  const adminMessage = `
-📢 Yangi uchrashuv band qilindi:
-
-👤 Bemor: ${newPatient.name}
-📅 Sana: ${selectedDate}
-🕒 Vaqt: ${selectedTime}
-🔹 Jarayon: ${procedure}
-
-🦷 SDK DENTAL tizimi
-  `.trim();
-
-  sendTelegramMessage('5838205785', adminMessage); // Admin chat ID
-
-  // 🧹 Tozalash
-  setTimeout(() => {
-    setSuccessMessage('');
-    setSelectedTime('');
-    setProcedure('');
-  }, 3000);
-};
-
-
-  // Handle request for next available slot
   const handleRequestNextSlot = () => {
     setError('');
     setSuccessMessage('');
@@ -194,7 +152,6 @@ Hurmatli ${newPatient.name},
     }
   };
 
-  // Clear messages after timeout
   useEffect(() => {
     if (successMessage || error) {
       const timer = setTimeout(() => {
@@ -206,110 +163,40 @@ Hurmatli ${newPatient.name},
   }, [successMessage, error]);
 
   return (
-    <div className="container">
+    <div className="patient-portal-container">
       <h1>Bemor Portali</h1>
 
-      {successMessage && (
-        <div className="bg-green-100">{successMessage}</div>
-      )}
-      {error && (
-        <div className="bg-red-100">{error}</div>
-      )}
+      {successMessage && <div className="success-message">{successMessage}</div>}
+      {error && <div className="error-message">{error}</div>}
 
       {showRegistration ? (
-        <div className="bg-white">
+        <div className="registration-form">
           <h2>Roʻyxatdan oʻtish</h2>
           <form onSubmit={handleRegister}>
-            <div>
-              <label><FiUser /> Ism *</label>
-              <input
-                type="text"
-                value={newPatient.name}
-                onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label><FiPhone /> Telefon *</label>
-              <input
-                type="tel"
-                value={newPatient.phone}
-                onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
-                placeholder="+998901234567"
-                required
-              />
-            </div>
-            <div>
-              <label>Telegram Chat ID (majburiy emas)</label>
-              <input
-                type="text"
-                value={newPatient.telegram}
-                onChange={(e) => setNewPatient({ ...newPatient, telegram: e.target.value })}
-                placeholder="Telegram Chat ID (masalan: 5838205785)"
-              />
-              <p className="text-sm text-gray-500">Botga /start buyrugʻini yuboring va Chat ID ni kiriting.</p>
-            </div>
-            <button type="submit" className="bg-blue-500">
-              <FiPlus /> Roʻyxatdan oʻtish
-            </button>
+            <div className="form-group"><label><FiUser /> Ism *</label><input type="text" value={newPatient.name} onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })} required /></div>
+            <div className="form-group"><label><FiPhone /> Telefon *</label><input type="tel" value={newPatient.phone} onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })} placeholder="+998901234567" required /></div>
+            <div className="form-group"><label>Telegram Chat ID (ixtiyoriy)</label><input type="text" value={newPatient.telegram} onChange={(e) => setNewPatient({ ...newPatient, telegram: e.target.value })} placeholder="5838205785" /><p className="hint">Botga /start buyrugʻini yuboring va Chat ID ni kiriting.</p></div>
+            <button type="submit" className="btn-primary"><FiPlus /> Roʻyxatdan oʻtish</button>
           </form>
         </div>
       ) : (
-        <div className="bg-white">
+        <div className="appointment-form">
           <h2>Uchrashuv band qilish</h2>
-          <div>
-            <label><FiCalendar /> Sana</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-            />
-          </div>
-          <div>
+          <div className="form-group"><label><FiCalendar /> Sana</label><input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} /></div>
+          <div className="time-slots">
             <h3>Boʻsh vaqtlar</h3>
-            <div className="grid">
+            <div className="slots-grid">
               {slots.map((slot) => (
-                <button
-                  key={slot.time}
-                  className={`p-2 ${slot.isBooked ? 'bg-gray-300' : 'bg-blue-100'}`}
-                  onClick={() => !slot.isBooked && setSelectedTime(slot.time)}
-                  disabled={slot.isBooked}
-                  aria-selected={selectedTime === slot.time}
-                >
+                <button key={slot.time} className={`time-slot ${slot.isBooked ? 'booked' : ''} ${selectedTime === slot.time ? 'selected' : ''}`} onClick={() => !slot.isBooked && setSelectedTime(slot.time)} disabled={slot.isBooked}>
                   {slot.time} {slot.isBooked ? '(Band)' : ''}
                 </button>
               ))}
             </div>
           </div>
           <form onSubmit={handleBookAppointment}>
-            <div>
-              <label><FiClock /> Tanlangan vaqt</label>
-              <input
-                type="text"
-                value={selectedTime}
-                readOnly
-              />
-            </div>
-            <div>
-              <label>Jarayon *</label>
-              <input
-                type="text"
-                value={procedure}
-                onChange={(e) => setProcedure(e.target.value)}
-                placeholder="Masalan: Tish tekshiruvi"
-                required
-              />
-            </div>
-            <button type="submit" className="bg-blue-500">
-              <FiPlus /> Uchrashuv band qilish
-            </button>
-            <button
-              type="button"
-              className="bg-green-500"
-              onClick={handleRequestNextSlot}
-            >
-              Keyingi boʻsh vaqt
-            </button>
+            <div className="form-group"><label><FiClock /> Tanlangan vaqt</label><input type="text" value={selectedTime} readOnly /></div>
+            <div className="form-group"><label>Jarayon *</label><input type="text" value={procedure} onChange={(e) => setProcedure(e.target.value)} placeholder="Masalan: Tish tekshiruvi" required /></div>
+            <div className="form-actions"><button type="submit" className="btn-primary"><FiPlus /> Uchrashuv band qilish</button><button type="button" className="btn-secondary" onClick={handleRequestNextSlot}>Keyingi boʻsh vaqt</button></div>
           </form>
         </div>
       )}
