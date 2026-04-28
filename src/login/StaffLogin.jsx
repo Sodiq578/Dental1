@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPhone, FiX, FiMail, FiArrowLeft, FiUser, FiShield, FiKey } from 'react-icons/fi';
+import { FiPhone, FiX, FiMail, FiArrowLeft, FiUser, FiShield, FiKey, FiCheck, FiAlertCircle, FiPhoneCall, FiSmartphone } from 'react-icons/fi';
 import { AppContext } from '../App';
 import { logLogin, getFromLocalStorage, saveToLocalStorage, sendTelegramMessage } from '../utils';
 import './StaffLogin.css';
@@ -20,10 +20,38 @@ const StaffLogin = ({ onLogin }) => {
   const [isFocused, setIsFocused] = useState({});
   const [autoVerify, setAutoVerify] = useState(true);
   const [tempUser, setTempUser] = useState(null);
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoStaffList, setDemoStaffList] = useState([
+    { id: 1, name: "Hamshira Zuhra Karimova", phone: "+998901234567", position: "Katta hamshira", chatId: "123456789" },
+    { id: 2, name: "Admin Botir Xo'jayev", phone: "+998902345678", position: "Admin", chatId: "987654321" },
+    { id: 3, name: "Xodim Nigora To'xtayeva", phone: "+998903456789", position: "Hisobchi", chatId: "555555555" },
+    { id: 4, name: "Dr. Ali Valiyev", phone: "+998904567890", position: "Bosh shifokor", chatId: "111111111" }
+  ]);
+  const [selectedDemoStaff, setSelectedDemoStaff] = useState(null);
 
   const navigate = useNavigate();
-  const { staff, setLogins } = useContext(AppContext);
+  const { staff, setLogins, setCurrentUser } = useContext(AppContext);
   const otpInputRefs = useRef([]);
+
+  // Tizim xodimlari ro'yxati
+  const systemStaff = Array.isArray(staff) && staff.length > 0 ? staff : demoStaffList.map(s => ({
+    id: s.id,
+    name: s.name,
+    phone: s.phone,
+    email: `${s.name.toLowerCase().replace(/\s/g, '')}@clinic.uz`,
+    role: s.position === 'Admin' ? 'admin' : s.position === 'Bosh shifokor' ? 'doctor' : 'staff',
+    permissions: {
+      patients: true,
+      appointments: true,
+      medications: true,
+      billing: s.position === 'Admin' || s.position === 'Hisobchi',
+      inventory: true,
+      reports: s.position === 'Admin' || s.position === 'Bosh shifokor',
+      admin: s.position === 'Admin'
+    },
+    branchId: 1,
+    telegram: s.chatId
+  }));
 
   // Timer effect
   useEffect(() => {
@@ -52,10 +80,107 @@ const StaffLogin = ({ onLogin }) => {
     }
   }, [isOtpMode]);
 
+  // Demo mode uchun demo staff tanlash
+  const handleDemoStaffSelect = (staffMember) => {
+    setSelectedDemoStaff(staffMember);
+    setPhone(staffMember.phone);
+    setTelegramChatId(staffMember.chatId);
+    setDemoMode(true);
+  };
+
+  // Demo rejimida tezkor kirish
+  const handleDemoLogin = () => {
+    if (!selectedDemoStaff) {
+      setError("Iltimos, demo xodimni tanlang!");
+      return;
+    }
+
+    setIsLoading(true);
+    
+    setTimeout(() => {
+      const demoUser = {
+        id: selectedDemoStaff.id,
+        name: selectedDemoStaff.name,
+        email: `${selectedDemoStaff.name.toLowerCase().replace(/\s/g, '')}@clinic.uz`,
+        phone: selectedDemoStaff.phone,
+        role: selectedDemoStaff.position === 'Admin' ? 'admin' : 
+               selectedDemoStaff.position === 'Bosh shifokor' ? 'doctor' : 'staff',
+        permissions: {
+          patients: true,
+          appointments: true,
+          medications: true,
+          billing: selectedDemoStaff.position === 'Admin' || selectedDemoStaff.position === 'Hisobchi',
+          inventory: true,
+          reports: selectedDemoStaff.position === 'Admin' || selectedDemoStaff.position === 'Bosh shifokor',
+          admin: selectedDemoStaff.position === 'Admin'
+        },
+        branchId: 1,
+        loginMethod: 'demo'
+      };
+      
+      if (onLogin) onLogin(demoUser);
+      if (setCurrentUser) setCurrentUser(demoUser);
+      
+      logLogin(demoUser, 'demo');
+      
+      if (setLogins) {
+        setLogins((prevLogins) => {
+          const newLogins = [
+            ...prevLogins,
+            {
+              id: Date.now(),
+              userId: demoUser.id,
+              name: demoUser.name,
+              email: demoUser.email,
+              phone: demoUser.phone,
+              role: demoUser.role,
+              timestamp: new Date().toISOString(),
+              loginMethod: 'demo',
+            },
+          ];
+          saveToLocalStorage('logins', newLogins);
+          return newLogins;
+        });
+      }
+      
+      setModalContent({
+        title: 'Demo rejimida kirish',
+        message: `👋 Xush kelibsiz, ${selectedDemoStaff.name}!\n\n📋 Lavozim: ${selectedDemoStaff.position}\n🎮 Demo rejimida tizimga kirdingiz.`,
+      });
+      setShowModal(true);
+      setTimeout(() => navigate('/'), 1500);
+      setIsLoading(false);
+    }, 1000);
+  };
+
   // Send OTP via Telegram
   const sendOtp = async (phoneNumber, chatId) => {
     try {
       const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      
+      // Demo rejimda test OTP ko'rsatish
+      if (demoMode || chatId === '123456789' || phoneNumber === '+998901234567') {
+        const testOtp = '1234';
+        const otpData = {
+          phone: phoneNumber,
+          otp: testOtp,
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+          createdAt: new Date().toISOString(),
+        };
+        const currentOtps = getFromLocalStorage('otpCodes', []);
+        const filteredOtps = currentOtps.filter((o) => o.phone !== phoneNumber);
+        filteredOtps.push(otpData);
+        saveToLocalStorage('otpCodes', filteredOtps);
+        
+        setModalContent({
+          title: 'Test OTP kodi',
+          message: `🔑 Demo rejimda: OTP kodingiz: ${testOtp}\n\n💡 Haqiqiy tizimda OTP Telegram orqali yuboriladi.`,
+        });
+        setShowModal(true);
+        setTimeout(() => setShowModal(false), 3000);
+        return true;
+      }
+
       const otpData = {
         phone: phoneNumber,
         otp: generatedOtp,
@@ -68,16 +193,10 @@ const StaffLogin = ({ onLogin }) => {
       filteredOtps.push(otpData);
       saveToLocalStorage('otpCodes', filteredOtps);
 
-      const message = `🦷 SDK DENTAL Staff Login OTP\n\nSizning tasdiqlash kodingiz: ${generatedOtp}\n\nKod 10 daqiqa amal qiladi.\n\n⚠️ Bu kodni hech kim bilan baham ko'rmang!`;
+      const message = `🦷 SDK DENTAL Xodim Login OTP\n\nSizning tasdiqlash kodingiz: ${generatedOtp}\n\nKod 10 daqiqa amal qiladi.\n\n⚠️ Bu kodni hech kim bilan baham ko'rmang!`;
 
       const success = await sendTelegramMessage(chatId, message);
-      if (success) {
-        console.log(`OTP ${generatedOtp} sent to ${phoneNumber}`);
-        return true;
-      } else {
-        console.error('Failed to send OTP via Telegram');
-        return false;
-      }
+      return success;
     } catch (error) {
       console.error('Error sending OTP:', error);
       return false;
@@ -87,11 +206,16 @@ const StaffLogin = ({ onLogin }) => {
   // Verify OTP
   const verifyOtp = (phoneNumber, enteredOtp) => {
     try {
+      // Demo rejimda test OTP tekshiruvi
+      if (demoMode || enteredOtp === '1234') {
+        return true;
+      }
+      
       const currentOtps = getFromLocalStorage('otpCodes', []);
       const otpData = currentOtps.find((o) => o.phone === phoneNumber && o.otp === enteredOtp);
 
       if (!otpData) {
-        return /^\d{4}$/.test(enteredOtp);
+        return false;
       }
 
       const now = new Date();
@@ -108,7 +232,7 @@ const StaffLogin = ({ onLogin }) => {
       return true;
     } catch (error) {
       console.error('Error verifying OTP:', error);
-      return /^\d{4}$/.test(enteredOtp);
+      return enteredOtp === '1234';
     }
   };
 
@@ -130,8 +254,7 @@ const StaffLogin = ({ onLogin }) => {
       return;
     }
 
-    // Check if staff exists
-    const staffMembers = Array.isArray(staff) ? staff : [];
+    const staffMembers = systemStaff;
     const staffMember = staffMembers.find((s) => s.phone === phone);
     if (!staffMember) {
       setError('Bu telefon raqami bilan xodim topilmadi');
@@ -148,7 +271,7 @@ const StaffLogin = ({ onLogin }) => {
           email: staffMember.email || '',
           phone: staffMember.phone,
           role: staffMember.role || 'staff',
-          permissions: {
+          permissions: staffMember.permissions || {
             patients: true,
             appointments: true,
             medications: true,
@@ -181,15 +304,11 @@ const StaffLogin = ({ onLogin }) => {
     try {
       const isValid = verifyOtp(phone, otpCode);
       if (isValid && tempUser) {
-        // Call onLogin prop
-        if (onLogin) {
-          onLogin(tempUser);
-        }
+        if (onLogin) onLogin(tempUser);
+        if (setCurrentUser) setCurrentUser(tempUser);
         
-        // Log login
         logLogin(tempUser, 'phone_otp');
 
-        // Update logins in context
         if (setLogins) {
           setLogins((prevLogins) => {
             const newLogins = [
@@ -212,7 +331,7 @@ const StaffLogin = ({ onLogin }) => {
 
         setModalContent({
           title: 'Xodim sifatida kirish',
-          message: `Tizimga muvaffaqiyatli kirdingiz!\n\nXush kelibsiz, ${tempUser.name}!`,
+          message: `✅ Tizimga muvaffaqiyatli kirdingiz!\n\n👤 Xush kelibsiz, ${tempUser.name}!`,
         });
         setShowModal(true);
         setTimeout(() => navigate('/'), 1500);
@@ -244,12 +363,13 @@ const StaffLogin = ({ onLogin }) => {
     setOtpDigits(['', '', '', '']);
 
     try {
-      const staffMembers = Array.isArray(staff) ? staff : [];
-      const staffMember = staffMembers.find((s) => s.phone === phone);
+      const staffMember = systemStaff.find((s) => s.phone === phone);
       if (staffMember && telegramChatId) {
         const success = await sendOtp(phone, telegramChatId);
         if (!success) {
           setError('OTP yuborishda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
+        } else {
+          setSuccessMessage("OTP kodi qayta yuborildi!");
         }
       } else {
         setError('Xodim uchun Telegram chat ID topilmadi');
@@ -260,6 +380,16 @@ const StaffLogin = ({ onLogin }) => {
       setIsLoading(false);
     }
   };
+
+  // Success message state
+  const [successMessage, setSuccessMessage] = useState('');
+  
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // OTP input change handler
   const handleOtpChange = (index, value) => {
@@ -344,22 +474,89 @@ const StaffLogin = ({ onLogin }) => {
               <FiUser className="logo-icon" />
               <span>DentCare</span>
             </div>
-            <h2 className="login-title">{isOtpMode ? 'OTP tasdiqlash' : 'Xodim kirishi'}</h2>
+            <h2 className="login-title">
+              {isOtpMode ? 'OTP tasdiqlash' : demoMode ? 'Demo rejim - Xodim tanlash' : 'Xodim kirishi'}
+            </h2>
             <p className="login-subtitle">
               {isOtpMode 
                 ? 'Telefon raqamingizga yuborilgan kodni kiriting' 
+                : demoMode 
+                ? 'Demo rejimda kirish uchun xodimni tanlang'
                 : 'Xodim sifatida tizimga kiring'}
             </p>
           </div>
 
           {error && (
             <div className="alert-error">
-              <div className="alert-icon">!</div>
+              <FiAlertCircle className="alert-icon-custom" />
               <span>{error}</span>
             </div>
           )}
 
-          {isOtpMode ? (
+          {successMessage && (
+            <div className="alert-success">
+              <FiCheck className="alert-icon-custom" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {demoMode && !isOtpMode ? (
+            <div className="demo-staff-selector">
+              <div className="demo-staff-list">
+                {demoStaffList.map((staffMember) => (
+                  <div
+                    key={staffMember.id}
+                    className={`demo-staff-card ${selectedDemoStaff?.id === staffMember.id ? 'selected' : ''}`}
+                    onClick={() => handleDemoStaffSelect(staffMember)}
+                  >
+                    <div className="demo-staff-avatar">
+                      <FiUser size={32} />
+                    </div>
+                    <div className="demo-staff-info">
+                      <h4>{staffMember.name}</h4>
+                      <p>{staffMember.position}</p>
+                      <small>{staffMember.phone}</small>
+                    </div>
+                    {selectedDemoStaff?.id === staffMember.id && (
+                      <div className="demo-staff-check">
+                        <FiCheck />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="demo-actions">
+                <button
+                  className="demo-login-btn"
+                  onClick={handleDemoLogin}
+                  disabled={!selectedDemoStaff || isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="button-spinner"></div>
+                      Kirilmoqda...
+                    </>
+                  ) : (
+                    <>
+                      <FiSmartphone /> Demo rejimda kirish
+                    </>
+                  )}
+                </button>
+                <button
+                  className="back-button"
+                  onClick={() => {
+                    setDemoMode(false);
+                    setSelectedDemoStaff(null);
+                    setPhone('');
+                    setTelegramChatId('');
+                  }}
+                >
+                  <FiArrowLeft /> Oddiy rejimga o'tish
+                </button>
+              </div>
+            </div>
+          ) : isOtpMode ? (
             <form onSubmit={handleOtpSubmit} className="login-form">
               <div className="otp-info">
                 <p className="otp-message">
@@ -436,7 +633,7 @@ const StaffLogin = ({ onLogin }) => {
                     Tekshirilmoqda...
                   </>
                 ) : (
-                  'Tasdiqlash'
+                  <><FiCheck /> Tasdiqlash</>
                 )}
               </button>
 
@@ -460,73 +657,87 @@ const StaffLogin = ({ onLogin }) => {
                     setCanResend(false);
                   }}
                 >
-                  Orqaga
+                  <FiArrowLeft /> Orqaga
                 </button>
               </div>
 
               <div className="otp-help">
                 <p>
-                  <strong>Qo'llanma:</strong> Kodni bitta inputga yozing yoki har bir raqamni alohida kiriting.
+                  <strong>💡 Qo'llanma:</strong> Kodni bitta inputga yozing yoki har bir raqamni alohida kiriting.
                   Kod to'liq kiritilganda avtomatik tekshiriladi.
                 </p>
               </div>
             </form>
           ) : (
-            <form onSubmit={handlePhoneSubmit} className="login-form">
-              <div className={`input-group ${isFocused.phone ? 'focused' : ''}`}>
-                <FiPhone className="input-icon" />
-                <input
-                  type="tel"
-                  placeholder="+998 XX XXX XX XX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  onFocus={() => handleFocus('phone')}
-                  onBlur={() => handleBlur('phone')}
-                  className="input-field"
-                  required
-                  autoComplete="tel"
-                />
-              </div>
+            <>
+              <form onSubmit={handlePhoneSubmit} className="login-form">
+                <div className={`input-group ${isFocused.phone ? 'focused' : ''}`}>
+                  <FiPhone className="input-icon" />
+                  <input
+                    type="tel"
+                    placeholder="+998 XX XXX XX XX"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onFocus={() => handleFocus('phone')}
+                    onBlur={() => handleBlur('phone')}
+                    className="input-field"
+                    required
+                    autoComplete="tel"
+                  />
+                </div>
 
-              <div className={`input-group ${isFocused.telegram ? 'focused' : ''}`}>
-                <FiMail className="input-icon" />
-                <input
-                  type="text"
-                  placeholder="Telegram Chat ID"
-                  value={telegramChatId}
-                  onChange={(e) => setTelegramChatId(e.target.value)}
-                  onFocus={() => handleFocus('telegram')}
-                  onBlur={() => handleBlur('telegram')}
-                  className="input-field"
-                  required
-                  autoComplete="off"
-                />
+                <div className={`input-group ${isFocused.telegram ? 'focused' : ''}`}>
+                  <FiMail className="input-icon" />
+                  <input
+                    type="text"
+                    placeholder="Telegram Chat ID"
+                    value={telegramChatId}
+                    onChange={(e) => setTelegramChatId(e.target.value)}
+                    onFocus={() => handleFocus('telegram')}
+                    onBlur={() => handleBlur('telegram')}
+                    className="input-field"
+                    required
+                    autoComplete="off"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className={`submit-button ${isLoading ? 'loading' : ''}`}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="button-spinner"></div>
+                      OTP yuborilmoqda...
+                    </>
+                  ) : (
+                    <><FiPhoneCall /> OTP yuborish</>
+                  )}
+                </button>
+
+                <div className="login-hint">
+                  <p>📌 Ma'lumot:</p>
+                  <ul>
+                    <li>Telefon raqami tizimda ro'yxatdan o'tgan bo'lishi kerak</li>
+                    <li>Telegram Chat ID ni kiriting</li>
+                    <li>OTP kodi Telegram orqali yuboriladi</li>
+                    <li>Test rejimida <strong>1234</strong> kodidan foydalaning</li>
+                  </ul>
+                </div>
+              </form>
+
+              <div className="login-divider">
+                <span>yoki</span>
               </div>
 
               <button
-                type="submit"
-                className={`submit-button ${isLoading ? 'loading' : ''}`}
-                disabled={isLoading}
+                className="demo-mode-btn"
+                onClick={() => setDemoMode(true)}
               >
-                {isLoading ? (
-                  <>
-                    <div className="button-spinner"></div>
-                    OTP yuborilmoqda...
-                  </>
-                ) : (
-                  'OTP yuborish'
-                )}
+                <FiSmartphone /> Demo rejimda sinab ko'rish
               </button>
-
-              <div className="login-hint">
-                <p>📌 Xodim ma'lumotlari:</p>
-                <ul>
-                  <li>Telefon raqami tizimda ro'yxatdan o'tgan bo'lishi kerak</li>
-                  <li>Telegram Chat ID ni kiriting</li>
-                  <li>OTP kodi Telegram orqali yuboriladi</li>
-                </ul>
-              </div>
-            </form>
+            </>
           )}
 
           <div className="login-options">
@@ -535,14 +746,14 @@ const StaffLogin = ({ onLogin }) => {
               className="login-option-btn"
               onClick={() => navigate('/login')}
             >
-              <FiArrowLeft /> Foydalanuvchi Kirishi
+              <FiArrowLeft /> Foydalanuvchi kirishi
             </button>
             <button
               type="button"
               className="login-option-btn"
               onClick={() => navigate('/admin-login')}
             >
-              <FiShield /> Admin Kirishi
+              <FiShield /> Admin kirishi
             </button>
           </div>
         </div>
