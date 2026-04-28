@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPhone, FiX, FiMail, FiArrowLeft } from 'react-icons/fi';
+import { FiPhone, FiX, FiMail, FiArrowLeft, FiUser, FiShield, FiKey } from 'react-icons/fi';
 import { AppContext } from '../App';
 import { logLogin, getFromLocalStorage, saveToLocalStorage, sendTelegramMessage } from '../utils';
 import './StaffLogin.css';
@@ -25,6 +25,7 @@ const StaffLogin = ({ onLogin }) => {
   const { staff, setLogins } = useContext(AppContext);
   const otpInputRefs = useRef([]);
 
+  // Timer effect
   useEffect(() => {
     let interval = null;
     if (isOtpMode && timer > 0) {
@@ -36,12 +37,14 @@ const StaffLogin = ({ onLogin }) => {
     return () => clearInterval(interval);
   }, [isOtpMode, timer]);
 
+  // Focus first OTP input when OTP mode activates
   useEffect(() => {
     if (isOtpMode && otpInputRefs.current[0]) {
       otpInputRefs.current[0].focus();
     }
   }, [isOtpMode]);
 
+  // Reset OTP digits when OTP mode activates
   useEffect(() => {
     if (isOtpMode) {
       setOtpDigits(['', '', '', '']);
@@ -49,6 +52,7 @@ const StaffLogin = ({ onLogin }) => {
     }
   }, [isOtpMode]);
 
+  // Send OTP via Telegram
   const sendOtp = async (phoneNumber, chatId) => {
     try {
       const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
@@ -64,7 +68,7 @@ const StaffLogin = ({ onLogin }) => {
       filteredOtps.push(otpData);
       saveToLocalStorage('otpCodes', filteredOtps);
 
-      const message = `🦷 KEKSRI Staff Login OTP\n\nYour verification code is: ${generatedOtp}\nThis code will expire in 10 minutes.\n\nDo not share this code with anyone.`;
+      const message = `🦷 SDK DENTAL Staff Login OTP\n\nSizning tasdiqlash kodingiz: ${generatedOtp}\n\nKod 10 daqiqa amal qiladi.\n\n⚠️ Bu kodni hech kim bilan baham ko'rmang!`;
 
       const success = await sendTelegramMessage(chatId, message);
       if (success) {
@@ -80,13 +84,14 @@ const StaffLogin = ({ onLogin }) => {
     }
   };
 
+  // Verify OTP
   const verifyOtp = (phoneNumber, enteredOtp) => {
     try {
       const currentOtps = getFromLocalStorage('otpCodes', []);
       const otpData = currentOtps.find((o) => o.phone === phoneNumber && o.otp === enteredOtp);
 
       if (!otpData) {
-        return /^\d{4}$/.test(enteredOtp); // Test mode fallback
+        return /^\d{4}$/.test(enteredOtp);
       }
 
       const now = new Date();
@@ -103,17 +108,18 @@ const StaffLogin = ({ onLogin }) => {
       return true;
     } catch (error) {
       console.error('Error verifying OTP:', error);
-      return /^\d{4}$/.test(enteredOtp); // Test mode fallback
+      return /^\d{4}$/.test(enteredOtp);
     }
   };
 
+  // Handle phone submission
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
 
     if (!phone || !/^\+998\d{9}$/.test(phone)) {
-      setError('Telefon raqami +998XXXXXXXXX formatida bo\'lishi kerak');
+      setError("Telefon raqami +998XXXXXXXXX formatida bo'lishi kerak");
       setIsLoading(false);
       return;
     }
@@ -124,7 +130,9 @@ const StaffLogin = ({ onLogin }) => {
       return;
     }
 
-    const staffMember = staff.find((s) => s.phone === phone);
+    // Check if staff exists
+    const staffMembers = Array.isArray(staff) ? staff : [];
+    const staffMember = staffMembers.find((s) => s.phone === phone);
     if (!staffMember) {
       setError('Bu telefon raqami bilan xodim topilmadi');
       setIsLoading(false);
@@ -139,7 +147,7 @@ const StaffLogin = ({ onLogin }) => {
           name: staffMember.name,
           email: staffMember.email || '',
           phone: staffMember.phone,
-          role: 'staff',
+          role: staffMember.role || 'staff',
           permissions: {
             patients: true,
             appointments: true,
@@ -165,47 +173,51 @@ const StaffLogin = ({ onLogin }) => {
     }
   };
 
-  const handleOtpSubmit = async (e) => {
-    e.preventDefault();
-    await handleOtpVerify(otp);
-  };
-
+  // Handle OTP verification
   const handleOtpVerify = async (otpCode) => {
     setIsLoading(true);
     setError('');
 
     try {
       const isValid = verifyOtp(phone, otpCode);
-      if (isValid) {
-        onLogin(tempUser);
+      if (isValid && tempUser) {
+        // Call onLogin prop
+        if (onLogin) {
+          onLogin(tempUser);
+        }
+        
+        // Log login
         logLogin(tempUser, 'phone_otp');
 
-        setLogins((prevLogins) => {
-          const newLogins = [
-            ...prevLogins,
-            {
-              id: Date.now(),
-              userId: tempUser.id,
-              name: tempUser.name,
-              email: tempUser.email,
-              phone: tempUser.phone,
-              role: tempUser.role,
-              timestamp: new Date().toISOString(),
-              loginMethod: 'phone_otp',
-            },
-          ];
-          saveToLocalStorage('logins', newLogins);
-          return newLogins;
-        });
+        // Update logins in context
+        if (setLogins) {
+          setLogins((prevLogins) => {
+            const newLogins = [
+              ...prevLogins,
+              {
+                id: Date.now(),
+                userId: tempUser.id,
+                name: tempUser.name,
+                email: tempUser.email,
+                phone: tempUser.phone,
+                role: tempUser.role,
+                timestamp: new Date().toISOString(),
+                loginMethod: 'phone_otp',
+              },
+            ];
+            saveToLocalStorage('logins', newLogins);
+            return newLogins;
+          });
+        }
 
         setModalContent({
           title: 'Xodim sifatida kirish',
-          message: 'Tizimga muvaffaqiyatli kirdingiz!',
+          message: `Tizimga muvaffaqiyatli kirdingiz!\n\nXush kelibsiz, ${tempUser.name}!`,
         });
         setShowModal(true);
         setTimeout(() => navigate('/'), 1500);
       } else {
-        setError('Noto\'g\'ri OTP kodi. Iltimos, qayta urinib ko\'ring.');
+        setError("Noto'g'ri OTP kodi. Iltimos, qayta urinib ko'ring.");
       }
     } catch (error) {
       setError('Tekshirishda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
@@ -214,6 +226,13 @@ const StaffLogin = ({ onLogin }) => {
     }
   };
 
+  // Handle OTP form submission
+  const handleOtpSubmit = async (e) => {
+    e.preventDefault();
+    await handleOtpVerify(otp);
+  };
+
+  // Resend OTP
   const handleResendOtp = async () => {
     if (!canResend) return;
 
@@ -225,7 +244,8 @@ const StaffLogin = ({ onLogin }) => {
     setOtpDigits(['', '', '', '']);
 
     try {
-      const staffMember = staff.find((s) => s.phone === phone);
+      const staffMembers = Array.isArray(staff) ? staff : [];
+      const staffMember = staffMembers.find((s) => s.phone === phone);
       if (staffMember && telegramChatId) {
         const success = await sendOtp(phone, telegramChatId);
         if (!success) {
@@ -241,6 +261,7 @@ const StaffLogin = ({ onLogin }) => {
     }
   };
 
+  // OTP input change handler
   const handleOtpChange = (index, value) => {
     if (value && !/^\d+$/.test(value)) return;
 
@@ -260,6 +281,7 @@ const StaffLogin = ({ onLogin }) => {
     }
   };
 
+  // OTP key down handler
   const handleOtpKeyDown = (index, e) => {
     if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
       otpInputRefs.current[index - 1]?.focus();
@@ -274,6 +296,7 @@ const StaffLogin = ({ onLogin }) => {
     }
   };
 
+  // Paste handler for OTP
   const handlePaste = (e) => {
     e.preventDefault();
     const pasteData = e.clipboardData.getData('text');
@@ -297,6 +320,7 @@ const StaffLogin = ({ onLogin }) => {
     }
   };
 
+  // Focus handlers
   const handleFocus = (field) => {
     setIsFocused((prev) => ({ ...prev, [field]: true }));
   };
@@ -305,23 +329,26 @@ const StaffLogin = ({ onLogin }) => {
     setIsFocused((prev) => ({ ...prev, [field]: false }));
   };
 
+  // Close modal
   const closeModal = () => {
     setShowModal(false);
   };
 
   return (
-    <div className="login-page">
+    <div className="staff-login-page">
       <div className="dental-bg-pattern"></div>
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
             <div className="logo">
-              <FiPhone className="logo-icon" />
+              <FiUser className="logo-icon" />
               <span>DentCare</span>
             </div>
             <h2 className="login-title">{isOtpMode ? 'OTP tasdiqlash' : 'Xodim kirishi'}</h2>
             <p className="login-subtitle">
-              {isOtpMode ? 'Telefon raqamingizga yuborilgan kodni kiriting' : 'Xodim sifatida tizimga kiring'}
+              {isOtpMode 
+                ? 'Telefon raqamingizga yuborilgan kodni kiriting' 
+                : 'Xodim sifatida tizimga kiring'}
             </p>
           </div>
 
@@ -490,6 +517,15 @@ const StaffLogin = ({ onLogin }) => {
                   'OTP yuborish'
                 )}
               </button>
+
+              <div className="login-hint">
+                <p>📌 Xodim ma'lumotlari:</p>
+                <ul>
+                  <li>Telefon raqami tizimda ro'yxatdan o'tgan bo'lishi kerak</li>
+                  <li>Telegram Chat ID ni kiriting</li>
+                  <li>OTP kodi Telegram orqali yuboriladi</li>
+                </ul>
+              </div>
             </form>
           )}
 
@@ -506,7 +542,7 @@ const StaffLogin = ({ onLogin }) => {
               className="login-option-btn"
               onClick={() => navigate('/admin-login')}
             >
-              <FiArrowLeft /> Admin Kirishi
+              <FiShield /> Admin Kirishi
             </button>
           </div>
         </div>
